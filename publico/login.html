@@ -1,0 +1,112 @@
+<!DOCTYPE html><!--tipo de documento-->
+<html lang="es"><!--idioma de la pagina-->
+    <head><!--encabezado de la pagina del login-->
+        <meta charset="UTF-8"><!--tipo de codificacion-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"><!--para que se adapte a cualquier pantalla-->
+        <title>Inventario360</title><!--titulo de la pagina-->
+        <link rel="stylesheet" href="stilos/loginstyles.css"><!--enlace a la hoja de estilos-->
+    </head>
+
+    <body>
+        <!--encabezado del login-->
+        <div class="encabezado"><!--clase para el encabezado-->
+            <div class="texto-bienvenida"><!--clase para el texto de bienvenida-->
+                <h1>Inventario 360</h1><!--titulo de la pagina-->
+                <img src="assets/logoinventario360.png" alt="logo de inventario360">
+                <!--imagen para el logo de la pagina-->
+                <p>Bienvenidos a Inventario 360, la mejor opción para la gestión de tu negocio,</p><!--texto de bienvenida-->
+            </div>
+
+            <!--formulario de inicio de sesión-->
+            <form id="formulario-inicio" class="formulario activo"><!--clase para formulario de inicio de sesion-->
+                <h2>Iniciar Sesión</h2><!--etiqueta del titulo del formulario-->        
+                <!--campo para ingresar el usuario del inicio de sesion-->
+                <div class="username"><!--clase para nombre de usuario-->
+                    <label for="login-username">Usuario</label><!--etiqueta para el usuario-->
+                    <input type="text" id="login-username" name="username" placeholder="Ingresa tu usuario" value="" required/><!--campo para ingresar el usuario-->
+                    <div id="alerta-login-usuario" class="alerta"></div><!--alerta para el usuario-->
+                </div>
+                <!--campo para ingresar la contraseña del inicio de sesion-->
+                <div class="contraseña"><!--clase para contraseña de inicio de secion-->
+                    <label for="login-contraseña">contraseña</label><!--etiqueta para la contraseña-->
+                    <input type="password" id="login-contraseña" name="contraseña" placeholder="Ingresa tu contraseña" required/><!--campo para ingresar la contraseña-->
+                    <div id="alerta-login-contraseña" class="alerta"></div><!--alerta para la contraseña-->
+                </div>
+                <div class="botones">
+                    <button type="submit">Iniciar sesión</button><!--boton para enviar el formulario de inicio de sesion-->
+                    <button type="button" onclick="mostrarFormulario('formulario-registro')">Registrarse</button>
+                </div>
+                <p>Registrate ¿Si No tienes una cuenta?</p><!--pregunta si no tienes una contraseña-->
+                <p>Olvidastes tu contraseña</p><!--pregunta para recordar contraseña--> 
+                <a href="#" onclick="mostrarFormulario('formulario-recuperar')">Recuperar contraseña</a><!--enlace a la pagina de recuperar contraseña-->
+            </form><!--fin del formulario de inicio de sesion-->
+
+            <!-- Panel de depuración visible para ayudar a diagnosticar problemas de login -->
+            <div id="debugLogin" style="margin:12px 0; padding:10px; background:#fff4e5; border:1px solid #ffd8a8; border-radius:8px; display:none; font-size:13px; color:#333"></div>
+
+            <!--formulario de registro-->
+            <form id="formulario-registro" class="formulario"><!--clase para formulario de registro-->
+                <h2>Crea una Cuenta</h2><!--etiqueta del titulo registro-->
+                <!--campo para ingresar el usuario del registro-->
+                <div class="username">
+                    <label for="registro-username">Ingresa tu usuario</label>
+                    <input type="text" id="registro-username" name="username" placeholder="Ingresa tu usuario" required/>
+                    <div id="alerta-registro-usuario" class="alerta"></div>
+                </div>
+                <div class="telefono">
+                    <label for="registro-telefono">Ingresa tu telefono</label>
+                    <input type="number" id="registro-telefono" name="telefono" placeholder="Ingrese su numero de telefono" required/>
+                    <div id="alerta-telefono" class="alerta"></div>
+                </div>
+                <!--campo para ingresar el correo electronico del registro-->
+                <div class="email"><!--clase para correo electronico-->
+                    <label for="registroemail">Correo Electronico</label>
+                    <input type="email" id="registro-email" name="email" placeholder="Ingresa tu correo electronico" required/>
+                    <div id="alerta-registro-email" class="alerta"></div>
+                </div>
+                <!--campo para ingresar la contraseña del registro-->
+                <div class="contraseña">
+                    <label for="registro-contraseña">Contraseña</label>
+                    <input type="password" id="registro-contraseña" name="contraseña" placeholder="Ingresa tu contraseña" required/>
+                    <div id="alerta-registro-contraseña" class="alerta"></div>
+                </div>
+                <button type="submit">Registrar</button><!--boton para enviar el formulario de registro-->
+                <p><a href="#" onclick="mostrarFormulario('formulario-inicio')">Volver al inicio</a></p><!--enlace para volver al inicio-->
+            </form><!--fin del formulario de registro-->
+
+            <form id="formulario-recuperar" class="formulario">
+                <h2>Recuperar contraseña</h2>
+                <input type="email" id="recuperacion-email" placeholder="Correo registrado" required />
+                <div id="alerta-recuperacion-email" class="alerta"></div>
+                <button type="submit">Enviar enlace de recuperación</button>
+                <p><a href="#" onclick="mostrarFormulario('formulario-inicio')">Volver al inicio</a></p>
+            </form>
+            <form id="formulario-confirmar-recuperacion" class="formulario">
+                <h2>Restablecer contraseña</h2>
+                <input type="hidden" id="token-recuperacion" />
+                <input type="password" id="nueva-contraseña" placeholder="Nueva contraseña" required />
+                <div id="alerta-nueva-contraseña" class="alerta"></div>
+                <button type="submit">Actualizar contraseña</button>
+                <p><a href="#" onclick="mostrarFormulario('formulario-inicio')">Volver al inicio</a></p>
+            </form>
+        </div><!--fin del encabezado de la pagina-->
+        <script>
+            // Stub seguro para evitar ReferenceError si el módulo no cargó aún.
+            // Si el módulo se carga correctamente sobrescribirá esta función.
+            if (!window.mostrarFormulario) {
+                window.mostrarFormulario = function (formularioId) {
+                    try {
+                        document.querySelectorAll('.formulario').forEach(f => f.classList.remove('activo'));
+                        const formulario = document.getElementById(formularioId);
+                        if (formulario) formulario.classList.add('activo');
+                    } catch (e) {
+                        console.warn('mostrarFormulario temporal fallo:', e);
+                    }
+                };
+            }
+        </script>
+        <!-- Validaciones usadas por los formularios (expone variables y helpers en window) -->
+        <script src="js/validaciodecampos.js"></script>
+        <script type="module" src="js/login.js"></script><!--enlace al archivo js-->
+    </body>
+</html>

@@ -1,0 +1,227 @@
+/* === RESET GLOBAL === */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Times New Roman', Times, serif;
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: #f4f4f4;
+}
+
+/* === TIPOGRAFÍA === */
+p {
+    color: #4752ae;
+    font-size: 20px;
+    line-height: 2.0;
+}
+
+h1 {
+    font-size: 60px;
+    text-align: center;
+    color: #4752ae;
+    padding: 20px;
+}
+
+h2 {
+    font-size: 30px;
+    text-align: center;
+    color: #4752ae;
+    margin-bottom: 20px;
+}
+
+/* === ENCABEZADO === */
+.encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 40px;
+    gap: 40px;
+    background-color: #fff;
+}
+
+.encabezado h1,
+.texto-bienvenida p,
+.texto-bienvenida img {
+    text-align: center;
+    margin: 0 auto;
+}
+
+.texto-bienvenida {
+    font-size: 90px;
+    text-align: center;
+    color: #4752ae;
+    padding: 20px;
+}
+
+.texto-bienvenida img {
+    width: 70%;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+/* === FORMULARIOS === */
+.formulario {
+    display: none;
+    width: 30%;
+    margin: auto;
+    padding: 02%;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 25px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
+    transition: all 1.5s ease;
+}
+
+.formulario.activo {
+    display: block;
+    animation: fadeIn 1.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.formulario label {
+    display: block;
+    margin-bottom: 15px;
+    font-weight: bold;
+    color: #4752ae;
+}
+
+.formulario input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.formulario input:focus {
+    border-color: #4752ae;
+    outline: none;
+    box-shadow: 0 0 5px rgba(71, 82, 174, 0.4);
+}
+
+.formulario button {
+    display: block;
+    width: 60%;
+    margin: 20px auto 15px auto;
+    padding: 10px;
+    background-color: #fea43f;
+    color: #4752ae;
+    border: 2px solid #4752ae;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.formulario button:hover {
+    background-color: #4752ae;
+    color: #fea43f;
+    border-color: #fea43f;
+}
+
+/* === OPCIONES DE NAVEGACIÓN === */
+.opciones {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.opciones a {
+    color: #4752ae;
+    text-decoration: none;
+    transition: text-decoration 0.3s;
+}
+
+.opciones a:hover {
+    text-decoration: underline;
+}
+
+/* === BOTONES  DE LOS FORMULARIOS DE INCIO === */
+.botones {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.botones button {
+    padding: 10px;
+    font-size: 100%;
+    cursor: pointer;
+    background-color: #fea43f;
+    border: 2px solid #4752ae;
+    border-radius: 15px;
+    color: #4752ae;
+    transition: all 0.3s ease;
+}
+
+.botones button:hover {
+    background-color: #4752ae;
+    color: #fff;
+}
+
+/* === ALERTAS === */
+.alerta {
+    font-size: 0.9em;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    display: none;
+    transition: all 0.3s ease;
+}
+
+.alerta.valido {
+    color: #28a745;
+}
+
+.alerta.invalido {
+    color: #dc3545;
+}
+
+.input-valido {
+    border: 2px solid #28a745;
+    box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+}
+
+.input-invalido {
+    border: 2px solid #dc3545;
+    box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+}
+
+/* === RESPONSIVE  QUE PUEDA ADACTARSE A DIFERNTES TAMAÑOS DE PANTALLAS === */
+@media (max-width: 768px) {
+    .encabezado {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .formulario {
+        width: 90%;
+        margin: 40px auto;
+        padding: 30px;
+    }
+
+    h1 {
+        font-size: 40px;
+    }
+
+    .formulario h2 {
+        font-size: 24px;
+    }
+
+    .formulario button {
+        width: 100%;
+    }
+
+    .formulario label,
+    .formulario input {
+        text-align: center;
+    }
+}

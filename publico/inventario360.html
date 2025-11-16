@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><!--encabezado de la pagina-->
+    <meta charset="UTF-8"><!--tipo de codificacion-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><!--para que se adapte a cualquier pantalla-->
+    <title>Inventario360</title><!--titulo de la pagina-->
+    <link rel="stylesheet" href="stilos/appstyles.css"><!--enlace a la hoja de estilos-->
+    <!-- Chart.js para gráficas de estadísticas -->
+    <!-- Usar una versión fija evita solicitudes a mapas de origen que pueden no existir en la URL genérica -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
+    <!--esto permite restringir la entrada sin antes loguiase-->
+    <script>
+        window.onload = function() {  
+            const usuario = localStorage.getItem("usuarioActivo");
+            if (!usuario) {
+            window.location.href = "login.html"; // redirige si no hay sesión
+            }
+        };
+    </script>
+    <script>
+        const usuario = localStorage.getItem("usuarioActivo");
+        if (!usuario) {
+            window.location.href = "login.html";
+        }
+    </script>
+    typeof window.mostrarModulo
+    typeof window.crearProducto
+    typeof window.crearCategorias
+    typeof window.crearCliente
+    typeof window.crearProveedor>
+</head>
+
+<body>
+    <div class="contenedor-app">
+    <!-- dashboar para ociones fijas -->
+        <aside class="sidebar">
+            <div style="display: flex; align-items: center;">
+                <img src="assets/logoinventario360.png" alt="Logo" style="height: 40px; margin-right: 10px;">
+                <span style="font-size: 17px; font-weight: bold;">Inventario 360</span>
+            </div>
+            <nav>
+                <ul>
+                    <li onclick="mostrarModulo('Perfil')">Perfil</li>
+                    <label for="menu">Menu</label>
+                    <li onclick="mostrarModulo('inventario')">Inventario</li>
+                    <li onclick="mostrarModulo('ventas')">Ventas</li>
+                    <li onclick="mostrarModulo('Movimientos')">Movimientos</li>
+                    <li onclick="mostrarModulo('Estadísticas')">Estadísticas</li>
+                    <label for="Contactos">Contactos</label>
+                    <li onclick="mostrarModulo('clientes')">Clientes</li>
+                    <li onclick="mostrarModulo('proveedores')">Proveedores</li>
+                    <li onclick="mostrarModulo('ajustes')">Ajustes</li>
+                    <button onclick="cerrarSesion('Cerrar sesion')">Cerrar sesión</button>
+                </ul>
+            </nav>
+        </aside>
+        <!-- Área dinámica -->
+        <main class="contenido">
+            <!-- Barra superior con perfil compacto -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <!-- nombre de la app o sección -->
+                    <strong id="topbarTitulo">Inventario 360</strong>
+                </div>
+                <div class="topbar-right">
+                    <img id="topbarFoto" src="assets/logoinventario360.png" alt="Foto perfil" />
+                    <span id="topbarNombre">Usuario</span>
+                </div>
+            </div>
+            <!--aqui comiensa el perfil de usuario se traen datos de la base y se permiten agregar datos adicionales-->
+            <section id="Perfil" class="modulo">
+                <h2>Perfil de usuario</h2>
+                <div class="perfil-info">
+                    <!-- Cambiado a input file: permite seleccionar una imagen desde el equipo -->
+                    <input type="file" id="fotoperfil" accept="image/*" />
+                    <!-- Vista previa de la foto seleccionada -->
+                    <img id="previewFoto" alt="Foto de perfil" style="display:block; max-width:120px; margin-top:8px;" />
+                    <label>Nombre:</label>
+                    <input type="text" id="nombreUsuario" placeholder="Tu nombre">
+                    <label>Dirección:</label>
+                    <input type="text" id="direccionUsuario" placeholder="Calle, número, barrio">
+                    <label>Ciudad:</label>
+                    <input type="text" id="ciudadUsuario" placeholder="Ciudad">
+                    <label>País:</label>
+                    <input type="text" id="paisUsuario" placeholder="País">
+                    <label>Código postal:</label>
+                    <input type="text" id="codigoPostalUsuario" placeholder="00000">
+                    <label>Detalles / Notas:</label>
+                    <textarea id="detallesUsuario" placeholder="Notas adicionales sobre el usuario" rows="3"></textarea>
+                    <label>Correo:</label>
+                    <input type="email" id="correoUsuario" placeholder="tu@email.com">
+                    <label>Teléfono:</label>
+                    <input type="tel" id="telefonoUsuario" placeholder="8888-8888">
+                    <button onclick="guardarPerfil()">Guardar cambios</button>
+                </div>
+            </section>
+            <!--aqui comiensa el inventario-->
+            <section id="inventario" class="modulo activo">
+                <h2>Inventario</h2>
+                <!--Resumen del inventario -->
+                <div class="inventario-resumen">
+                        <h3>
+                            <span>Cantidad de artículos: <strong id="totalArticulos"></strong></span>
+                            <span>Costo inventario: <strong id="costoInventario"></strong></span>
+                        </h3>
+                </div>
+                <!--Botones para el Inventario-->
+                <div class="inventario-header">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="buscador" placeholder="Buscar por nombre, código o ID" />
+                    </div>
+                    <div class="acciones-inventario">
+                        <button id="btnCrearProducto" class="btn-action primary" onclick="crearProducto()">Crear Producto</button>
+                        <button id="btnCrearCategoria" class="btn-action" onclick="crearCategorias()">Crear Categoría</button>
+                        <button class="btn-action" onclick="verCategorias()">Ver Categorías</button>
+                    </div>
+                    <!-- Aquí se mostrarán los botones de categorías -->
+                    <div id="categoriasHeader" class="categorias-header"></div>
+                </div>
+                <!--tabla de campos para los productos del inventario-->
+                <table class="tabla-inventario">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Producto</th>
+                            <th>Última actualización</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Estimado</th>
+                            <th>Costo</th>
+                            <th>Ganancia</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaInventarioBody">
+                        <!-- Filas dinámicas -->
+                    </tbody>
+                </table>
+                <h2>Agregar producto</h2>
+                    <!-- El formulario inline se oculta: se usa el modal para crear productos -->
+                    <form id="formProducto" style="display:none;">
+                        <label>Producto:</label>
+                        <input type="text" id="producto" required>
+                        <label>Categoría:</label>
+                        <input type="text" id="categoria" required>
+                        <label>Cantidad:</label>
+                        <input type="number" id="cantidad" required>
+                        <label>Precio:</label>
+                        <input type="number" id="precio" required>
+                        <label>Costo:</label>
+                        <input type="number" id="costo" required>
+                        <button type="submit">Agregar</button>
+                    </form>
+            </section>
+            <!-- Modal genérico -->
+            <div id="modal" class="modal">
+                <div class="modal-contenido modal-content">
+                        <button type="button" class="cerrar" aria-label="Cerrar modal" onclick="cerrarModal()">&times;</button>
+                        <h3 id="modal-titulo"></h3>
+                        <form id="modal-form"></form>
+                    </div>
+            </div>
+            <!--aqui comiensa el apartado de ventras-->
+            <section id="ventas" class="modulo">
+                <h2>Ventas</h2>
+                <!-- Formulario o historial de ventas -->
+                <div class="ventas-header">
+                    <div class="ventas-inventario">
+                        <h3>Buscar producto</h3>
+                        <input type="text" id="buscadorVentas" placeholder="Buscar por nombre, código o ID (Ventas)" />
+                        <ul id="resultados"></ul>
+                        <table class="ventas-inventario">
+                            <thead>
+                                <tr>
+                                <th>ID</th>
+                                <th>Producto</th>
+                                <th>Última actualización</th>
+                                <th>Cantidad</th>
+                                <th>Precio</th>
+                                <th>Costo</th>
+                                <th>Ganancia</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaventasBody"></tbody><!--filas dinamicas-->
+                        </table>
+                    </div>
+                    <div class="ventas-canasta">
+                        <h3>Canasta de venta</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio</th>
+                                    <th>Subtotal</th>
+                                    <th>Eliminar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="canastaBody"></tbody>
+                        </table>
+                        <div class="ventas-acciones">
+                            <button onclick="Nuevaventa()">Nueva venta</button>
+                            <button onclick="vaciarcanasta()">Vaciar canasta</button>
+                            <button onclick="terminarventa()">Terminar venta</button>
+                        </div>
+                    </div>
+                </div>                
+            </section>
+            <!--Aqui comiensa el apartado de movimientos-->
+            <section id="Movimientos" class="modulo">
+                <h2>Movimientos</h2>
+                <div class="Movimientos-header">
+                    <label for="fechaBase">Selecciona una fecha base:</label>
+                    <input type="date" id="fechaBase">
+                    <label for="rangoTiempo">Rango:</label>
+                    <select id="rangoTiempo">
+                        <option value="dia">Día</option>
+                        <option value="semana">Semana</option>
+                        <option value="mes">Mes</option>
+                        <option value="año">Año</option>
+                    </select>
+                        <button onclick="filtrarPorRango()">Buscar</button>
+                        <label for="filterTipo">Tipo:</label>
+                        <select id="filterTipo" aria-label="Filtrar por tipo">
+                            <option value="">Todos</option>
+                            <option value="venta">Venta</option>
+                            <option value="egreso">Egreso</option>
+                            <option value="ajuste">Ajuste</option>
+                        </select>
+                        <label for="filterProducto">Producto:</label>
+                        <select id="filterProducto" aria-label="Filtrar por producto"><option value="">Todos</option></select>
+                        <button onclick="loadMovimientosUI()">Refrescar</button>
+                        <button onclick="exportMovimientosCSV()">Exportar CSV</button>
+                </div>
+                <div class="movimientos-controles">
+                    <button onclick="mostrarMovimientos('ingresos')">Ingresos</button>
+                    <button onclick="mostrarMovimientos('egresos')">Egresos</button>
+                    <button onclick="mostrarMovimientos('porPagar')">Por pagar</button>
+                    <button onclick="mostrarMovimientos('porCobrar')">Por cobrar</button>
+                </div>
+                <div class="movimientos-tabla">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaMovimientosBody">
+                        <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Formulario para agregar productos -->
+            </section>
+            <!--aqui comiensa mi apartado de estadisticas-->
+            <section id="Estadísticas" class="modulo">
+                <h2>Estadísticas</h2>
+                <div class="estadisticas-controles">
+                    <label>Fecha base:</label>
+                    <input type="date" id="fechaBase">
+                    <label>Rango:</label>
+                    <select id="rangoTiempo">
+                    <option value="dia">Día</option>
+                    <option value="semana">Semana</option>
+                    <option value="mes">Mes</option>
+                    <option value="año">Año</option>
+                    </select>
+                    <button onclick="filtrarEstadisticas()">Buscar</button>
+                </div>
+                <div class="estadisticas-resumen">
+                    <strong>Total vendido: C$<span id="totalVentas">0</span></strong>
+                    <strong>Ganancia estimada: C$<span id="gananciaTotal">0</span></strong>
+                    <strong>Costo total: C$<span id="costoTotal">0</span></strong>
+                    <strong>Productos vendidos: <span id="productosVendidos">0</span></strong>
+                </div>
+                <div class="estadisticas-graficas">
+                    <canvas id="salesBarChart" width="400" height="200"></canvas>
+                    <canvas id="salesPieChart" width="320" height="200"></canvas>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Periodo</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Costo</th>
+                            <th>Ganancia</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaEstadisticasBody"></tbody>
+                </table>                
+            </section>
+            <!--Aqui comiensa el apartado para los clientes del usuario-->
+            <section id="clientes" class="modulo">
+                <h2>Clientes</h2>
+                <input type="text" id="nuevoCliente" placeholder="Nombre del cliente">
+                <button onclick="agregarCliente()">Agregar</button>
+                <ul id="listaClientes"></ul>
+            </section>
+            <!--Aqui comiensa el apartado para los proveedores del usario-->
+            <section id="proveedores" class="modulo">
+                <h2>Proveedores</h2>
+                <input type="text" id="nuevoProveedor" placeholder="Nombre del proveedor">
+                <button onclick="agregarProveedor()">Agregar</button>
+                <ul id="listaProveedores"></ul>
+            </section>
+            <!--Aqui podemos hacer algunos cambios en la app-->
+            <section id="ajustes" class="modulo">
+                <h2>Ajustes del sistema</h2>
+                <div class="ajustes-grupo">
+                    <label for="nombreEmpresa">Nombre de la empresa:</label>
+                    <input type="text" id="nombreEmpresa" placeholder="Inventario 360">
+                </div>
+                <div class="ajustes-grupo">
+                    <label for="moneda">Moneda:</label>
+                    <select id="moneda">
+                        <option value="C$">C$ Córdoba</option>
+                        <option value="$">$ Dólar</option>
+                    </select>
+                </div>
+                <div class="ajustes-grupo">
+                    <label>Notificaciones:</label>
+                    <input type="checkbox" id="notificaciones"> Activar alertas
+                </div>
+                <div class="ajustes-grupo">
+                    <button onclick="guardarAjustes()">Guardar ajustes</button>
+                    <button onclick="exportarDatos()">Exportar datos</button>
+                    <button onclick="confirmarReset()">Restablecer sistema</button>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script type="module" src="./js/index.js"></script>
+</body>
+</html>

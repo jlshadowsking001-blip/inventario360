@@ -1,0 +1,583 @@
+.search-box input[type="text"]{
+  padding: 10px 14px 10px 40px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.search-box .search-icon{
+  position: relative; left:34px; color: var(--color-muted); opacity:.9; pointer-events:none;
+}
+
+/* fallback: estilo directo para el input #buscador si no está dentro de .search-box */
+#buscador{
+  padding: 10px 14px 10px 40px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  max-width: 520px;
+  width: 60%;
+}
+
+/* estilo para botones dentro del modal */
+.modal-contenido form button,
+.modal-contenido form .btn-action{
+  display:inline-block;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 2px solid var(--color-primary);
+  background: var(--color-cta);
+  color: var(--color-primary);
+  cursor:pointer;
+  font-weight:600;
+}
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap');
+
+:root{
+  /* colores */
+  --color-primary: #2c284d; /* fondo sidebar deep */
+  --color-primary-2: #382a53; /* gradiente */
+  --color-accent: #9b59ff; /* morado acento */
+  --color-cta: #fea43f; /* naranja botones */
+  --color-text: #2f2d5c; /* texto principal */
+  --color-muted: #8a86a9; /* texto secundario */
+  --bg: #f4f4f4;
+  --surface: #ffffff;
+  --border: #e6e4ef;
+  --shadow: rgba(44,40,77,0.06);
+
+  /* tipografías */
+  --font-ui: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --font-heading: 'Playfair Display', serif;
+
+  /* medidas */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --spacing-xs: 6px;
+  --spacing-sm: 10px;
+  --spacing-md: 16px;
+}
+
+body{
+  font-family: var(--font-ui);
+  background-color: var(--bg);
+  color: var(--color-text);
+  margin: 0;
+  padding: 0;
+}
+*{
+  box-sizing: border-box;/*para que el padding no afecte al ancho*/
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;/*para que al hacer scroll se vea mas suave*/
+}
+p{
+  color: var(--color-text);/*color del texto*/
+  font-size: 16px;/*tamaño del texto*/
+  line-height: 1.6;/*altura de la linea*/
+}
+
+/* Controles form-like globales */
+label{ display:block; margin-bottom:6px; color:var(--color-muted); font-size:13px }
+input[type="text"], input[type="number"], input[type="email"], input[type="tel"], select, textarea, .modal-form-control{
+  width:100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-family: var(--font-ui);
+  color: var(--color-text);
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.02);
+}
+input:focus, select:focus, textarea:focus{
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 4px 18px rgba(155,89,255,0.08);
+}
+/* botón principal: usar paleta del login (fondo naranja, texto azul primario) */
+button.btn-primary{
+  background: var(--color-cta);
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight:600;
+}
+button.btn-primary:hover{ background: var(--color-primary); color: var(--color-cta); border-color: var(--color-cta); transform: translateY(-2px) }
+
+/* estilo para inputs file y preview */
+.file-preview{ display:flex; gap:12px; align-items:center }
+.file-preview img{ width:72px; height:72px; object-fit:cover; border-radius:8px; border:1px solid var(--border) }
+
+@media (max-width: 768px) {
+  .contenedor-app {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    position: relative;
+    padding: 10px;
+    font-size: 16px;
+  }
+  .sidebar nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding: 10px;
+  }
+  .sidebar nav ul li,
+  .sidebar nav ul label{
+    margin: 5px;
+    font-size: 14px;
+  }
+  .contenido {
+    width: 100%;
+    padding: 10px;
+  }
+  .ventas-header,
+  .inventario-header {
+    flex-direction: column;
+    align-items: center;
+  }
+  .ventas-inventario,
+  .ventas-canasta {
+    width: 100%;
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    font-size: 14px;
+    border-collapse: collapse;
+  }
+  th, td {
+    padding: 6px;
+    text-align: left;
+  }
+  .ventas-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .ventas-acciones button {
+    width: 100%;
+  }
+  .col-id,
+  .col-actualizacion,
+  .col-costo,
+  .col-ganancia {
+    display: none;
+  }
+  tabla-inventario td.col-id,
+    .tabla-inventario td.col-actualizacion,
+    .tabla-inventario td.col-costo,
+    .tabla-inventario td.col-ganancia {
+      padding: 10px;
+      content: 10px;
+    }
+  .tabla-inventario th,
+  .tabla-inventario td {
+    font-size: 14px;
+    padding: 6px;
+  }
+  .tabla-inventario {
+    width: 100%;
+    overflow-x: auto;
+    display: block;
+  }
+  
+  .ventas-inventario,
+  .ventas-canasta {
+    display: none; /* Oculta tablas y buscador */
+  }
+  .ventas-acciones {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #fff;
+    padding: 10px;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-around;
+    z-index: 1000;
+  }
+  .barra-modulos {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    background-color: #fff;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    z-index: 1000;
+    padding: 5px 0;
+  }
+  .barra-modulos nav ul {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+  }
+  .barra-modulos nav ul label {
+    display: none; /* Oculta los labels */
+  }
+  .sidebar > div {
+    display: none; /* Oculta logo y perfil */
+  }
+
+
+}
+
+/* estilos pagina principal*/
+
+.contenedor-app {
+  display: flex;
+  height: 100vh;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.sidebar {
+  text-align: left;
+  width: 220px;
+  background: linear-gradient(180deg,#2c284d 0%, #382a53 100%);
+  color: #fff;
+  padding: 26px 18px;
+  position: fixed;
+  height: 100%;
+  overflow-y: auto;
+  box-shadow: 2px 0 8px rgba(44,40,77,0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.sidebar .brand img{ height:36px; width:auto }
+.sidebar .brand .title { font-weight:700; font-size:18px; color: #fff }
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 6px;
+  flex: 1;
+}
+
+.sidebar .perfil {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 12px 6px;
+}
+.sidebar .perfil img{
+  width:72px;
+  height:72px;
+  border-radius:8px;
+  object-fit:cover;
+  border:4px solid #9b59ff; /* borde morado claro */
+}
+.sidebar .perfil .meta{ color: #f3eefe; font-size:13px }
+
+.sidebar li {
+  padding: 12px 10px;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  transition: background .12s, transform .06s;
+}
+
+.sidebar li .icon { opacity: 0.95 }
+
+.sidebar li:hover {
+  background: rgba(255,255,255,0.06);
+  transform: translateX(4px);
+}
+
+.sidebar li.active {
+  background: linear-gradient(90deg, rgba(155,89,255,0.14), rgba(155,89,255,0.06));
+  box-shadow: inset 3px 0 0 #9b59ff;
+}
+
+.sidebar .logout-btn{
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  align-self: stretch;
+}
+.sidebar .logout-btn:hover{ background: rgba(255,255,255,0.04) }
+
+.contenido {
+  margin-left: 220px;
+  padding: 40px;
+  flex: 1;
+  background-color: #f4f4f4;
+  overflow-y: auto;
+  min-height: 100vh;
+}
+/* Barra superior compacta (titulo + perfil) */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 10px 14px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.15));
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+.topbar-right{ display:flex; align-items:center; gap:10px }
+.topbar-right img{ width:48px; height:48px; border-radius:50%; object-fit:cover; border:3px solid #fff; box-shadow: 0 6px 16px rgba(44,40,77,0.10) }
+.topbar-right span{ font-weight:600; color:var(--color-primary) }
+section{
+  color: #4752ae;
+}
+section button{
+  background-color: #fea43f;
+  color: #4752ae;
+  border: none;
+  padding: 10px 15px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 5px;
+}
+section button:hover {
+  background-color: #4752ae;
+  color: #fea43f;
+}
+
+.modulo {
+  display: none;
+}
+
+.modulo.activo {
+  display: block;
+}
+/*stilo para el inventario*/
+inventario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+
+.inventario-resumen span {
+  margin-left: 20px;
+  font-weight: bold;
+}
+
+.tabla-inventario, .ventas-inventario {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 8px;
+  border-radius: 25px;
+  padding: 10px,20px;
+
+}
+
+.tabla-inventario th,
+.tabla-inventario td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: center;
+}
+
+.tabla-inventario th {
+  background-color: #f0f0f0;
+}
+
+.tabla-inventario td select {
+  width: 100%;
+}
+
+.tabla-inventario td a {
+  color: #0077cc;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ventas-header {
+  display: flex;
+  gap: 20px;
+}
+
+.ventas-inventario, .ventas-canasta {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-spacing: 8px;
+}
+
+.ventas-inventario { flex: 1 1 0; overflow-y: auto; max-height: calc(100vh - 220px); }
+.ventas-canasta {
+  width: 360px;
+  border: 1px solid #4752ae;
+  border-radius: 12px;
+  background: var(--surface);
+  position: sticky;
+  top: 20px;
+  height: calc(100vh - 160px);
+  overflow-y: auto;
+  flex: 0 0 360px;
+  padding: 16px;
+}
+
+/* make ventas-header a two-column layout */
+.ventas-header { display:flex; gap:16px; align-items:flex-start }
+  .movimientos-controles {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+}
+
+.modal-contenido {
+  background: var(--surface);
+  margin: 6% auto;
+  padding: 22px;
+  width: 520px;
+  max-width: calc(100% - 40px);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px var(--shadow);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+}
+.modal-contenido h3 { font-family: var(--font-heading); margin:0 0 8px 0; color:var(--color-primary); font-size:20px }
+.modal-form-row{ display:flex; gap:12px; margin-bottom:12px }
+.modal-form-row .col{ flex:1 }
+.modal-form-control{ display:block }
+.modal .cerrar{
+  color:var(--color-muted);
+  font-size:22px;
+  background: transparent;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  float: right;
+}
+.modal .cerrar:focus{ outline: 2px solid rgba(155,89,255,0.25) }
+
+.modal form button{ margin-top:10px }
+
+/* Cabeceras y barra de búsqueda (Inventario) */
+section h2{
+  font-family: var(--font-heading);
+  font-size: 36px;
+  color: var(--color-primary);
+  margin-bottom: 14px;
+}
+
+.inventario-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom: 18px;
+}
+
+.search-box{
+  display:flex; align-items:center; gap:8px; max-width:520px; width:60%;
+}
+.search-box input[type="text"]{
+  padding: 10px 14px 10px 40px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.search-box .search-icon{
+  position: relative; left:34px; color: var(--color-muted); opacity:.9; pointer-events:none;
+}
+
+/* Botones de acción (Crear Producto/Categoría) */
+.acciones-inventario{ display:flex; gap:12px; align-items:center }
+.acciones-inventario .btn-action{ padding:8px 14px; border-radius:20px; border:2px solid var(--color-primary); background:var(--surface); color:var(--color-primary); font-weight:600 }
+.acciones-inventario .btn-action.primary{ background:var(--color-cta); color:var(--color-primary); border-color:var(--color-primary) }
+.acciones-inventario .btn-action:hover{ filter:brightness(.98) }
+
+/* Asegurar que modal use paleta del login también para botones y focos */
+/* background blur on sections */
+.blur {
+  filter: blur(4px);
+}
+
+/* example modal base */
+.modal {
+  display: none;            /* controlled by JS */
+  position: fixed;
+  inset: 0;                 /* full-screen overlay */
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* modal content card inside modal */
+.modal .modal-content {
+  background: #fff;
+  width: min(640px, 92vw);
+  max-height: 80vh;
+  overflow: auto;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  padding: 16px;
+}
+
+.categorias-header {
+  margin-top: 10px;
+}
+
+.categorias-header button {
+  margin: 5px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.categorias-header button:hover {
+  background-color: #0056b3;
+}
+ajustes-grupo {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+/* estilos para el perfil de usario*/
+.perfil-info{
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
+  align-items: start;
+  background: #f8f9fb;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.perfil-info img{ width:96px; height:96px; object-fit:cover; border-radius:12px; border: 3px solid #fff }
+.perfil-info input, .perfil-info textarea{ width:100%; }
