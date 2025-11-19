@@ -9,6 +9,17 @@ function mostrarFormulario(formularioId){
 }
 window.mostrarFormulario = mostrarFormulario;
 
+// Helper de depuración visible en la página (div #debugLogin)
+function debugLog(msg) {
+    try {
+        const el = document.getElementById('debugLogin');
+        if (!el) return console.log('[debug]', msg);
+        el.style.display = 'block';
+        const time = new Date().toLocaleTimeString();
+        el.innerHTML = `<div>[${time}] ${String(msg)}</div>` + el.innerHTML;
+    } catch (e) { console.log('[debug error]', e, msg); }
+}
+debugLog('login.js cargado');
 // Envío de datos para login
 document.getElementById("formulario-inicio").addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -17,23 +28,37 @@ document.getElementById("formulario-inicio").addEventListener("submit", async fu
     const alertaUsuario = document.getElementById("alerta-login-usuario");
     const alertaContraseña = document.getElementById("alerta-login-contraseña");
     const validoUsuario = validarCampo(usuarioInput, usuarioRegex, alertaUsuario, mensaje.usuario);
-    const validoContraseña = validarCampo(contraseñaInput, contraseñaRegex, alertaContraseña,mensaje.contraseña);
-    if (!validoUsuario || !validoContraseña) return;
+    const validoContraseña = validarCampo(contraseñaInput, contraseñaRegex, alertaContraseña, mensaje.contraseña);
+    if (!validoUsuario || !validoContraseña) {
+        debugLog('Validación falló. Usuario o contraseña no cumplen el formato. Se intentará enviar de todas formas para diagnóstico.');
+        // continuamos para diagnosticar en el servidor y mostrar respuesta
+    }
     const username = usuarioInput.value.trim();
     const password = contraseñaInput.value.trim();
-    console.log('Login: payload ->', { username, password });
-    const res = await fetch("/usuarios/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-    });
-    const data = await res.json();
-    console.log('Login: respuesta ->', res.status, data);
+    debugLog('Login: payload -> ' + JSON.stringify({ username: String(username).replace(/./g,'*') }) );
+    // Enviar petición al backend
+    let res;
+    try {
+        res = await fetch("/usuarios/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+    } catch (err) {
+        debugLog('Error enviando petición: ' + (err && err.message ? err.message : String(err)));
+        return alert('Error comunicándose con el servidor. Revisa la conexión y la consola.');
+    }
+    let data;
+    try { data = await res.json(); } catch (err) { data = { error: 'Respuesta no JSON' }; }
+    debugLog('Login: respuesta -> status=' + res.status + ' body=' + JSON.stringify(data));
     if (res.ok) {
         localStorage.setItem("usuarioActivo", data.usuario.username);
+        debugLog('Inicio de sesión correcto. Redirigiendo...');
         window.location.href = "inventario360.html";
     } else {
-        alert(data.error);
+        const msg = data && data.error ? data.error : ('Error HTTP ' + res.status);
+        debugLog('Login fallido: ' + msg);
+        alert(msg);
     }
 });
 
@@ -62,19 +87,26 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
     const email = emailVal;
     const telefono = telefonoVal;
     const password = contraseñaInput.value.trim();
-    console.log('Registro: payload ->', { username, password, email, telefono });
-    const res = await fetch("/usuarios/registro", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, email, telefono })
-    });
-    const data = await res.json();
-    console.log('Registro: respuesta ->', res.status, data);
+    debugLog('Registro: payload -> ' + JSON.stringify({ username, email, telefono }));
+    let res;
+    try {
+        res = await fetch("/usuarios/registro", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password, email, telefono })
+        });
+    } catch (err) {
+        debugLog('Error enviando registro: ' + (err && err.message ? err.message : String(err)) );
+        return alert('No se pudo conectar al servidor');
+    }
+    let data;
+    try { data = await res.json(); } catch(e){ data = { error: 'Respuesta no JSON' }; }
+    debugLog('Registro: respuesta -> status=' + res.status + ' body=' + JSON.stringify(data));
     if (res.ok) {
         alert("Registro exitoso. Ahora puedes iniciar sesión.");
         mostrarFormulario("formulario-inicio");
     } else {
-        alert(data.error);
+        alert(data.error || 'Error en registro');
     }
 });
 

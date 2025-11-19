@@ -33,7 +33,9 @@ window.formatearFecha = function formatearFecha(fecha) {
  * @returns {string}
  */
 window.formatearMoneda = function formatearMoneda(valor) {
-    n `C$${Number(valor).toFixed(2)}`;
+    const numero = Number(valor);
+    if (Number.isNaN(numero)) return 'C$0.00';
+    return `C$${numero.toFixed(2)}`;
 };
 
 /**

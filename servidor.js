@@ -2,8 +2,8 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const inventario360 = express();
-const PORT = process.env.PORT || 3001; // puerto configurable por env
-// ALLOWED_ORIGINS puede ser una lista separada por comas (ej: https://midominio.com,http://localhost:3001)
+const PORT = process.env.PORT || 3002; // puerto configurable por env
+// ALLOWED_ORIGINS puede ser una lista separada por comas (ej: https://midominio.com,http://localhost:3002)
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [`http://localhost:${PORT}`];
 
 // --- HANDLERS GLOBALES PARA CAPTURAR ERRORES Y DIAGNOSTICAR DEBUGGER ---

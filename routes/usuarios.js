@@ -36,7 +36,7 @@ router.post('/solicitar-recuperacion', (req, res) => {
     function (err) {
       if (err) return res.status(500).json({ error: 'Error al generar token' });
 
-      const link = `http://localhost:3001/usuarios/confirmar-recuperacion?token=${token}`;
+      const link = `http://localhost:3002/usuarios/confirmar-recuperacion?token=${token}`;
 
       const transporter = nodemailer.createTransport({
         service: 'gmail',

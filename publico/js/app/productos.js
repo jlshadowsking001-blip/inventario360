@@ -2,6 +2,8 @@
 // Gestión de productos e inventario
 // ===============================
 
+window._productosCache = window._productosCache || [];
+
 /**
  * Guarda un nuevo producto en la base de datos, incluyendo imagen opcional.
  */
@@ -88,8 +90,8 @@ window.renderProductsTable = function renderProductsTable(productos) {
         <td>${p.costo != null ? ('$' + Number(p.costo).toFixed(2)) : '—'}</td>
         <td>$${ganancia}</td>
         <td>
-            <button class="btn-vender" data-id="${p.id}">Vender</button>
-            <button class="btn-egreso" data-id="${p.id}">Egreso</button>
+            <button class="btn-editar" data-id="${p.id}">Editar</button>
+            <button class="btn-eliminar" data-id="${p.id}">Eliminar</button>
         </td>
         `;
         tbody.appendChild(fila);
@@ -112,12 +114,12 @@ window.renderProductsTable = function renderProductsTable(productos) {
         });
     });
 
-    document.querySelectorAll('.btn-vender').forEach(b => b.addEventListener('click', (e) => {
-        venderProducto(e.target.dataset.id);
+    tbody.querySelectorAll('.btn-editar').forEach(b => b.addEventListener('click', (e) => {
+        editarProducto(e.target.dataset.id);
     }));
 
-    document.querySelectorAll('.btn-egreso').forEach(b => b.addEventListener('click', (e) => {
-        registrarEgreso(e.target.dataset.id);
+    tbody.querySelectorAll('.btn-eliminar').forEach(b => b.addEventListener('click', (e) => {
+        eliminarProducto(e.target.dataset.id);
     }));
 };
 
@@ -145,51 +147,77 @@ window.updateProduct = async function updateProduct(id, fields) {
     }
 };
 
-/**
- * Registra una venta de un producto solicitando la cantidad.
- * @param {string} id - ID del producto.
- */
-window.venderProducto = function venderProducto(id) {
-    const cantidad = parseInt(prompt('Cantidad a vender (unidades):', '1'));
-    if (!cantidad || cantidad <= 0) return;
-    fetch('/movimientos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo: 'venta', producto_id: id, cantidad })
-    }).then(r => r.json()).then(resp => {
-        if (resp.error) return alert(resp.error);
-        alert('Venta registrada');
-        loadProducts();
-        loadMovimientos();
-        loadStats();
-    }).catch(err => {
-        console.error('Error registrando venta:', err);
-        alert('Error registrando venta');
-    });
+window.editarProducto = function editarProducto(id) {
+    const producto = (window._productosCache || []).find(p => Number(p.id) === Number(id));
+    if (!producto) return alert('Producto no encontrado');
+
+    abrirModal('Editar Producto', `
+        <div class="modal-form-row"><div class="col"><label>Producto:</label><input id="producto" name="nombre" type="text" required></div><div class="col"><label>Categoría:</label><select id="categoria" name="categoria"><option value="">Sin categoría</option></select></div></div>
+        <div class="modal-form-row"><div class="col"><label>Cantidad:</label><input id="cantidad" name="cantidad" type="number" value="0"></div><div class="col"><label>Precio:</label><input id="precio" name="precio" type="number" step="0.01" value="0"></div></div>
+        <div class="modal-form-row"><div class="col"><label>Costo:</label><input id="costo" name="costo" type="number" step="0.01" value="0"></div></div>
+        <div style="text-align:right; margin-top:10px;"><button type="submit" class="btn-action primary">Guardar Cambios</button></div>
+    `, { submitHandler: 'producto-editar', focusSelector: '#producto' });
+
+    const form = document.getElementById('modal-form');
+    if (form) form.dataset.productId = producto.id;
+
+    const nombreInput = document.getElementById('producto');
+    const cantidadInput = document.getElementById('cantidad');
+    const precioInput = document.getElementById('precio');
+    const costoInput = document.getElementById('costo');
+    const categoriaSelect = document.getElementById('categoria');
+
+    if (nombreInput) nombreInput.value = producto.nombre || '';
+    if (cantidadInput) cantidadInput.value = producto.existencia ?? 0;
+    if (precioInput) precioInput.value = producto.precio ?? 0;
+    if (costoInput) costoInput.value = producto.costo ?? 0;
+
+    if (categoriaSelect) {
+        categoriaSelect.innerHTML = '<option value="">Sin categoría</option>';
+        (window.categorias || []).forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.nombre;
+            categoriaSelect.appendChild(opt);
+        });
+        if (producto.categoria_id) categoriaSelect.value = producto.categoria_id;
+    }
 };
 
-/**
- * Registra un egreso (salida de inventario) para un producto.
- * @param {string} id - ID del producto.
- */
-window.registrarEgreso = function registrarEgreso(id) {
-    const cantidad = parseInt(prompt('Cantidad de egreso (unidades):', '1'));
-    if (!cantidad || cantidad <= 0) return;
-    const descripcion = prompt('Descripción del egreso (opcional):', 'Egreso');
-    fetch('/movimientos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipo: 'egreso', producto_id: id, cantidad, descripcion })
-    }).then(r => r.json()).then(resp => {
-        if (resp.error) return alert(resp.error);
-        alert('Egreso registrado');
+window.actualizarProductoModal = async function actualizarProductoModal() {
+    const form = document.getElementById('modal-form');
+    if (!form?.dataset?.productId) return alert('Producto no válido');
+
+    const nombre = document.getElementById('producto').value.trim();
+    if (!nombre) return alert('El nombre es obligatorio');
+
+    const payload = {
+        nombre,
+        categoria_id: document.getElementById('categoria').value || null,
+        existencia: parseInt(document.getElementById('cantidad').value) || 0,
+        precio: parseFloat(document.getElementById('precio').value) || 0,
+        costo: parseFloat(document.getElementById('costo').value) || 0
+    };
+
+    await updateProduct(form.dataset.productId, payload);
+    cerrarModal();
+    alert('Producto actualizado');
+};
+
+window.eliminarProducto = async function eliminarProducto(id) {
+    if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
+    try {
+        const res = await fetch(`/productos/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (!res.ok) return alert(data.error || 'No se pudo eliminar');
+        alert('Producto eliminado');
         loadProducts();
         loadMovimientos();
         loadStats();
-    }).catch(err => {
-        console.error('Error registrando egreso:', err);
-        alert('Error registrando egreso');
-    });
+    } catch (err) {
+        console.error('Error eliminando producto:', err);
+        alert('Error eliminando producto');
+    }
 };
 
 /**

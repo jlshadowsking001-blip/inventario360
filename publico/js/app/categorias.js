@@ -18,7 +18,7 @@ window.cargarCategorias = async function cargarCategorias() {
 
         const select = document.getElementById('categoria');
         const filtroSelect = document.getElementById('filterProducto');
-        if (select) select.innerHTML = '';
+        if (select) select.innerHTML = '<option value="">Sin categoría</option>';
         if (filtroSelect) filtroSelect.innerHTML = '<option value="">Todos</option>';
 
         categorias.forEach(cat => {
@@ -83,12 +83,29 @@ window.filtrarPorCategoria = function filtrarPorCategoria(categoriaId) {
 };
 
 /**
+ * Restablece la tabla para mostrar todos los productos sin filtro.
+ */
+window.mostrarTodosProductos = function mostrarTodosProductos() {
+    if (Array.isArray(window._productosCache) && window._productosCache.length) {
+        renderProductsTable(window._productosCache);
+        return;
+    }
+    loadProducts();
+};
+
+/**
  * Renderiza los botones de categorías en el encabezado del inventario.
  */
 window.renderizarCategoriasHeader = function renderizarCategoriasHeader() {
     const cont = document.getElementById('categoriasHeader');
     if (!cont) return;
     cont.innerHTML = '';
+
+    const btnTodos = document.createElement('button');
+    btnTodos.textContent = 'Todos los productos';
+    btnTodos.className = 'btn-categoria btn-categoria--todos';
+    btnTodos.onclick = () => window.mostrarTodosProductos();
+    cont.appendChild(btnTodos);
 
     categorias.forEach(cat => {
         const btn = document.createElement('button');

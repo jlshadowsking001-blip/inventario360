@@ -12,6 +12,7 @@ window.addEventListener('load', () => {
     // Cargar datos iniciales
     loadProducts();
     loadMovimientos();
+    loadMovimientosUI();
     cargarCategorias();
     loadClientes();
     loadProveedores();

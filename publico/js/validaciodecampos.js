@@ -1,6 +1,8 @@
 // Expresiones regulares para validar los campos
-const usuarioRegex = /^[a-zA-Z0-9_]{8,20}$/;
-const contraseñaRegex = /^[a-zA-Z0-9!@#$%^&*()_+]{8,20}$/;
+// Usuario: permitir 3-20 caracteres alfanuméricos o guion bajo (más flexible en desarrollo)
+const usuarioRegex = /^[a-zA-Z0-9_]{3,20}$/;
+// Contraseña: permitir cualquier caracter (excepto nueva línea) entre 4 y 100 chars
+const contraseñaRegex = /^.{4,100}$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const telefonoRegex = /^\d{8,12}$/;
 
@@ -82,4 +84,3 @@ window.telefonoRegex = telefonoRegex;
 window.configurarValidacion = configurarValidacion;
 window.validarCampo = validarCampo;
 window.mensaje = mensaje;
-

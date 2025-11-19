@@ -9,7 +9,7 @@
     <!-- Usar una versión fija evita solicitudes a mapas de origen que pueden no existir en la URL genérica -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
     <!--esto permite restringir la entrada sin antes loguiase-->
-    <script>
+    <!--<script>
         window.onload = function() {  
             const usuario = localStorage.getItem("usuarioActivo");
             if (!usuario) {
@@ -22,12 +22,7 @@
         if (!usuario) {
             window.location.href = "login.html";
         }
-    </script>
-    typeof window.mostrarModulo
-    typeof window.crearProducto
-    typeof window.crearCategorias
-    typeof window.crearCliente
-    typeof window.crearProveedor>
+    </script>-->
 </head>
 
 <body>
@@ -113,7 +108,6 @@
                     <div class="acciones-inventario">
                         <button id="btnCrearProducto" class="btn-action primary" onclick="crearProducto()">Crear Producto</button>
                         <button id="btnCrearCategoria" class="btn-action" onclick="crearCategorias()">Crear Categoría</button>
-                        <button class="btn-action" onclick="verCategorias()">Ver Categorías</button>
                     </div>
                     <!-- Aquí se mostrarán los botones de categorías -->
                     <div id="categoriasHeader" class="categorias-header"></div>
@@ -137,21 +131,6 @@
                         <!-- Filas dinámicas -->
                     </tbody>
                 </table>
-                <h2>Agregar producto</h2>
-                    <!-- El formulario inline se oculta: se usa el modal para crear productos -->
-                    <form id="formProducto" style="display:none;">
-                        <label>Producto:</label>
-                        <input type="text" id="producto" required>
-                        <label>Categoría:</label>
-                        <input type="text" id="categoria" required>
-                        <label>Cantidad:</label>
-                        <input type="number" id="cantidad" required>
-                        <label>Precio:</label>
-                        <input type="number" id="precio" required>
-                        <label>Costo:</label>
-                        <input type="number" id="costo" required>
-                        <button type="submit">Agregar</button>
-                    </form>
             </section>
             <!-- Modal genérico -->
             <div id="modal" class="modal">

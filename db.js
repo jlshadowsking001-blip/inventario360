@@ -1,14 +1,53 @@
 const path = require('path');
-const DB_TYPE = process.env.DB_TYPE || 'sqlite';
+const DB_TYPE = process.env.DB_TYPE || 'mysql';
 
 if (DB_TYPE === 'mysql') {
     // MySQL (mysql2)
-    const mysql = require('mysql2/promise');
+    let mysql;
+    try {
+        mysql = require('mysql2/promise');
+    } catch (err) {
+        console.error('El paquete "mysql2" no está instalado. Instálalo con: npm install mysql2');
+        console.error('Si quieres usar SQLite en su lugar establece DB_TYPE=sqlite o instala mysql2.');
+        process.exit(1);
+    }
     const MYSQL_HOST = process.env.MYSQL_HOST || '127.0.0.1';
     const MYSQL_PORT = process.env.MYSQL_PORT ? Number(process.env.MYSQL_PORT) : 3306;
     const MYSQL_USER = process.env.MYSQL_USER || 'root';
     const MYSQL_PASSWORD = process.env.MYSQL_PASSWORD || '';
     const MYSQL_DATABASE = process.env.MYSQL_DATABASE || 'inventario360';
+
+    async function ensureDatabaseExists() {
+        const connection = await mysql.createConnection({
+            host: MYSQL_HOST,
+            port: MYSQL_PORT,
+            user: MYSQL_USER,
+            password: MYSQL_PASSWORD
+        });
+        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+        await connection.end();
+        console.log(`Base de datos MySQL ${MYSQL_DATABASE} verificada/creada`);
+    }
+
+    /**
+     * Traduce expresiones específicas de SQLite (strftime) a equivalentes MySQL.
+     * Esto permite reutilizar las mismas consultas en ambos motores.
+     */
+    const translateSql = (query) => {
+        if (typeof query !== 'string' || !query.includes('strftime')) return query;
+        let converted = query;
+
+        // timestamps actuales
+        converted = converted.replace(/strftime\((['"])%s\1,\s*(['"])now\2\)/gi, 'UNIX_TIMESTAMP()');
+
+        // Formatos de fecha para agrupaciones y reportes
+        converted = converted.replace(/strftime\((['"])%Y-%m-%d\1,\s*([^ )]+)\)/gi, 'DATE_FORMAT(FROM_UNIXTIME($2), \'%Y-%m-%d\')');
+        converted = converted.replace(/strftime\((['"])%Y-W%W\1,\s*([^ )]+)\)/gi, 'DATE_FORMAT(FROM_UNIXTIME($2), \'%x-W%v\')');
+        converted = converted.replace(/strftime\((['"])%Y-%m\1,\s*([^ )]+)\)/gi, 'DATE_FORMAT(FROM_UNIXTIME($2), \'%Y-%m\')');
+        converted = converted.replace(/strftime\((['"])%Y\1,\s*([^ )]+)\)/gi, 'DATE_FORMAT(FROM_UNIXTIME($2), \'%Y\')');
+
+        return converted;
+    };
 
     const pool = mysql.createPool({
         host: MYSQL_HOST,
@@ -25,6 +64,8 @@ if (DB_TYPE === 'mysql') {
     // Crear tablas simples si no existen (DDL compatible MySQL)
     (async () => {
         try {
+            await ensureDatabaseExists();
+
             await pool.query(`CREATE TABLE IF NOT EXISTS usuarios (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(191) NOT NULL UNIQUE,
@@ -103,7 +144,8 @@ if (DB_TYPE === 'mysql') {
             if (typeof params === 'function') { cb = params; params = []; }
             params = params || [];
             try {
-                const [result] = await pool.execute(sql, params);
+                const normalizedSql = translateSql(sql);
+                const [result] = await pool.execute(normalizedSql, params);
                 const insertId = result && (result.insertId || null);
                 const affectedRows = result && (result.affectedRows || 0);
                 if (typeof cb === 'function') return cb.call({ lastID: insertId, changes: affectedRows }, null);
@@ -117,7 +159,8 @@ if (DB_TYPE === 'mysql') {
             if (typeof params === 'function') { cb = params; params = []; }
             params = params || [];
             try {
-                const [rows] = await pool.execute(sql, params);
+                const normalizedSql = translateSql(sql);
+                const [rows] = await pool.execute(normalizedSql, params);
                 const row = (rows && rows.length) ? rows[0] : null;
                 if (typeof cb === 'function') return cb(null, row);
                 return row;
@@ -130,7 +173,8 @@ if (DB_TYPE === 'mysql') {
             if (typeof params === 'function') { cb = params; params = []; }
             params = params || [];
             try {
-                const [rows] = await pool.execute(sql, params);
+                const normalizedSql = translateSql(sql);
+                const [rows] = await pool.execute(normalizedSql, params);
                 if (typeof cb === 'function') return cb(null, rows);
                 return rows;
             } catch (err) {
