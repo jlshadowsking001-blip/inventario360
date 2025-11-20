@@ -11,7 +11,7 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 // Listar productos
 router.get('/', (_req, res)=>{
   db.all(
-    `SELECT p.id, p.nombre, p.descripcion, p.precio, p.costo, p.existencia, p.categoria_id, p.image_url, c.nombre as categoria
+    `SELECT p.id, p.nombre, p.descripcion, p.precio, p.costo, p.existencia, p.categoria_id, p.image_url, p.created_at, p.updated_at, c.nombre as categoria
       FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id`,
     [],
     (err, rows) => {
@@ -98,8 +98,12 @@ router.patch('/:id', (req, res)=>{
     }
   });
   if (fields.length === 0) return res.status(400).json({ error: 'Nada para actualizar' });
+  const shouldStampUpdate = ['existencia', 'precio', 'costo'].some(k => req.body[k] !== undefined);
+  if (shouldStampUpdate) {
+    fields.push("updated_at = strftime('%s','now')");
+  }
   values.push(id);
-  const sql = `UPDATE productos SET ${fields.join(', ')}, updated_at = strftime('%s','now') WHERE id = ?`;
+  const sql = `UPDATE productos SET ${fields.join(', ')} WHERE id = ?`;
   db.run(sql, values, function (err) {
     if (err) return res.status(500).json({ error: 'Error actualizando producto' });
     if (this.changes === 0) return res.status(404).json({ error: 'Producto no encontrado' });

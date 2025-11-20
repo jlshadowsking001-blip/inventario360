@@ -1,6 +1,20 @@
 // ===============================
 // Gestión de movimientos y estadísticas
 // ===============================
+// Este módulo concentra todas las operaciones relacionadas con los movimientos
+// (ventas, egresos, gastos, ajustes) y los gráficos/resúmenes que dependen de ellos.
+
+/**
+ * Garantiza que los campos de filtro de movimientos tengan valores iniciales coherentes.
+ * Asigna la fecha de hoy y el rango "día" solo la primera vez que se abre el módulo.
+ */
+window.ensureMovimientosFiltros = function ensureMovimientosFiltros() {
+    const fechaInput = document.getElementById('fechaBaseMovimientos');
+    const rangoSelect = document.getElementById('rangoTiempoMovimientos');
+    const hoy = new Date().toISOString().slice(0, 10);
+    if (fechaInput && !fechaInput.value) fechaInput.value = hoy;
+    if (rangoSelect && !rangoSelect.value) rangoSelect.value = 'dia';
+};
 
 /**
  * Carga los movimientos recientes desde el servidor (sin filtros).
@@ -18,16 +32,24 @@ window.loadMovimientos = async function loadMovimientos() {
 };
 
 /**
- * Carga los movimientos aplicando filtros por tipo y producto.
+ * Carga los movimientos con los filtros seleccionados (tipo, producto y rango temporal opcional).
  * Se usa en el módulo de "Movimientos" para mostrar resultados en tabla.
  */
-window.loadMovimientosUI = async function loadMovimientosUI() {
+window.loadMovimientosUI = async function loadMovimientosUI(options = {}) {
     try {
+        window.ensureMovimientosFiltros && window.ensureMovimientosFiltros();
         const tipo = document.getElementById('filterTipo')?.value || '';
         const producto = document.getElementById('filterProducto')?.value || '';
+        const fechaBase = document.getElementById('fechaBaseMovimientos')?.value;
+        const rango = document.getElementById('rangoTiempoMovimientos')?.value || 'dia';
         const qs = new URLSearchParams();
         if (tipo) qs.set('tipo', tipo);
         if (producto) qs.set('producto_id', producto);
+        if (options.applyDateFilter) {
+            if (!fechaBase) return alert('Selecciona una fecha base');
+            qs.set('fechaBase', fechaBase);
+            qs.set('rango', rango);
+        }
 
         const res = await fetch('/movimientos' + (qs.toString() ? '?' + qs.toString() : ''));
         const data = await res.json();
@@ -52,14 +74,18 @@ window.renderMovimientosTable = function renderMovimientosTable(movimientos) {
 
     movimientos.forEach(m => {
         const fecha = m.fecha ? new Date(m.fecha * 1000).toLocaleString() : '-';
+        const detalles = [m.descripcion, m.producto ? `Producto: ${m.producto}` : '', m.cliente ? `Cliente: ${m.cliente}` : '', m.proveedor ? `Proveedor: ${m.proveedor}` : '']
+            .filter(Boolean)
+            .join(' • ');
+        const vinculo = m.proveedor ? `Proveedor: ${m.proveedor}` : (m.cliente ? `Cliente: ${m.cliente}` : '—');
         tbody.innerHTML += `
         <tr>
             <td>${fecha}</td>
             <td>${m.tipo}</td>
-            <td>${m.producto || m.producto_id || '-'}</td>
+            <td>${detalles || '-'}</td>
             <td>${m.cantidad || 0}</td>
             <td>${m.monto != null ? ('$' + Number(m.monto).toFixed(2)) : '-'}</td>
-            <td>${m.descripcion || '-'}</td>
+            <td>${vinculo}</td>
         </tr>`;
     });
 };
@@ -70,7 +96,7 @@ window.renderMovimientosTable = function renderMovimientosTable(movimientos) {
 window.exportMovimientosCSV = function exportMovimientosCSV() {
     if (!window.lastMovimientos?.length) return alert('No hay movimientos para exportar');
 
-    const rows = [['fecha', 'tipo', 'producto', 'cantidad', 'monto', 'descripcion']];
+    const rows = [['fecha', 'tipo', 'producto', 'cantidad', 'monto', 'descripcion', 'cliente', 'proveedor']];
     window.lastMovimientos.forEach(m => {
         const fecha = m.fecha ? new Date(m.fecha * 1000).toISOString() : '';
         rows.push([
@@ -79,7 +105,9 @@ window.exportMovimientosCSV = function exportMovimientosCSV() {
         m.producto || m.producto_id || '',
         m.cantidad || 0,
         m.monto ?? '',
-        m.descripcion || ''
+        m.descripcion || '',
+        m.cliente || '',
+        m.proveedor || ''
         ]);
     });
 
@@ -141,6 +169,12 @@ window.loadStats = async function loadStats() {
         const resP = await fetch('/productos');
         const dataP = await resP.json();
         const prods = dataP.productos || [];
+        window._productosCache = prods;
+        try {
+            window.actualizarResumenInventario && window.actualizarResumenInventario(prods);
+        } catch (err) {
+            console.warn('No se pudo actualizar el resumen de inventario', err);
+        }
         const mapEst = {};
         resumen.forEach(r => {
         r.estimated_price = r.total_unidades ? (r.total_monto / r.total_unidades) : null;
@@ -155,4 +189,12 @@ window.loadStats = async function loadStats() {
     } catch (err) {
         console.error('Error cargando estadísticas:', err);
     }
+};
+
+/**
+ * Handler utilizado por el botón "Buscar" en el módulo de movimientos.
+ * Aplica el rango seleccionado sin afectar la carga automática por defecto.
+ */
+window.filtrarPorRango = function filtrarPorRango() {
+    window.loadMovimientosUI({ applyDateFilter: true });
 };

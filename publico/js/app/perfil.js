@@ -42,3 +42,41 @@ function guardarPerfil() {
 
 window.guardarPerfil = guardarPerfil;
 
+window.cargarPerfil = async function cargarPerfil() {
+    const currentUser = localStorage.getItem('usuarioActivo');
+    if (!currentUser) return;
+    try {
+        const res = await fetch(`/usuarios/perfil/${encodeURIComponent(currentUser)}`);
+        const data = await res.json();
+        if (!res.ok) {
+            console.warn('No se pudo cargar el perfil', data);
+            return;
+        }
+        const perfil = data.usuario || {};
+        const setValue = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.value = value || '';
+        };
+        setValue('nombreUsuario', perfil.nombre);
+        setValue('direccionUsuario', perfil.direccion);
+        setValue('ciudadUsuario', perfil.ciudad);
+        setValue('paisUsuario', perfil.pais);
+        setValue('codigoPostalUsuario', perfil.codigo_postal);
+        setValue('detallesUsuario', perfil.detalles);
+        setValue('correoUsuario', perfil.email);
+        setValue('telefonoUsuario', perfil.telefono);
+
+        const preview = document.getElementById('previewFoto');
+        if (preview && perfil.foto_url) preview.src = perfil.foto_url;
+
+        const topbarNombre = document.getElementById('topbarNombre');
+        const topbarFoto = document.getElementById('topbarFoto');
+        if (topbarNombre) topbarNombre.textContent = perfil.nombre || perfil.username || currentUser;
+        if (topbarFoto && perfil.foto_url) topbarFoto.src = perfil.foto_url;
+
+        try { localStorage.setItem('perfilUsuario', JSON.stringify(perfil)); } catch (err) {}
+    } catch (err) {
+        console.error('Error cargando perfil:', err);
+    }
+};
+

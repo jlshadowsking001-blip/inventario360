@@ -1,3 +1,14 @@
+/* =============================================================
+  Guía rápida de este archivo (appstyles.css)
+  1) Inventario: buscador, métricas y acciones principales
+  2) Temas globales: fuentes, variables, resets y formularios
+  3) Layout general: contenedor, sidebar, topbar y módulos
+  4) Secciones específicas: Inventario, Ventas, Movimientos, etc.
+  5) Componentes reutilizables: tablas, modales y ajustes responsivos
+  Cada bloque está etiquetado con comentarios en español para ubicarlo rápido.
+============================================================== */
+
+/* === Sección 1: Inventario (buscador + métricas) === */
 .search-box input[type="text"]{
   padding: 10px 14px 10px 40px;
   border-radius: 999px;
@@ -10,6 +21,111 @@
 }
 
 /* fallback: estilo directo para el input #buscador si no está dentro de .search-box */
+
+.stats-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-end;
+}
+.stats-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.inventario-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.inventario-tabla-wrapper {
+  border-radius: 18px;
+  border: 1px solid rgba(44,40,77,0.08);
+  box-shadow: 0 12px 28px rgba(44,40,77,0.08);
+  overflow: hidden;
+}
+
+/* El encabezado del módulo debe permanecer visible mientras solo la tabla hace scroll */
+@media (min-width: 992px) {
+  .inventario-card {
+    max-height: calc(100vh - 120px);
+    overflow: hidden;
+  }
+
+  .inventario-card > * {
+    flex-shrink: 0;
+  }
+
+  .inventario-tabla-wrapper {
+    flex: 1;
+    min-height: 300px;
+    overflow: auto;
+  }
+}
+
+.inventario-top {
+  display: grid;
+  grid-template-columns: 1fr minmax(260px, 320px) auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.inventario-metrics {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.metric-card {
+  background: linear-gradient(140deg, rgba(155,89,255,0.12), rgba(255,255,255,0.9));
+  border-radius: 18px;
+  border: 1px solid rgba(155,89,255,0.2);
+  padding: 12px 18px;
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-card span {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.metric-card strong {
+  font-size: 22px;
+  color: var(--color-primary);
+}
+
+.metric-card small {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.inventario-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-action.ghost {
+  background: transparent;
+  border-color: rgba(44,40,77,0.3);
+  color: var(--color-primary);
+}
+
+.inventario-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 #buscador{
   padding: 10px 14px 10px 40px;
   border-radius: 999px;
@@ -19,7 +135,12 @@
   max-width: 520px;
   width: 60%;
 }
-
+.search-box{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
 /* estilo para botones dentro del modal */
 .modal-contenido form button,
 .modal-contenido form .btn-action{
@@ -32,6 +153,7 @@
   cursor:pointer;
   font-weight:600;
 }
+/* === Sección 2: Tipografías y variables globales === */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap');
 
 :root{
@@ -59,6 +181,7 @@
   --spacing-md: 16px;
 }
 
+/* === Sección 3: Reset y tipografía base === */
 body{
   font-family: var(--font-ui);
   background-color: var(--bg);
@@ -78,6 +201,7 @@ p{
   line-height: 1.6;/*altura de la linea*/
 }
 
+/* === Sección 4: Formularios y botones genéricos === */
 /* Controles form-like globales */
 label{ display:block; margin-bottom:6px; color:var(--color-muted); font-size:13px }
 input[type="text"], input[type="number"], input[type="email"], input[type="tel"], select, textarea, .modal-form-control{
@@ -111,6 +235,7 @@ button.btn-primary:hover{ background: var(--color-primary); color: var(--color-c
 .file-preview{ display:flex; gap:12px; align-items:center }
 .file-preview img{ width:72px; height:72px; object-fit:cover; border-radius:8px; border:1px solid var(--border) }
 
+/* === Sección 5: Ajustes responsivos generales === */
 @media (max-width: 768px) {
   .contenedor-app {
     flex-direction: column;
@@ -207,6 +332,36 @@ button.btn-primary:hover{ background: var(--color-primary); color: var(--color-c
   .barra-modulos {
     position: fixed;
     bottom: 0;
+
+  .resumen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin: 12px 0 18px;
+  }
+
+  .resumen-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 22px rgba(44,40,77,0.08);
+    border-radius: 16px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .resumen-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    letter-spacing: 0.5px;
+  }
+
+  .resumen-value {
+    font-size: 22px;
+    color: var(--color-primary);
+  }
     left: 0;
     width: 100%;
     height: auto;
@@ -234,12 +389,15 @@ button.btn-primary:hover{ background: var(--color-primary); color: var(--color-c
 
 /* estilos pagina principal*/
 
+/* === Sección 6: Layout general y contenedor principal === */
+
 .contenedor-app {
   display: flex;
   height: 100vh;
   font-family: 'Times New Roman', Times, serif;
 }
 
+/* === Sidebar: navegación fija y branding === */
 .sidebar {
   text-align: left;
   width: 220px;
@@ -320,6 +478,7 @@ button.btn-primary:hover{ background: var(--color-primary); color: var(--color-c
 }
 .sidebar .logout-btn:hover{ background: rgba(255,255,255,0.04) }
 
+/* === Área central y barra superior === */
 .contenido {
   margin-left: 220px;
   padding: 40px;
@@ -339,8 +498,40 @@ button.btn-primary:hover{ background: var(--color-primary); color: var(--color-c
   margin-bottom: 18px;
 }
 .topbar-right{ display:flex; align-items:center; gap:10px }
-.topbar-right img{ width:48px; height:48px; border-radius:50%; object-fit:cover; border:3px solid #fff; box-shadow: 0 6px 16px rgba(44,40,77,0.10) }
 .topbar-right span{ font-weight:600; color:var(--color-primary) }
+/* perfil anclado al primer item del menú */
+.nav-item.perfil-nav{
+  background: rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 10px;
+  margin-bottom: 12px;
+  transition: background .12s, transform .06s;
+}
+.nav-item.perfil-nav img{
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 3px solid rgba(255,255,255,0.35);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+.perfil-nav-text{
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.perfil-nav-label{
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.65);
+}
+.perfil-nav #topbarNombre{
+  font-size: 15px;
+  color: #fff;
+}
+
+/* === Sección 7: Estilos base para módulos y secciones === */
 section{
   color: #4752ae;
 }
@@ -358,6 +549,7 @@ section button:hover {
   color: #fea43f;
 }
 
+/* Visibilidad básica de cada módulo SPA */
 .modulo {
   display: none;
 }
@@ -365,7 +557,7 @@ section button:hover {
 .modulo.activo {
   display: block;
 }
-/*stilo para el inventario*/
+/* === Sección 8: Controles específicos de Inventario === */
 inventario-header {
   display: flex;
   justify-content: space-between;
@@ -400,6 +592,41 @@ inventario-header {
   background-color: #f0f0f0;
 }
 
+.ventas-inventario tbody tr {
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.ventas-inventario tbody tr:hover {
+  background: rgba(155, 89, 255, 0.08);
+  transform: translateX(2px);
+}
+
+.venta-producto-img-cell {
+  width: 64px;
+}
+
+.venta-producto-img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.venta-producto-nombre {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.venta-producto-desc {
+  display: block;
+  font-size: 12px;
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
 .tabla-inventario td select {
   width: 100%;
 }
@@ -410,6 +637,7 @@ inventario-header {
   cursor: pointer;
 }
 
+/* === Sección 9: Venta rápida y canasta === */
 .ventas-header {
   display: flex;
   gap: 20px;
@@ -423,7 +651,13 @@ inventario-header {
   border-spacing: 8px;
 }
 
-.ventas-inventario { flex: 1 1 0; overflow-y: auto; max-height: calc(100vh - 220px); }
+.ventas-inventario {
+  flex: 1 1 0;
+  overflow-y: auto;
+  max-height: calc(100vh - 180px);
+  position: sticky;
+  top: 20px;
+}
 .ventas-canasta {
   width: 360px;
   border: 1px solid #4752ae;
@@ -437,13 +671,31 @@ inventario-header {
   padding: 16px;
 }
 
+.ventas-inventario table,
+.ventas-canasta table,
+.movimientos-tabla table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ventas-cliente-select {
+  margin-bottom: 12px;
+}
+
+.ventas-cliente-select select {
+  width: 100%;
+}
+
 /* make ventas-header a two-column layout */
 .ventas-header { display:flex; gap:16px; align-items:flex-start }
+/* === Sección 10: Controles de movimientos === */
   .movimientos-controles {
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
 }
+
+/* === Componentes reutilizables: Modales === */
 .modal {
   display: none;
   position: fixed;
@@ -514,9 +766,9 @@ section h2{
 
 /* Botones de acción (Crear Producto/Categoría) */
 .acciones-inventario{ display:flex; gap:12px; align-items:center }
-.acciones-inventario .btn-action{ padding:8px 14px; border-radius:20px; border:2px solid var(--color-primary); background:var(--surface); color:var(--color-primary); font-weight:600 }
-.acciones-inventario .btn-action.primary{ background:var(--color-cta); color:var(--color-primary); border-color:var(--color-primary) }
-.acciones-inventario .btn-action:hover{ filter:brightness(.98) }
+.btn-action{ padding:8px 14px; border-radius:20px; border:2px solid var(--color-primary); background:var(--surface); color:var(--color-primary); font-weight:600 }
+.btn-action.primary{ background:var(--color-cta); color:var(--color-primary); border-color:var(--color-primary) }
+.btn-action:hover{ filter:brightness(.98) }
 
 /* Asegurar que modal use paleta del login también para botones y focos */
 /* background blur on sections */
@@ -544,23 +796,233 @@ section h2{
   padding: 16px;
 }
 
+/* === Inventario: botones de categoría === */
 .categorias-header {
-  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .categorias-header button {
-  margin: 5px;
-  padding: 6px 12px;
+  padding: 10px 18px;
+  border-radius: 16px;
   border: none;
-  border-radius: 6px;
-  background-color: #007bff;
-  color: white;
+  background: #ffdd63;
+  font-weight: 600;
+  color: #3c3484;
   cursor: pointer;
-  transition: background 0.2s;
+  box-shadow: inset 0 -2px rgba(0,0,0,0.08);
 }
 
 .categorias-header button:hover {
-  background-color: #0056b3;
+  filter: brightness(0.95);
+}
+
+.inventario-tabla-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inventario-tabla-wrapper thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+/* === Sección 11: Tarjetas y tablas de Estadísticas === */
+.stats-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-end;
+}
+
+.stats-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stats-filters label {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.stats-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.stats-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  grid-template-areas:
+    "bar pie"
+    "table table";
+  gap: 14px;
+  align-items: stretch;
+}
+
+.stats-chart--bar {
+  grid-area: bar;
+}
+
+.stats-chart--pie {
+  grid-area: pie;
+}
+
+.chart-card {
+  background: #f7f6ff;
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid rgba(44,40,77,0.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.stats-chart {
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-chart canvas {
+  flex: 1;
+}
+
+.chart-title {
+  font-weight: 600;
+  color: #514a98;
+  margin-bottom: 8px;
+}
+
+.stats-table {
+  grid-area: table;
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid rgba(44,40,77,0.08);
+  box-shadow: 0 8px 20px rgba(44,40,77,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stats-table .tabla-wrapper {
+  flex: 1;
+}
+
+.stats-table--wide .tabla-wrapper {
+  max-height: 280px;
+  overflow: auto;
+}
+
+.stats-table table th {
+  background: #eef0ff;
+  color: #4a4d9a;
+}
+
+.inventario-card .tabla-inventario th {
+  background: #eef0ff;
+  color: #4a4d9a;
+}
+
+.inventario-card .tabla-inventario td,
+.stats-table td {
+  text-align: center;
+}
+
+.inventario-card .tabla-inventario td:first-child,
+.stats-table td:first-child {
+  text-align: left;
+}
+
+.stats-layout canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 1024px) {
+  .inventario-top {
+    grid-template-columns: 1fr;
+  }
+  .inventario-metrics {
+    justify-content: flex-start;
+  }
+  .stats-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "bar"
+      "pie"
+      "table";
+  }
+}
+/* === Componentes reutilizables: tablas genéricas === */
+.tabla-wrapper table,
+.tabla-clientes,
+.tabla-proveedores {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tabla-wrapper th,
+.tabla-wrapper td,
+.tabla-clientes th,
+.tabla-clientes td,
+.tabla-proveedores th,
+.tabla-proveedores td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.tabla-wrapper th {
+  background: #f0f0f0;
+}
+
+.movimientos-tabla {
+  max-height: calc(100vh - 220px);
+  overflow: auto;
+  border: 1px solid rgba(44,40,77,0.12);
+  border-radius: 16px;
+  box-shadow: 0 10px 22px rgba(44,40,77,0.08);
+  background: #fff;
+}
+
+.movimientos-tabla table th {
+  background: #eef0ff;
+  color: #4a4d9a;
+}
+
+/* Cabeceras pegajosas reutilizables para todas las tablas largas */
+.inventario-tabla-wrapper thead th,
+.ventas-inventario table thead th,
+.ventas-canasta table thead th,
+.movimientos-tabla table thead th,
+.tabla-wrapper table thead th,
+.tabla-clientes thead th,
+.tabla-proveedores thead th,
+.stats-table .tabla-wrapper thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.tabla-wrapper button {
+  margin-right: 6px;
 }
 ajustes-grupo {
   margin-bottom: 15px;
@@ -568,7 +1030,7 @@ ajustes-grupo {
   flex-direction: column;
   gap: 5px;
 }
-/* estilos para el perfil de usario*/
+/* === Sección 12: Panel de perfil del usuario === */
 .perfil-info{
   padding: 18px;
   display: grid;

@@ -2,6 +2,8 @@
 // CRUD de Proveedores
 // ===============================
 
+window._proveedoresCache = window._proveedoresCache || [];
+
 /**
  * Carga la lista de proveedores desde el servidor y la renderiza en la tabla.
  */
@@ -10,9 +12,22 @@ window.loadProveedores = async function loadProveedores() {
         const res = await fetch('/proveedores');
         const data = await res.json();
         if (!res.ok) return console.error('Error cargando proveedores', data);
-        renderProveedoresTable(data.proveedores || []);
+        window._proveedoresCache = data.proveedores || [];
+        renderProveedoresTable(window._proveedoresCache);
+        window.actualizarResumenProveedores && window.actualizarResumenProveedores(data.resumen || {});
     } catch (err) {
         console.error('Error cargando proveedores:', err);
+    }
+};
+
+window.actualizarResumenProveedores = function actualizarResumenProveedores(resumen = {}) {
+    const totalProvEl = document.getElementById('totalProveedoresResumen');
+    const totalPagarEl = document.getElementById('totalPorPagarResumen');
+    if (totalProvEl) totalProvEl.textContent = resumen.totalProveedores != null ? resumen.totalProveedores : (window._proveedoresCache?.length || 0);
+    if (totalPagarEl) {
+        const monto = Number(resumen.totalPorPagar || 0);
+        const formatted = typeof window.formatearMoneda === 'function' ? window.formatearMoneda(monto) : `C$${monto.toFixed(2)}`;
+        totalPagarEl.textContent = formatted;
     }
 };
 
@@ -27,17 +42,20 @@ window.renderProveedoresTable = function renderProveedoresTable(items) {
     cont.innerHTML = '';
     const table = document.createElement('table');
     table.className = 'tabla-proveedores';
-    table.innerHTML = `<thead><tr><th>ID</th><th>Nombre</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>`;
+    table.innerHTML = `<thead><tr><th>ID</th><th>Nombre</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Pendiente</th><th>Acciones</th></tr></thead>`;
     const tbody = document.createElement('tbody');
 
     items.forEach(p => {
         const tr = document.createElement('tr');
+        const saldo = Number(p.total_por_pagar) || 0;
+        const saldoTexto = typeof window.formatearMoneda === 'function' ? window.formatearMoneda(saldo) : `C$${saldo.toFixed(2)}`;
         tr.innerHTML = `
         <td>${p.id}</td>
         <td contenteditable="true" data-field="nombre" data-id="${p.id}">${p.nombre || ''}</td>
         <td contenteditable="true" data-field="contacto" data-id="${p.id}">${p.contacto || ''}</td>
         <td contenteditable="true" data-field="telefono" data-id="${p.id}">${p.telefono || ''}</td>
         <td contenteditable="true" data-field="email" data-id="${p.id}">${p.email || ''}</td>
+        <td>${saldoTexto}</td>
         <td><button data-id="${p.id}" class="btn-delete-proveedor">Eliminar</button></td>
         `;
         tbody.appendChild(tr);

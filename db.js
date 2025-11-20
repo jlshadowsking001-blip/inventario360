@@ -113,8 +113,36 @@ if (DB_TYPE === 'mysql') {
                 cantidad INT NOT NULL DEFAULT 0,
                 monto DOUBLE NOT NULL DEFAULT 0,
                 descripcion TEXT,
-                fecha BIGINT
+                fecha BIGINT,
+                cliente_id INT,
+                proveedor_id INT
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+            const columnExists = async (table, column) => {
+                const [rows] = await pool.query(
+                    'SELECT COUNT(*) AS total FROM information_schema.columns WHERE table_schema = ? AND table_name = ? AND column_name = ?',
+                    [MYSQL_DATABASE, table, column]
+                );
+                const total = rows && rows[0] ? Number(rows[0].total) : 0;
+                return total > 0;
+            };
+
+            const ensureColumn = async (table, column, definition) => {
+                try {
+                    const exists = await columnExists(table, column);
+                    if (exists) return;
+                    await pool.query(`ALTER TABLE \`${table}\` ADD COLUMN ${column} ${definition}`);
+                    console.log(`Columna ${column} añadida a ${table}`);
+                } catch (err) {
+                    const msg = String(err && err.message ? err.message : err || '');
+                    if (err && err.code === 'ER_DUP_FIELDNAME') return;
+                    if (msg.includes('Duplicate column name')) return;
+                    console.error(`No se pudo añadir columna ${column} en ${table}:`, err);
+                }
+            };
+
+            await ensureColumn('movimientos', 'cliente_id', 'INT NULL');
+            await ensureColumn('movimientos', 'proveedor_id', 'INT NULL');
 
             await pool.query(`CREATE TABLE IF NOT EXISTS clientes (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -244,8 +272,21 @@ if (DB_TYPE === 'mysql') {
             cantidad INTEGER NOT NULL DEFAULT 0,
             monto REAL NOT NULL DEFAULT 0,
             descripcion TEXT,
-            fecha INTEGER DEFAULT (strftime('%s','now'))
+            fecha INTEGER DEFAULT (strftime('%s','now')),
+            cliente_id INTEGER,
+            proveedor_id INTEGER
         )`);
+
+        const ensureColumnSqlite = (column) => {
+            db.run(`ALTER TABLE movimientos ADD COLUMN ${column}`, (err) => {
+                if (err && !String(err.message || '').includes('duplicate column name')) {
+                    console.error(`No se pudo añadir columna ${column} en movimientos:`, err.message || err);
+                }
+            });
+        };
+
+        ensureColumnSqlite('cliente_id INTEGER');
+        ensureColumnSqlite('proveedor_id INTEGER');
 
         // Clientes
         db.run(`CREATE TABLE IF NOT EXISTS clientes (

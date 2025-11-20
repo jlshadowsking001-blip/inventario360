@@ -2,6 +2,8 @@
 // CRUD de Clientes
 // ===============================
 
+window._clientesCache = window._clientesCache || [];
+
 /**
  * Obtiene la lista de clientes desde el backend y la pinta en el módulo.
  */
@@ -13,9 +15,23 @@ window.loadClientes = async function loadClientes() {
             console.error('Error cargando clientes', data);
             return;
         }
-        renderClientesList(data.clientes || []);
+        window._clientesCache = data.clientes || [];
+        renderClientesList(window._clientesCache);
+        window.actualizarResumenClientes && window.actualizarResumenClientes(data.resumen || {});
+        refrescarSelectorClientes();
     } catch (err) {
         console.error('Error cargando clientes:', err);
+    }
+};
+
+window.actualizarResumenClientes = function actualizarResumenClientes(resumen = {}) {
+    const totalClientesEl = document.getElementById('totalClientesResumen');
+    const totalCobrarEl = document.getElementById('totalPorCobrarResumen');
+    if (totalClientesEl) totalClientesEl.textContent = resumen.totalClientes != null ? resumen.totalClientes : (window._clientesCache?.length || 0);
+    if (totalCobrarEl) {
+        const monto = Number(resumen.totalPorCobrar || 0);
+        const formatted = typeof window.formatearMoneda === 'function' ? window.formatearMoneda(monto) : `C$${monto.toFixed(2)}`;
+        totalCobrarEl.textContent = formatted;
     }
 };
 
@@ -28,38 +44,64 @@ window.renderClientesList = function renderClientesList(clientes) {
     if (!cont) return;
 
     cont.innerHTML = '';
+    const table = document.createElement('table');
+    table.className = 'tabla-clientes';
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Email</th>
+                <th>Dirección</th>
+                <th>Por cobrar</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+    `;
+
+    const tbody = document.createElement('tbody');
+
     if (!clientes.length) {
-        const empty = document.createElement('li');
-        empty.textContent = 'Sin clientes registrados';
-        cont.appendChild(empty);
-        return;
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="7">Sin clientes registrados</td>';
+        tbody.appendChild(tr);
+    } else {
+        clientes.forEach(cliente => {
+            const tr = document.createElement('tr');
+            const saldo = Number(cliente.total_credito) || 0;
+            const saldoTexto = typeof window.formatearMoneda === 'function'
+                ? window.formatearMoneda(saldo)
+                : `C$${saldo.toFixed(2)}`;
+            tr.innerHTML = `
+                <td>${cliente.id}</td>
+                <td>${cliente.nombre || '—'}</td>
+                <td>${cliente.telefono || '—'}</td>
+                <td>${cliente.email || '—'}</td>
+                <td>${cliente.direccion || '—'}</td>
+                <td>${saldoTexto}</td>
+                <td>
+                    <button data-id="${cliente.id}" class="btn-editar-cliente">Editar</button>
+                    <button data-id="${cliente.id}" class="btn-eliminar-cliente">Eliminar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
-    clientes.forEach(cliente => {
-        const li = document.createElement('li');
-        li.className = 'cliente-item';
-        const datosContacto = [cliente.telefono, cliente.email].filter(Boolean).join(' · ');
-        li.innerHTML = `
-        <div class="cliente-info">
-            <strong>${cliente.nombre || '—'}</strong>
-            <small>${datosContacto || 'Sin contacto'}</small>
-        </div>`;
+    table.appendChild(tbody);
+    cont.appendChild(table);
 
-        const acciones = document.createElement('div');
-        acciones.className = 'cliente-acciones';
+    cont.querySelectorAll('.btn-editar-cliente').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = Number(e.target.dataset.id);
+            const cliente = clientes.find(c => Number(c.id) === id);
+            if (cliente) editarCliente(cliente);
+        });
+    });
 
-        const editarBtn = document.createElement('button');
-        editarBtn.textContent = 'Editar';
-        editarBtn.addEventListener('click', () => editarCliente(cliente));
-
-        const eliminarBtn = document.createElement('button');
-        eliminarBtn.textContent = 'Eliminar';
-        eliminarBtn.addEventListener('click', () => eliminarCliente(cliente.id));
-
-        acciones.appendChild(editarBtn);
-        acciones.appendChild(eliminarBtn);
-        li.appendChild(acciones);
-        cont.appendChild(li);
+    cont.querySelectorAll('.btn-eliminar-cliente').forEach(btn => {
+        btn.addEventListener('click', (e) => eliminarCliente(e.target.dataset.id));
     });
 };
 
@@ -148,5 +190,21 @@ async function eliminarCliente(id) {
     } catch (err) {
         console.error('Error eliminando cliente:', err);
         alert('Error eliminando cliente');
+    }
+}
+
+function refrescarSelectorClientes() {
+    const select = document.getElementById('clienteVentaSelect');
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = '<option value="">Sin cliente</option>';
+    (window._clientesCache || []).forEach(cliente => {
+        const opt = document.createElement('option');
+        opt.value = cliente.id;
+        opt.textContent = cliente.nombre;
+        select.appendChild(opt);
+    });
+    if (current && select.querySelector(`option[value="${current}"]`)) {
+        select.value = current;
     }
 }

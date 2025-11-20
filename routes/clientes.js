@@ -2,11 +2,24 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Listar clientes
+// Listar clientes junto con su saldo pendiente (ventas asociadas)
 router.get('/', (_req, res) => {
-  db.all('SELECT * FROM clientes ORDER BY id DESC', [], (err, rows) => {
+  const sql = `
+    SELECT c.*, COALESCE(t.total_credito, 0) AS total_credito
+    FROM clientes c
+    LEFT JOIN (
+      SELECT cliente_id, SUM(COALESCE(monto, 0)) AS total_credito
+      FROM movimientos
+      WHERE cliente_id IS NOT NULL AND tipo = 'venta'
+      GROUP BY cliente_id
+    ) t ON t.cliente_id = c.id
+    ORDER BY c.id DESC`;
+
+  db.all(sql, [], (err, rows = []) => {
     if (err) return res.status(500).json({ error: 'Error leyendo clientes' });
-    res.json({ clientes: rows });
+    const totalClientes = rows.length;
+    const totalPorCobrar = rows.reduce((acc, row) => acc + (Number(row.total_credito) || 0), 0);
+    res.json({ clientes: rows, resumen: { totalClientes, totalPorCobrar } });
   });
 });
 

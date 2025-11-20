@@ -4,6 +4,31 @@
 
 window._productosCache = window._productosCache || [];
 
+window.actualizarResumenInventario = function actualizarResumenInventario(productos = window._productosCache || []) {
+    const totalArticulosEl = document.getElementById('totalArticulos');
+    const costoInventarioEl = document.getElementById('costoInventario');
+    if (!totalArticulosEl && !costoInventarioEl) return;
+
+    const lista = Array.isArray(productos) ? productos : [];
+    const totalRegistros = lista.length;
+    const totalCapital = lista.reduce((acc, prod) => {
+        const unidades = Number(prod.existencia) || 0;
+        const costoUnit = Number(prod.costo);
+        const precioUnit = Number(prod.precio);
+        const base = Number.isFinite(costoUnit) ? costoUnit : (Number.isFinite(precioUnit) ? precioUnit : 0);
+        return acc + (unidades * base);
+    }, 0);
+
+    if (totalArticulosEl) totalArticulosEl.textContent = `${totalRegistros} productos`;
+
+    if (costoInventarioEl) {
+        const formato = typeof window.formatearMoneda === 'function'
+            ? window.formatearMoneda(totalCapital)
+            : `C$${Number(totalCapital || 0).toFixed(2)}`;
+        costoInventarioEl.textContent = formato;
+    }
+};
+
 /**
  * Guarda un nuevo producto en la base de datos, incluyendo imagen opcional.
  */
@@ -56,6 +81,7 @@ window.loadProducts = async function loadProducts() {
         const data = await res.json();
         if (res.ok) {
         window._productosCache = data.productos || [];
+        window.actualizarResumenInventario(window._productosCache);
         renderProductsTable(window._productosCache);
         try { renderSalesInventory(window._productosCache); } catch (e) {}
         try { renderCanasta(); } catch (e) {}

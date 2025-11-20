@@ -1,19 +1,35 @@
 /**
- * Solicita estadísticas agregadas al backend y actualiza la UI.
+ * Normaliza los controles del módulo de estadísticas estableciendo fecha y rango por defecto.
+ * Esto evita que el usuario tenga que seleccionar manualmente la combinación más común (día actual).
+ */
+window.ensureEstadisticasFiltros = function ensureEstadisticasFiltros() {
+    const fechaInput = document.getElementById('fechaBaseEstadisticas');
+    const rangoSelect = document.getElementById('rangoTiempoEstadisticas');
+    const hoy = new Date().toISOString().slice(0, 10);
+    if (fechaInput && !fechaInput.value) fechaInput.value = hoy;
+    if (rangoSelect && !rangoSelect.value) rangoSelect.value = 'dia';
+};
+
+/**
+ * Llama al backend con los filtros seleccionados y reconstruye:
+ * 1) Tabla de periodos/productos.
+ * 2) Totales rápidos.
+ * 3) Las gráficas de barras y pastel.
  */
 window.filtrarEstadisticas = async function filtrarEstadisticas() {
-    const fechaBase = document.getElementById('fechaBase')?.value;
-    const rango = document.getElementById('rangoTiempo')?.value;
-    if (!fechaBase || !rango) return alert('Selecciona fecha base y rango');
+    window.ensureEstadisticasFiltros();
+    const fechaBase = document.getElementById('fechaBaseEstadisticas')?.value;
+    const rango = document.getElementById('rangoTiempoEstadisticas')?.value || 'dia';
+    if (!fechaBase) return alert('Selecciona una fecha base');
 
     try {
-        const res = await fetch(`/estadisticas?rango=${rango}&fechaBase=${fechaBase}`);
+        const res = await fetch(`/estadisticas?rango=${encodeURIComponent(rango)}&fechaBase=${encodeURIComponent(fechaBase)}`);
         const data = await res.json();
         if (!res.ok) return alert(data.error || 'Error cargando estadísticas');
 
         const resumen = data.resumen || [];
 
-        // Actualizar tabla
+        // --- Tabla detallada por periodo/producto ---
         const tbody = document.getElementById('tablaEstadisticasBody');
         tbody.innerHTML = '';
         resumen.forEach(r => {
@@ -30,7 +46,7 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
         tbody.appendChild(tr);
         });
 
-        // Totales
+        // --- Totales rápidos en la cabecera del módulo ---
         const totalVentas = resumen.reduce((a, b) => a + (b.total_monto || 0), 0);
         const totalCostos = resumen.reduce((a, b) => a + (b.total_costo || 0), 0);
         const totalUnidades = resumen.reduce((a, b) => a + (b.total_unidades || 0), 0);
@@ -41,7 +57,7 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
         document.getElementById('gananciaTotal').textContent = gananciaTotal.toFixed(2);
         document.getElementById('productosVendidos').textContent = totalUnidades;
 
-        // Gráficas
+        // --- Gráficas comparativas ---
         const labels = resumen.map(r => r.periodo);
         const montos = resumen.map(r => r.total_monto || 0);
 
@@ -78,3 +94,16 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
         alert('Error al cargar estadísticas');
     }
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        window.ensureEstadisticasFiltros();
+        if (!window.__estadisticasAutocargadas) {
+            window.__estadisticasAutocargadas = true;
+            // Cargar automáticamente el rango del día para mostrar datos sin interacción inicial.
+            window.filtrarEstadisticas && window.filtrarEstadisticas();
+        }
+    } catch (err) {
+        console.warn('No se pudieron inicializar los filtros de estadísticas:', err);
+    }
+});

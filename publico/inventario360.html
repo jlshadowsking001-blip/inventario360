@@ -35,7 +35,13 @@
             </div>
             <nav>
                 <ul>
-                    <li onclick="mostrarModulo('Perfil')">Perfil</li>
+                    <li class="nav-item perfil-nav" onclick="mostrarModulo('Perfil')">
+                        <img id="topbarFoto" src="assets/logoinventario360.png" alt="Foto perfil" />
+                        <div class="perfil-nav-text">
+                            <span class="perfil-nav-label">Perfil</span>
+                            <strong id="topbarNombre">Usuario</strong>
+                        </div>
+                    </li>
                     <label for="menu">Menu</label>
                     <li onclick="mostrarModulo('inventario')">Inventario</li>
                     <li onclick="mostrarModulo('ventas')">Ventas</li>
@@ -53,14 +59,8 @@
         <main class="contenido">
             <!-- Barra superior con perfil compacto -->
             <div class="topbar">
-                <div class="topbar-left">
-                    <!-- nombre de la app o sección -->
-                    <strong id="topbarTitulo">Inventario 360</strong>
-                </div>
-                <div class="topbar-right">
-                    <img id="topbarFoto" src="assets/logoinventario360.png" alt="Foto perfil" />
-                    <span id="topbarNombre">Usuario</span>
-                </div>
+                <div class="topbar-left"></div>
+                <div class="topbar-right"></div>
             </div>
             <!--aqui comiensa el perfil de usuario se traen datos de la base y se permiten agregar datos adicionales-->
             <section id="Perfil" class="modulo">
@@ -91,46 +91,58 @@
             </section>
             <!--aqui comiensa el inventario-->
             <section id="inventario" class="modulo activo">
-                <h2>Inventario</h2>
-                <!--Resumen del inventario -->
-                <div class="inventario-resumen">
-                        <h3>
-                            <span>Cantidad de artículos: <strong id="totalArticulos"></strong></span>
-                            <span>Costo inventario: <strong id="costoInventario"></strong></span>
-                        </h3>
-                </div>
-                <!--Botones para el Inventario-->
-                <div class="inventario-header">
-                    <div class="search-box">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" id="buscador" placeholder="Buscar por nombre, código o ID" />
+                <div class="section-card inventario-card">
+                    <div class="inventario-top">
+                        <div>
+                            <p class="section-tag">Control general</p>
+                            <h2>Inventario</h2>
+                        </div>
+                        <div class="inventario-metrics">
+                            <div class="metric-card">
+                                <span>Total productos</span>
+                                <strong id="totalArticulos">0</strong>
+                            </div>
+                            <div class="metric-card">
+                                <span>Costo inventario</span>
+                                <strong id="costoInventario">C$0.00</strong>
+                            </div>
+                        </div>
+                        <div class="inventario-actions">
+                            <button id="btnCrearCategoria" class="btn-action ghost" onclick="crearCategorias()">Crear Categoría</button>
+                            <button id="btnCrearProducto" class="btn-action primary" onclick="crearProducto()">Crear Producto</button>
+                        </div>
                     </div>
-                    <div class="acciones-inventario">
-                        <button id="btnCrearProducto" class="btn-action primary" onclick="crearProducto()">Crear Producto</button>
-                        <button id="btnCrearCategoria" class="btn-action" onclick="crearCategorias()">Crear Categoría</button>
+
+                    <div class="inventario-controls">
+                        <div class="search-box">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="buscador" placeholder="Buscar por nombre, código o ID" />
+                        </div>
                     </div>
-                    <!-- Aquí se mostrarán los botones de categorías -->
+
                     <div id="categoriasHeader" class="categorias-header"></div>
+
+                    <div class="tabla-wrapper inventario-tabla-wrapper">
+                        <table class="tabla-inventario">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Producto</th>
+                                    <th>Última actualización</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio</th>
+                                    <th>Estimado</th>
+                                    <th>Costo</th>
+                                    <th>Ganancia</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaInventarioBody">
+                                <!-- Filas dinámicas -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <!--tabla de campos para los productos del inventario-->
-                <table class="tabla-inventario">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Producto</th>
-                            <th>Última actualización</th>
-                            <th>Cantidad</th>
-                            <th>Precio</th>
-                            <th>Estimado</th>
-                            <th>Costo</th>
-                            <th>Ganancia</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaInventarioBody">
-                        <!-- Filas dinámicas -->
-                    </tbody>
-                </table>
             </section>
             <!-- Modal genérico -->
             <div id="modal" class="modal">
@@ -152,13 +164,10 @@
                         <table class="ventas-inventario">
                             <thead>
                                 <tr>
-                                <th>ID</th>
+                                <th>Imagen</th>
                                 <th>Producto</th>
-                                <th>Última actualización</th>
-                                <th>Cantidad</th>
+                                <th>Disponible</th>
                                 <th>Precio</th>
-                                <th>Costo</th>
-                                <th>Ganancia</th>
                                 </tr>
                             </thead>
                             <tbody id="tablaventasBody"></tbody><!--filas dinamicas-->
@@ -166,6 +175,12 @@
                     </div>
                     <div class="ventas-canasta">
                         <h3>Canasta de venta</h3>
+                        <div class="ventas-cliente-select">
+                            <label for="clienteVentaSelect">Cliente (opcional)</label>
+                            <select id="clienteVentaSelect">
+                                <option value="">Sin cliente</option>
+                            </select>
+                        </div>
                         <table>
                             <thead>
                                 <tr>
@@ -182,6 +197,7 @@
                             <button onclick="Nuevaventa()">Nueva venta</button>
                             <button onclick="vaciarcanasta()">Vaciar canasta</button>
                             <button onclick="terminarventa()">Terminar venta</button>
+                            <button onclick="abrirModalGasto()">Registrar gasto</button>
                         </div>
                     </div>
                 </div>                
@@ -190,10 +206,10 @@
             <section id="Movimientos" class="modulo">
                 <h2>Movimientos</h2>
                 <div class="Movimientos-header">
-                    <label for="fechaBase">Selecciona una fecha base:</label>
-                    <input type="date" id="fechaBase">
-                    <label for="rangoTiempo">Rango:</label>
-                    <select id="rangoTiempo">
+                    <label for="fechaBaseMovimientos">Selecciona una fecha base:</label>
+                    <input type="date" id="fechaBaseMovimientos">
+                    <label for="rangoTiempoMovimientos">Rango:</label>
+                    <select id="rangoTiempoMovimientos">
                         <option value="dia">Día</option>
                         <option value="semana">Semana</option>
                         <option value="mes">Mes</option>
@@ -206,6 +222,7 @@
                             <option value="venta">Venta</option>
                             <option value="egreso">Egreso</option>
                             <option value="ajuste">Ajuste</option>
+                            <option value="gasto">Gasto</option>
                         </select>
                         <label for="filterProducto">Producto:</label>
                         <select id="filterProducto" aria-label="Filtrar por producto"><option value="">Todos</option></select>
@@ -224,9 +241,10 @@
                             <tr>
                                 <th>Fecha</th>
                                 <th>Tipo</th>
-                                <th>Descripción</th>
+                                <th>Detalles</th>
+                                <th>Cantidad</th>
                                 <th>Monto</th>
-                                <th>Estado</th>
+                                <th>Vinculado</th>
                             </tr>
                         </thead>
                         <tbody id="tablaMovimientosBody">
@@ -238,56 +256,114 @@
             </section>
             <!--aqui comiensa mi apartado de estadisticas-->
             <section id="Estadísticas" class="modulo">
-                <h2>Estadísticas</h2>
-                <div class="estadisticas-controles">
-                    <label>Fecha base:</label>
-                    <input type="date" id="fechaBase">
-                    <label>Rango:</label>
-                    <select id="rangoTiempo">
-                    <option value="dia">Día</option>
-                    <option value="semana">Semana</option>
-                    <option value="mes">Mes</option>
-                    <option value="año">Año</option>
-                    </select>
-                    <button onclick="filtrarEstadisticas()">Buscar</button>
+                <div class="section-card stats-card">
+                    <div class="stats-header">
+                        <div>
+                            <p class="section-tag">Resumen</p>
+                            <h2>Estadísticas</h2>
+                        </div>
+                        <div class="stats-filters">
+                            <label>Fecha base</label>
+                            <input type="date" id="fechaBaseEstadisticas">
+                            <label for="rangoTiempoEstadisticas">Rango</label>
+                            <select id="rangoTiempoEstadisticas">
+                                <option value="dia">Día</option>
+                                <option value="semana">Semana</option>
+                                <option value="mes">Mes</option>
+                                <option value="año">Año</option>
+                            </select>
+                            <button class="btn-action" onclick="filtrarEstadisticas()">Buscar</button>
+                        </div>
+                    </div>
+
+                    <div class="stats-metrics">
+                        <div class="metric-card">
+                            <span>Total vendido</span>
+                            <strong>C$<span id="totalVentas">0</span></strong>
+                            <small>monto vendido según el rango</small>
+                        </div>
+                        <div class="metric-card">
+                            <span>Ganancia estimada</span>
+                            <strong>C$<span id="gananciaTotal">0</span></strong>
+                            <small>utilidad después de costos</small>
+                        </div>
+                        <div class="metric-card">
+                            <span>Costo total</span>
+                            <strong>C$<span id="costoTotal">0</span></strong>
+                            <small>inversión del stock vendido</small>
+                        </div>
+                        <div class="metric-card">
+                            <span>Productos vendidos</span>
+                            <strong><span id="productosVendidos">0</span></strong>
+                            <small>unidades totales</small>
+                        </div>
+                    </div>
+
+                    <div class="stats-layout">
+                        <div class="chart-card stats-chart stats-chart--bar">
+                            <div class="chart-title">Detalles de ventas</div>
+                            <canvas id="salesBarChart"></canvas>
+                        </div>
+                        <div class="chart-card stats-chart stats-chart--pie">
+                            <div class="chart-title">Distribución por producto</div>
+                            <canvas id="salesPieChart"></canvas>
+                        </div>
+                        <div class="stats-table stats-table--wide">
+                            <div class="chart-title">Detalles de productos vendidos</div>
+                            <div class="tabla-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Periodo</th>
+                                            <th>Producto</th>
+                                            <th>Cantidad</th>
+                                            <th>Precio</th>
+                                            <th>Costo</th>
+                                            <th>Ganancia</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaEstadisticasBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="estadisticas-resumen">
-                    <strong>Total vendido: C$<span id="totalVentas">0</span></strong>
-                    <strong>Ganancia estimada: C$<span id="gananciaTotal">0</span></strong>
-                    <strong>Costo total: C$<span id="costoTotal">0</span></strong>
-                    <strong>Productos vendidos: <span id="productosVendidos">0</span></strong>
-                </div>
-                <div class="estadisticas-graficas">
-                    <canvas id="salesBarChart" width="400" height="200"></canvas>
-                    <canvas id="salesPieChart" width="320" height="200"></canvas>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Periodo</th>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Precio</th>
-                            <th>Costo</th>
-                            <th>Ganancia</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaEstadisticasBody"></tbody>
-                </table>                
             </section>
             <!--Aqui comiensa el apartado para los clientes del usuario-->
             <section id="clientes" class="modulo">
                 <h2>Clientes</h2>
+                <div class="resumen-grid">
+                    <div class="resumen-card">
+                        <span class="resumen-label">Clientes registrados</span>
+                        <strong class="resumen-value" id="totalClientesResumen">0</strong>
+                    </div>
+                    <div class="resumen-card">
+                        <span class="resumen-label">Total por cobrar</span>
+                        <strong class="resumen-value" id="totalPorCobrarResumen">C$0.00</strong>
+                    </div>
+                </div>
                 <input type="text" id="nuevoCliente" placeholder="Nombre del cliente">
-                <button onclick="agregarCliente()">Agregar</button>
-                <ul id="listaClientes"></ul>
+                <button onclick="agregarCliente()">Agregar rápido</button>
+                <button type="button" class="btn-action" onclick="crearCliente()">Formulario completo</button>
+                <div id="listaClientes" class="tabla-wrapper"></div>
             </section>
             <!--Aqui comiensa el apartado para los proveedores del usario-->
             <section id="proveedores" class="modulo">
                 <h2>Proveedores</h2>
+                <div class="resumen-grid">
+                    <div class="resumen-card">
+                        <span class="resumen-label">Proveedores registrados</span>
+                        <strong class="resumen-value" id="totalProveedoresResumen">0</strong>
+                    </div>
+                    <div class="resumen-card">
+                        <span class="resumen-label">Total a pagar</span>
+                        <strong class="resumen-value" id="totalPorPagarResumen">C$0.00</strong>
+                    </div>
+                </div>
                 <input type="text" id="nuevoProveedor" placeholder="Nombre del proveedor">
-                <button onclick="agregarProveedor()">Agregar</button>
-                <ul id="listaProveedores"></ul>
+                <button onclick="agregarProveedor()">Agregar rápido</button>
+                <button type="button" class="btn-action" onclick="crearProveedor()">Formulario completo</button>
+                <div id="listaProveedores" class="tabla-wrapper"></div>
             </section>
             <!--Aqui podemos hacer algunos cambios en la app-->
             <section id="ajustes" class="modulo">

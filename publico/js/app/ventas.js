@@ -15,24 +15,29 @@ window.renderSalesInventory = function renderSalesInventory(productos) {
 
     (productos || []).forEach(p => {
         const tr = document.createElement('tr');
+        const disponible = Number(p.existencia) || 0;
+        const precio = Number(p.precio) || 0;
+        const precioTexto = typeof window.formatearMoneda === 'function'
+            ? window.formatearMoneda(precio)
+            : `C$${precio.toFixed(2)}`;
+        const imagen = p.image_url || p.imagen || 'assets/logoinventario360.png';
+        tr.classList.add('venta-producto-row');
+        tr.dataset.id = p.id;
         tr.innerHTML = `
-        <td>${p.id}</td>
-        <td>${p.nombre}</td>
-        <td>${p.updated_at ? new Date(p.updated_at * 1000).toLocaleDateString() : (p.created_at ? new Date(p.created_at * 1000).toLocaleDateString() : '—')}</td>
-        <td><input data-id="${p.id}" class="venta-cantidad" type="number" value="1" style="width:70px"></td>
-        <td>${p.precio || 0}</td>
-        <td>${p.costo != null ? ('$' + Number(p.costo).toFixed(2)) : '—'}</td>
-        <td><button class="btn-add-to-canasta" data-id="${p.id}">Agregar</button></td>
+        <td class="venta-producto-img-cell"><img src="${imagen}" alt="${p.nombre}" class="venta-producto-img"></td>
+        <td>
+            <div class="venta-producto-nombre">${p.nombre}</div>
+            ${p.descripcion ? `<small class="venta-producto-desc">${p.descripcion}</small>` : ''}
+        </td>
+        <td>${disponible}</td>
+        <td>${precioTexto}</td>
         `;
         tbody.appendChild(tr);
-    });
 
-    tbody.querySelectorAll('.btn-add-to-canasta').forEach(btn => btn.addEventListener('click', (e) => {
-        const id = e.target.dataset.id;
-        const input = tbody.querySelector(`input.venta-cantidad[data-id="${id}"]`);
-        const cantidad = input ? parseInt(input.value) || 1 : 1;
-        addToCanasta(id, cantidad);
-    }));
+        tr.addEventListener('click', () => {
+            addToCanasta(p.id, 1);
+        });
+    });
 };
 
 /**
@@ -112,6 +117,8 @@ window.vaciarcanasta = function vaciarcanasta() {
  */
 window.terminarventa = async function terminarventa() {
     if (!window._canasta?.length) return alert('Canasta vacía');
+    const clienteSelect = document.getElementById('clienteVentaSelect');
+    const clienteId = clienteSelect && clienteSelect.value ? clienteSelect.value : null;
 
     try {
         for (const item of window._canasta) {
@@ -121,7 +128,8 @@ window.terminarventa = async function terminarventa() {
             body: JSON.stringify({
             tipo: 'venta',
             producto_id: item.id,
-            cantidad: item.cantidad
+            cantidad: item.cantidad,
+            cliente_id: clienteId || null
             })
         });
         const data = await res.json();
@@ -135,9 +143,59 @@ window.terminarventa = async function terminarventa() {
         renderCanasta();
         loadProducts();
         loadMovimientos();
+        loadMovimientosUI();
         loadStats();
     } catch (err) {
         console.error('Error finalizando venta:', err);
         alert('Error al registrar la venta');
+    }
+};
+
+window.abrirModalGasto = function abrirModalGasto() {
+    const proveedores = window._proveedoresCache || [];
+    const options = proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+    abrirModal('Registrar gasto', `
+        <div class="modal-form-row">
+            <div class="col">
+                <label>Monto (C$)</label>
+                <input id="gastoMonto" type="number" step="0.01" min="0" required>
+            </div>
+            <div class="col">
+                <label>Proveedor (opcional)</label>
+                <select id="gastoProveedor">
+                    <option value="">Sin proveedor</option>
+                    ${options}
+                </select>
+            </div>
+        </div>
+        <label>Descripción</label>
+        <textarea id="gastoDescripcion" rows="3" placeholder="Describe el gasto"></textarea>
+        <div style="text-align:right; margin-top:12px;">
+            <button type="submit" class="btn-action primary">Guardar gasto</button>
+        </div>
+    `, { submitHandler: 'gasto', focusSelector: '#gastoMonto' });
+};
+
+window.guardarGasto = async function guardarGasto() {
+    const monto = parseFloat(document.getElementById('gastoMonto').value);
+    if (!monto || monto <= 0) return alert('El monto es obligatorio');
+    const descripcion = (document.getElementById('gastoDescripcion').value || '').trim() || 'Gasto';
+    const proveedor = document.getElementById('gastoProveedor').value || null;
+
+    try {
+        const res = await fetch('/movimientos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipo: 'gasto', monto, descripcion, proveedor_id: proveedor || null })
+        });
+        const data = await res.json();
+        if (!res.ok) return alert(data.error || 'No se pudo registrar el gasto');
+        alert('Gasto registrado');
+        cerrarModal();
+        loadMovimientos();
+        loadMovimientosUI();
+    } catch (err) {
+        console.error('Error guardando gasto:', err);
+        alert('Error guardando gasto');
     }
 };

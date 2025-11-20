@@ -17,8 +17,41 @@ window.mostrarModulo = function(nombreModulo) {
         target.classList.add('activo');
 
         // Actualizar título en la barra superior
-        const titulo = document.getElementById('topbarTitulo');
-        if (titulo) titulo.textContent = nombreModulo;
+        // El encabezado general permanece fijo ("Inventario 360") y
+        // los nombres de módulo se muestran únicamente en cada sección (h2).
+
+        try {
+            switch (nombreModulo) {
+                case 'inventario':
+                case 'ventas':
+                    window.loadProducts && window.loadProducts();
+                    window.cargarCategorias && window.cargarCategorias();
+                    break;
+                case 'clientes':
+                    window.loadClientes && window.loadClientes();
+                    break;
+                case 'proveedores':
+                    window.loadProveedores && window.loadProveedores();
+                    break;
+                case 'Perfil':
+                    window.cargarPerfil && window.cargarPerfil();
+                    break;
+                case 'Movimientos':
+                    window.loadMovimientosUI && window.loadMovimientosUI();
+                    break;
+                case 'Estadísticas':
+                    if (window.filtrarEstadisticas) {
+                        window.filtrarEstadisticas();
+                    } else if (window.loadStats) {
+                        window.loadStats();
+                    }
+                    break;
+                default:
+                    break;
+            }
+        } catch (err) {
+            console.warn('Error refrescando módulo', nombreModulo, err);
+        }
     }
 };
 
@@ -112,7 +145,8 @@ const MODAL_HANDLERS = {
     categoria: () => window.guardarCategoria && window.guardarCategoria(),
     cliente: () => window.guardarCliente && window.guardarCliente(),
     proveedor: () => window.guardarProveedor && window.guardarProveedor(),
-    'producto-editar': () => window.actualizarProductoModal && window.actualizarProductoModal()
+    'producto-editar': () => window.actualizarProductoModal && window.actualizarProductoModal(),
+    gasto: () => window.guardarGasto && window.guardarGasto()
 };
 
 document.addEventListener('submit', async (e) => {
