@@ -1,693 +1,13 @@
 /* =============================================================
-  Guía rápida de este archivo (appstyles.css)
-  1) Inventario: buscador, métricas y acciones principales
-  2) Temas globales: fuentes, variables, resets y formularios
-  3) Layout general: contenedor, sidebar, topbar y módulos
-  4) Secciones específicas: Inventario, Ventas, Movimientos, etc.
-  5) Componentes reutilizables: tablas, modales y ajustes responsivos
-  Cada bloque está etiquetado con comentarios en español para ubicarlo rápido.
+  Appstyles ahora actúa como agregador modular.
+  Los estilos principales se separan en:
+  - globals.css      → Variables, resets y controles base
+  - layout.css       → Sidebar, responsive y estructura general
+  - inventario.css   → Métricas, tabla y buscadores del módulo inventario
+  - ventas.css       → Flujo de ventas y canasta
+  A continuación se cargan con @import para facilitar mantenimiento.
 ============================================================== */
 
-/* === Sección 1: Inventario (buscador + métricas) === */
-.search-box input[type="text"]{
-  padding: 10px 14px 10px 40px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-}
-.search-box .search-icon{
-  position: relative; left:34px; color: var(--color-muted); opacity:.9; pointer-events:none;
-}
-
-/* fallback: estilo directo para el input #buscador si no está dentro de .search-box */
-
-.stats-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.stats-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: flex-end;
-}
-.stats-filters {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.inventario-card {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.inventario-tabla-wrapper {
-  border-radius: 18px;
-  border: 1px solid rgba(44,40,77,0.08);
-  box-shadow: 0 12px 28px rgba(44,40,77,0.08);
-  overflow: hidden;
-}
-
-/* El encabezado del módulo debe permanecer visible mientras solo la tabla hace scroll */
-@media (min-width: 992px) {
-  .inventario-card {
-    max-height: calc(100vh - 120px);
-    overflow: hidden;
-  }
-
-  .inventario-card > * {
-    flex-shrink: 0;
-  }
-
-  .inventario-tabla-wrapper {
-    flex: 1;
-    min-height: 300px;
-    overflow: auto;
-  }
-}
-
-.inventario-top {
-  display: grid;
-  grid-template-columns: 1fr minmax(260px, 320px) auto;
-  gap: 18px;
-  align-items: center;
-}
-
-.inventario-metrics {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.metric-card {
-  background: linear-gradient(140deg, rgba(155,89,255,0.12), rgba(255,255,255,0.9));
-  border-radius: 18px;
-  border: 1px solid rgba(155,89,255,0.2);
-  padding: 12px 18px;
-  min-width: 150px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.metric-card span {
-  font-size: 13px;
-  color: var(--color-muted);
-}
-
-.metric-card strong {
-  font-size: 22px;
-  color: var(--color-primary);
-}
-
-.metric-card small {
-  font-size: 11px;
-  color: var(--color-muted);
-}
-
-.inventario-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-action.ghost {
-  background: transparent;
-  border-color: rgba(44,40,77,0.3);
-  color: var(--color-primary);
-}
-
-.inventario-controls {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-#buscador{
-  padding: 10px 14px 10px 40px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-  max-width: 520px;
-  width: 60%;
-}
-.search-box{
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-/* estilo para botones dentro del modal */
-.modal-contenido form button,
-.modal-contenido form .btn-action{
-  display:inline-block;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 2px solid var(--color-primary);
-  background: var(--color-cta);
-  color: var(--color-primary);
-  cursor:pointer;
-  font-weight:600;
-}
-/* === Sección 2: Tipografías y variables globales === */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap');
-
-:root{
-  /* colores */
-  --color-primary: #2c284d; /* fondo sidebar deep */
-  --color-primary-2: #382a53; /* gradiente */
-  --color-accent: #9b59ff; /* morado acento */
-  --color-cta: #fea43f; /* naranja botones */
-  --color-text: #2f2d5c; /* texto principal */
-  --color-muted: #8a86a9; /* texto secundario */
-  --bg: #f4f4f4;
-  --surface: #ffffff;
-  --border: #e6e4ef;
-  --shadow: rgba(44,40,77,0.06);
-
-  /* tipografías */
-  --font-ui: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-  --font-heading: 'Playfair Display', serif;
-
-  /* medidas */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --spacing-xs: 6px;
-  --spacing-sm: 10px;
-  --spacing-md: 16px;
-}
-
-/* === Sección 3: Reset y tipografía base === */
-body{
-  font-family: var(--font-ui);
-  background-color: var(--bg);
-  color: var(--color-text);
-  margin: 0;
-  padding: 0;
-}
-*{
-  box-sizing: border-box;/*para que el padding no afecte al ancho*/
-  margin: 0;
-  padding: 0;
-  scroll-behavior: smooth;/*para que al hacer scroll se vea mas suave*/
-}
-p{
-  color: var(--color-text);/*color del texto*/
-  font-size: 16px;/*tamaño del texto*/
-  line-height: 1.6;/*altura de la linea*/
-}
-
-/* === Sección 4: Formularios y botones genéricos === */
-/* Controles form-like globales */
-label{ display:block; margin-bottom:6px; color:var(--color-muted); font-size:13px }
-input[type="text"], input[type="number"], input[type="email"], input[type="tel"], select, textarea, .modal-form-control{
-  width:100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  font-family: var(--font-ui);
-  color: var(--color-text);
-  box-shadow: inset 0 1px 0 rgba(0,0,0,0.02);
-}
-input:focus, select:focus, textarea:focus{
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 4px 18px rgba(155,89,255,0.08);
-}
-/* botón principal: usar paleta del login (fondo naranja, texto azul primario) */
-button.btn-primary{
-  background: var(--color-cta);
-  color: var(--color-primary);
-  border: 2px solid var(--color-primary);
-  padding: 10px 16px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight:600;
-}
-button.btn-primary:hover{ background: var(--color-primary); color: var(--color-cta); border-color: var(--color-cta); transform: translateY(-2px) }
-
-/* estilo para inputs file y preview */
-.file-preview{ display:flex; gap:12px; align-items:center }
-.file-preview img{ width:72px; height:72px; object-fit:cover; border-radius:8px; border:1px solid var(--border) }
-
-/* === Sección 5: Ajustes responsivos generales === */
-@media (max-width: 768px) {
-  .contenedor-app {
-    flex-direction: column;
-  }
-  .sidebar {
-    width: 100%;
-    position: relative;
-    padding: 10px;
-    font-size: 16px;
-  }
-  .sidebar nav ul {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    padding: 10px;
-  }
-  .sidebar nav ul li,
-  .sidebar nav ul label{
-    margin: 5px;
-    font-size: 14px;
-  }
-  .contenido {
-    width: 100%;
-    padding: 10px;
-  }
-  .ventas-header,
-  .inventario-header {
-    flex-direction: column;
-    align-items: center;
-  }
-  .ventas-inventario,
-  .ventas-canasta {
-    width: 100%;
-    overflow-x: auto;
-  }
-  table {
-    width: 100%;
-    font-size: 14px;
-    border-collapse: collapse;
-  }
-  th, td {
-    padding: 6px;
-    text-align: left;
-  }
-  .ventas-acciones {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 10px;
-  }
-  .ventas-acciones button {
-    width: 100%;
-  }
-  .col-id,
-  .col-actualizacion,
-  .col-costo,
-  .col-ganancia {
-    display: none;
-  }
-  tabla-inventario td.col-id,
-    .tabla-inventario td.col-actualizacion,
-    .tabla-inventario td.col-costo,
-    .tabla-inventario td.col-ganancia {
-      padding: 10px;
-      content: 10px;
-    }
-  .tabla-inventario th,
-  .tabla-inventario td {
-    font-size: 14px;
-    padding: 6px;
-  }
-  .tabla-inventario {
-    width: 100%;
-    overflow-x: auto;
-    display: block;
-  }
-  
-  .ventas-inventario,
-  .ventas-canasta {
-    display: none; /* Oculta tablas y buscador */
-  }
-  .ventas-acciones {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: #fff;
-    padding: 10px;
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: space-around;
-    z-index: 1000;
-  }
-  .barra-modulos {
-    position: fixed;
-    bottom: 0;
-
-  .resumen-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 14px;
-    margin: 12px 0 18px;
-  }
-
-  .resumen-card {
-    background: #fff;
-    border: 1px solid var(--border);
-    box-shadow: 0 10px 22px rgba(44,40,77,0.08);
-    border-radius: 16px;
-    padding: 14px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .resumen-label {
-    font-size: 13px;
-    text-transform: uppercase;
-    color: var(--color-muted);
-    letter-spacing: 0.5px;
-  }
-
-  .resumen-value {
-    font-size: 22px;
-    color: var(--color-primary);
-  }
-    left: 0;
-    width: 100%;
-    height: auto;
-    background-color: #fff;
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-    z-index: 1000;
-    padding: 5px 0;
-  }
-  .barra-modulos nav ul {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    margin: 0;
-    padding: 0;
-  }
-  .barra-modulos nav ul label {
-    display: none; /* Oculta los labels */
-  }
-  .sidebar > div {
-    display: none; /* Oculta logo y perfil */
-  }
-
-
-}
-
-/* estilos pagina principal*/
-
-/* === Sección 6: Layout general y contenedor principal === */
-
-.contenedor-app {
-  display: flex;
-  height: 100vh;
-  font-family: 'Times New Roman', Times, serif;
-}
-
-/* === Sidebar: navegación fija y branding === */
-.sidebar {
-  text-align: left;
-  width: 220px;
-  background: linear-gradient(180deg,#2c284d 0%, #382a53 100%);
-  color: #fff;
-  padding: 26px 18px;
-  position: fixed;
-  height: 100%;
-  overflow-y: auto;
-  box-shadow: 2px 0 8px rgba(44,40,77,0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.sidebar .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-.sidebar .brand img{ height:36px; width:auto }
-.sidebar .brand .title { font-weight:700; font-size:18px; color: #fff }
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin-top: 6px;
-  flex: 1;
-}
-
-.sidebar .perfil {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding: 12px 6px;
-}
-.sidebar .perfil img{
-  width:72px;
-  height:72px;
-  border-radius:8px;
-  object-fit:cover;
-  border:4px solid #9b59ff; /* borde morado claro */
-}
-.sidebar .perfil .meta{ color: #f3eefe; font-size:13px }
-
-.sidebar li {
-  padding: 12px 10px;
-  cursor: pointer;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #fff;
-  transition: background .12s, transform .06s;
-}
-
-.sidebar li .icon { opacity: 0.95 }
-
-.sidebar li:hover {
-  background: rgba(255,255,255,0.06);
-  transform: translateX(4px);
-}
-
-.sidebar li.active {
-  background: linear-gradient(90deg, rgba(155,89,255,0.14), rgba(155,89,255,0.06));
-  box-shadow: inset 3px 0 0 #9b59ff;
-}
-
-.sidebar .logout-btn{
-  border: 1px solid rgba(255,255,255,0.12);
-  background: transparent;
-  color: #fff;
-  padding: 8px 10px;
-  border-radius: 14px;
-  cursor: pointer;
-  align-self: stretch;
-}
-.sidebar .logout-btn:hover{ background: rgba(255,255,255,0.04) }
-
-/* === Área central y barra superior === */
-.contenido {
-  margin-left: 220px;
-  padding: 40px;
-  flex: 1;
-  background-color: #f4f4f4;
-  overflow-y: auto;
-  min-height: 100vh;
-}
-/* Barra superior compacta (titulo + perfil) */
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding: 10px 14px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.4), rgba(255,255,255,0.15));
-  border-radius: 12px;
-  margin-bottom: 18px;
-}
-.topbar-right{ display:flex; align-items:center; gap:10px }
-.topbar-right span{ font-weight:600; color:var(--color-primary) }
-/* perfil anclado al primer item del menú */
-.nav-item.perfil-nav{
-  background: rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 10px;
-  margin-bottom: 12px;
-  transition: background .12s, transform .06s;
-}
-.nav-item.perfil-nav img{
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
-  object-fit: cover;
-  border: 3px solid rgba(255,255,255,0.35);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-}
-.perfil-nav-text{
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-.perfil-nav-label{
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.65);
-}
-.perfil-nav #topbarNombre{
-  font-size: 15px;
-  color: #fff;
-}
-
-/* === Sección 7: Estilos base para módulos y secciones === */
-section{
-  color: #4752ae;
-}
-section button{
-  background-color: #fea43f;
-  color: #4752ae;
-  border: none;
-  padding: 10px 15px;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 5px;
-}
-section button:hover {
-  background-color: #4752ae;
-  color: #fea43f;
-}
-
-/* Visibilidad básica de cada módulo SPA */
-.modulo {
-  display: none;
-}
-
-.modulo.activo {
-  display: block;
-}
-/* === Sección 8: Controles específicos de Inventario === */
-inventario-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-}
-
-
-.inventario-resumen span {
-  margin-left: 20px;
-  font-weight: bold;
-}
-
-.tabla-inventario, .ventas-inventario {
-  width: 100%;
-  border-collapse: collapse;
-  border-spacing: 8px;
-  border-radius: 25px;
-  padding: 10px,20px;
-
-}
-
-.tabla-inventario th,
-.tabla-inventario td {
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: center;
-}
-
-.tabla-inventario th {
-  background-color: #f0f0f0;
-}
-
-.ventas-inventario tbody tr {
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-
-.ventas-inventario tbody tr:hover {
-  background: rgba(155, 89, 255, 0.08);
-  transform: translateX(2px);
-}
-
-.venta-producto-img-cell {
-  width: 64px;
-}
-
-.venta-producto-img {
-  width: 52px;
-  height: 52px;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.venta-producto-nombre {
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.venta-producto-desc {
-  display: block;
-  font-size: 12px;
-  color: var(--color-muted);
-  margin-top: 2px;
-}
-
-.tabla-inventario td select {
-  width: 100%;
-}
-
-.tabla-inventario td a {
-  color: #0077cc;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-/* === Sección 9: Venta rápida y canasta === */
-.ventas-header {
-  display: flex;
-  gap: 20px;
-}
-
-.ventas-inventario, .ventas-canasta {
-  flex: 1;
-  border: 1px solid #ccc;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border-spacing: 8px;
-}
-
-.ventas-inventario {
-  flex: 1 1 0;
-  overflow-y: auto;
-  max-height: calc(100vh - 180px);
-  position: sticky;
-  top: 20px;
-}
-.ventas-canasta {
-  width: 360px;
-  border: 1px solid #4752ae;
-  border-radius: 12px;
-  background: var(--surface);
-  position: sticky;
-  top: 20px;
-  height: calc(100vh - 160px);
-  overflow-y: auto;
-  flex: 0 0 360px;
-  padding: 16px;
-}
-
-.ventas-inventario table,
-.ventas-canasta table,
-.movimientos-tabla table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.ventas-cliente-select {
-  margin-bottom: 12px;
-}
-
-.ventas-cliente-select select {
-  width: 100%;
-}
-
-/* make ventas-header a two-column layout */
-.ventas-header { display:flex; gap:16px; align-items:flex-start }
 /* === Sección 10: Controles de movimientos === */
   .movimientos-controles {
   display: flex;
@@ -734,58 +54,8 @@ inventario-header {
 
 .modal form button{ margin-top:10px }
 
-/* Cabeceras y barra de búsqueda (Inventario) */
-section h2{
-  font-family: var(--font-heading);
-  font-size: 36px;
-  color: var(--color-primary);
-  margin-bottom: 14px;
-}
-
-.inventario-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  margin-bottom: 18px;
-}
-
-.search-box{
-  display:flex; align-items:center; gap:8px; max-width:520px; width:60%;
-}
-.search-box input[type="text"]{
-  padding: 10px 14px 10px 40px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-}
-.search-box .search-icon{
-  position: relative; left:34px; color: var(--color-muted); opacity:.9; pointer-events:none;
-}
-
-/* Botones de acción (Crear Producto/Categoría) */
-.acciones-inventario{ display:flex; gap:12px; align-items:center }
-.btn-action{ padding:8px 14px; border-radius:20px; border:2px solid var(--color-primary); background:var(--surface); color:var(--color-primary); font-weight:600 }
-.btn-action.primary{ background:var(--color-cta); color:var(--color-primary); border-color:var(--color-primary) }
-.btn-action:hover{ filter:brightness(.98) }
-
-/* Asegurar que modal use paleta del login también para botones y focos */
-/* background blur on sections */
-.blur {
-  filter: blur(4px);
-}
-
-/* example modal base */
-.modal {
-  display: none;            /* controlled by JS */
-  position: fixed;
-  inset: 0;                 /* full-screen overlay */
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.4);
-}
-
-/* modal content card inside modal */
+/* Cabeceras y componentes específicos que aún no tienen módulo propio */
+.blur { filter: blur(4px); }
 .modal .modal-content {
   background: #fff;
   width: min(640px, 92vw);
@@ -795,151 +65,206 @@ section h2{
   box-shadow: 0 10px 40px rgba(0,0,0,0.25);
   padding: 16px;
 }
-
-/* === Inventario: botones de categoría === */
-.categorias-header {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.categorias-header button {
-  padding: 10px 18px;
-  border-radius: 16px;
-  border: none;
-  background: #ffdd63;
-  font-weight: 600;
-  color: #3c3484;
-  cursor: pointer;
-  box-shadow: inset 0 -2px rgba(0,0,0,0.08);
-}
-
-.categorias-header button:hover {
-  filter: brightness(0.95);
-}
-
-.inventario-tabla-wrapper table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.inventario-tabla-wrapper thead th {
-  position: sticky;
-  top: 0;
-  background: #fff;
-  z-index: 1;
-}
 /* === Sección 11: Tarjetas y tablas de Estadísticas === */
+/* --- Maquetado mockup Nov 2025 (paleta violeta/azul) --- */
 .stats-card {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding: 15px;
+  border: 2px solid #7a5bff;
+  border-radius: 28px;
+  background: linear-gradient(180deg,#ffffff 0%, #f6f3ff 70%);
+  box-shadow: 0 28px 60px rgba(60,38,122,0.14);
+  color: #2b1c52;
+  height: auto;
+  overflow: auto;
 }
 
-.stats-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  align-items: flex-end;
+.stats-header h2 {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  color: #2b1c52;
+  margin: 2px 0 0;
 }
 
-.stats-filters {
+.stats-header .section-tag {
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #a396df;
+}
+
+.stats-focus-row {
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+
+.metric-card--focus {
+  flex: 1 1 10px;
+  border: 2px solid #cab9ff;
+  border-radius: 28px;
+  background: #f6f1ff;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.6), 0 18px 32px rgba(118,86,218,0.12);
+  padding: 16px 20px;
+}
+
+.metric-card--focus strong {
+  font-size: 10px;
+  color: #4d2ed1;
+}
+
+.stats-card .metric-card {
+  background: #ffffff;
+  border: 1px solid #d8ccff;
+  border-radius: 20px;
+  box-shadow: 0 12px 24px rgba(77,55,166,0.12);
+  padding: 18px;
+}
+
+.stats-card .metric-card span {
+  color: #4c3592;
+  font-weight: 600;
+}
+
+.stats-card .metric-card strong {
+  color: #4d2ed1;
+}
+
+.stats-focus-row .metric-card small,
+.stats-card .metric-card small {
+  color: #8d85b9;
+}
+
+.stats-filter-card {
+  flex: 1 1 26px;
+  border: 2px solid #cab9ff;
+  border-radius: 28px;
+  padding: 18px 20px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(77,55,166,0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stats-filter-card__label {
+  font-weight: 20;
+  color: #4d2ed1;
+  font-size: 16px;
+}
+
+.stats-filter-card__controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.stats-filters label {
-  font-size: 12px;
-  color: var(--color-muted);
+.stats-filter-card__icon {
+  font-size: 22px;
+  color: #4d2ed1;
 }
+
+.stats-filter-card input[type="date"],
+.stats-filter-card select {
+  border: none;
+  background: #f2eeff;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 10;
+  color: #2b1c52;
+  box-shadow: inset 0 2px 6px rgba(39,24,71,0.08);
+}
+
+.stats-filter-card select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #4d2ed1 50%),
+    linear-gradient(135deg, #4d2ed1 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% + 2px), calc(100% - 12px) calc(50% + 2px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+}
+
+.stats-filter-card__btn {
+  background: #fff;
+  color: #4d2ed1;
+  border: 2px solid #4d2ed1;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-weight: 10;
+  box-shadow: none;
+}
+
 
 .stats-metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  flex-shrink: 0;
 }
 
 .stats-layout {
   display: grid;
-  grid-template-columns: repeat(2, minmax(240px, 1fr));
-  grid-template-areas:
-    "bar pie"
-    "table table";
-  gap: 14px;
-  align-items: stretch;
+  grid-template-rows: minmax(240px, 0.55fr) minmax(240px, 0.45fr);
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
 }
 
-.stats-chart--bar {
-  grid-area: bar;
+.stats-charts-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  min-height: 0;
 }
 
-.stats-chart--pie {
-  grid-area: pie;
+.stats-charts-row .stats-chart {
+  height: 100%;
+  min-height: 0;
 }
 
 .chart-card {
-  background: #f7f6ff;
-  border-radius: 16px;
-  padding: 14px;
-  border: 1px solid rgba(44,40,77,0.08);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
-}
-
-.stats-chart {
-  min-height: 210px;
-  display: flex;
-  flex-direction: column;
-}
-
-.stats-chart canvas {
-  flex: 1;
-}
-
-.chart-title {
-  font-weight: 600;
-  color: #514a98;
-  margin-bottom: 8px;
+  background: #f9f7ff;
+  border-radius: 22px;
+  padding: 20px;
+  border: 2px solid #d9ccff;
+  box-shadow: 0 20px 40px rgba(48,33,120,0.12);
 }
 
 .stats-table {
-  grid-area: table;
   background: #fff;
-  border-radius: 16px;
-  padding: 14px;
-  border: 1px solid rgba(44,40,77,0.08);
-  box-shadow: 0 8px 20px rgba(44,40,77,0.08);
+  border-radius: 24px;
+  padding: 20px;
+  border: 2px solid #d9ccff;
+  box-shadow: 0 18px 40px rgba(48,33,120,0.12);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
 }
-
 .stats-table .tabla-wrapper {
   flex: 1;
-}
-
-.stats-table--wide .tabla-wrapper {
-  max-height: 280px;
+  min-height: 0;
   overflow: auto;
 }
 
 .stats-table table th {
-  background: #eef0ff;
-  color: #4a4d9a;
+  background: #dfe7ff;
+  color: #2f1c52;
+  font-weight: 600;
 }
 
-.inventario-card .tabla-inventario th {
-  background: #eef0ff;
-  color: #4a4d9a;
-}
-
-.inventario-card .tabla-inventario td,
 .stats-table td {
   text-align: center;
+  color: #4a4171;
 }
 
-.inventario-card .tabla-inventario td:first-child,
 .stats-table td:first-child {
   text-align: left;
 }
@@ -950,18 +275,16 @@ section h2{
 }
 
 @media (max-width: 1024px) {
-  .inventario-top {
-    grid-template-columns: 1fr;
+  .stats-focus-row {
+    flex-direction: column;
   }
-  .inventario-metrics {
-    justify-content: flex-start;
+  .stats-card {
+    height: auto;
+    max-height: none;
+    overflow: visible;
   }
   .stats-layout {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "bar"
-      "pie"
-      "table";
+    grid-template-rows: auto auto;
   }
 }
 /* === Componentes reutilizables: tablas genéricas === */
@@ -1024,7 +347,7 @@ section h2{
 .tabla-wrapper button {
   margin-right: 6px;
 }
-ajustes-grupo {
+.ajustes-grupo {
   margin-bottom: 15px;
   display: flex;
   flex-direction: column;

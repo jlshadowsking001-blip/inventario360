@@ -1,0 +1,99 @@
+/* ===============================
+    Globals & Resets
+   =============================== */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap');
+
+:root{
+  /* colores */
+    --color-primary: #2c284d;
+    --color-primary-2: #382a53;
+    --color-accent: #9b59ff;
+    --color-cta: #fea43f;
+    --color-text: #2f2d5c;
+    --color-muted: #8a86a9;
+    --bg: #f4f4f4;
+    --surface: #ffffff;
+    --border: #e6e4ef;
+    --shadow: rgba(44,40,77,0.06);
+
+  /* tipografías */
+    --font-ui: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    --font-heading: 'Playfair Display', serif;
+
+  /* medidas */
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --spacing-xs: 6px;
+    --spacing-sm: 10px;
+    --spacing-md: 16px;
+    }
+
+body{
+    font-family: var(--font-ui);
+    background-color: var(--bg);
+    color: var(--color-text);
+    margin: 0;
+    padding: 0;
+}
+*
+{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    scroll-behavior: smooth;
+}
+p{
+    color: var(--color-text);
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+label{ display:block; margin-bottom:6px; color:var(--color-muted); font-size:13px }
+input[type="text"], input[type="number"], input[type="email"], input[type="tel"], select, textarea, .modal-form-control{
+    width:100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    font-family: var(--font-ui);
+    color: var(--color-text);
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.02);
+}
+input:focus, select:focus, textarea:focus{
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 4px 18px rgba(155,89,255,0.08);
+}
+
+button.btn-primary{
+    background: var(--color-cta);
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    padding: 10px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight:600;
+}
+button.btn-primary:hover{ background: var(--color-primary); color: var(--color-cta); border-color: var(--color-cta); transform: translateY(-2px) }
+
+.file-preview{ display:flex; gap:12px; align-items:center }
+.file-preview img{ width:72px; height:72px; object-fit:cover; border-radius:8px; border:1px solid var(--border) }
+
+/* Botones genéricos */
+.btn-action{ padding:8px 14px; border-radius:20px; border:2px solid var(--color-primary); background:var(--surface); color:var(--color-primary); font-weight:600; cursor:pointer }
+.btn-action.primary{ background:var(--color-cta); color:var(--color-primary); border-color:var(--color-primary) }
+.btn-action.ghost { background: transparent; border-color: rgba(44,40,77,0.3); color: var(--color-primary); }
+.btn-action:hover{ filter:brightness(.98) }
+
+/* Inputs dentro del modal */
+    .modal-contenido form button,
+    .modal-contenido form .btn-action{
+    display:inline-block;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 2px solid var(--color-primary);
+    background: var(--color-cta);
+    color: var(--color-primary);
+    cursor:pointer;
+    font-weight:600;
+}

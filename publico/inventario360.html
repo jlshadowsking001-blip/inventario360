@@ -4,12 +4,16 @@
     <meta charset="UTF-8"><!--tipo de codificacion-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0"><!--para que se adapte a cualquier pantalla-->
     <title>Inventario360</title><!--titulo de la pagina-->
-    <link rel="stylesheet" href="stilos/appstyles.css"><!--enlace a la hoja de estilos-->
+    <link rel="stylesheet" href="stilos/globals.css">
+    <link rel="stylesheet" href="stilos/layout.css">
+    <link rel="stylesheet" href="stilos/inventario.css">
+    <link rel="stylesheet" href="stilos/ventas.css">
+    <link rel="stylesheet" href="stilos/appstyles.css">
     <!-- Chart.js para gráficas de estadísticas -->
     <!-- Usar una versión fija evita solicitudes a mapas de origen que pueden no existir en la URL genérica -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
     <!--esto permite restringir la entrada sin antes loguiase-->
-    <!--<script>
+    <script>
         window.onload = function() {  
             const usuario = localStorage.getItem("usuarioActivo");
             if (!usuario) {
@@ -22,7 +26,7 @@
         if (!usuario) {
             window.location.href = "login.html";
         }
-    </script>-->
+    </script>
 </head>
 
 <body>
@@ -57,11 +61,6 @@
         </aside>
         <!-- Área dinámica -->
         <main class="contenido">
-            <!-- Barra superior con perfil compacto -->
-            <div class="topbar">
-                <div class="topbar-left"></div>
-                <div class="topbar-right"></div>
-            </div>
             <!--aqui comiensa el perfil de usuario se traen datos de la base y se permiten agregar datos adicionales-->
             <section id="Perfil" class="modulo">
                 <h2>Perfil de usuario</h2>
@@ -262,26 +261,31 @@
                             <p class="section-tag">Resumen</p>
                             <h2>Estadísticas</h2>
                         </div>
-                        <div class="stats-filters">
-                            <label>Fecha base</label>
-                            <input type="date" id="fechaBaseEstadisticas">
-                            <label for="rangoTiempoEstadisticas">Rango</label>
-                            <select id="rangoTiempoEstadisticas">
-                                <option value="dia">Día</option>
-                                <option value="semana">Semana</option>
-                                <option value="mes">Mes</option>
-                                <option value="año">Año</option>
-                            </select>
-                            <button class="btn-action" onclick="filtrarEstadisticas()">Buscar</button>
+                    </div>
+
+                    <div class="stats-focus-row">
+                        <div class="metric-card metric-card--focus">
+                            <span>Total Venta</span>
+                            <strong>C$<span id="totalVentas">0</span></strong>
+                            <small>monto vendido según el rango</small>
+                        </div>
+                        <div class="stats-filter-card">
+                            <span class="stats-filter-card__label">Fecha</span>
+                            <div class="stats-filter-card__controls">
+                                <span class="stats-filter-card__icon" aria-hidden="true">📅</span>
+                                <input type="date" id="fechaBaseEstadisticas">
+                                <select id="rangoTiempoEstadisticas" aria-label="Rango de tiempo para estadísticas">
+                                    <option value="dia">Día</option>
+                                    <option value="semana">Semana</option>
+                                    <option value="mes">Mes</option>
+                                    <option value="año">Año</option>
+                                </select>
+                                <button class="btn-action stats-filter-card__btn" onclick="filtrarEstadisticas()">Aplicar</button>
+                            </div>
                         </div>
                     </div>
 
                     <div class="stats-metrics">
-                        <div class="metric-card">
-                            <span>Total vendido</span>
-                            <strong>C$<span id="totalVentas">0</span></strong>
-                            <small>monto vendido según el rango</small>
-                        </div>
                         <div class="metric-card">
                             <span>Ganancia estimada</span>
                             <strong>C$<span id="gananciaTotal">0</span></strong>
@@ -300,13 +304,15 @@
                     </div>
 
                     <div class="stats-layout">
-                        <div class="chart-card stats-chart stats-chart--bar">
-                            <div class="chart-title">Detalles de ventas</div>
-                            <canvas id="salesBarChart"></canvas>
-                        </div>
-                        <div class="chart-card stats-chart stats-chart--pie">
-                            <div class="chart-title">Distribución por producto</div>
-                            <canvas id="salesPieChart"></canvas>
+                        <div class="stats-charts-row">
+                            <div class="chart-card stats-chart stats-chart--bar">
+                                <div class="chart-title">Detalles de ventas</div>
+                                <canvas id="salesBarChart"></canvas>
+                            </div>
+                            <div class="chart-card stats-chart stats-chart--pie">
+                                <div class="chart-title">Distribución por producto</div>
+                                <canvas id="salesPieChart"></canvas>
+                            </div>
                         </div>
                         <div class="stats-table stats-table--wide">
                             <div class="chart-title">Detalles de productos vendidos</div>

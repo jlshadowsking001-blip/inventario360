@@ -45,7 +45,7 @@ async function bootstrap() {
       const skipGlobal = Boolean(window.__DEV_SKIP_AUTH);
       const skipAuth = skipQuery || skipLocal || skipGlobal;
 
-      /*if (skipAuth) {
+      if (skipAuth) {
         console.warn('DEV_SKIP_AUTH active: saltando comprobación de sesión (desactivar con localStorage.removeItem("DEV_SKIP_AUTH") o ?noauth=0)');
       } else {
         const usuarioActivo = window.localStorage ? window.localStorage.getItem('usuarioActivo') : null;
@@ -56,7 +56,7 @@ async function bootstrap() {
           window.location.href = loginUrl;
           return;
         }
-      }*/
+      }
     } catch (e) {
       console.warn('Error comprobando usuarioActivo en localStorage', e);
     }
