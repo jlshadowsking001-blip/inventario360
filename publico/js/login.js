@@ -1,4 +1,8 @@
 console.log("login.js cargado");
+// Eliminar el div de depuración si por alguna razón permanece en el DOM (cache viejo).
+const debugNode = document.getElementById('debugLogin');
+if (debugNode) debugNode.remove();
+
 // validaciodecampos.js expone las variables y funciones en window (usuarioRegex, contraseñaRegex, etc.)
 
 // Mostrar/ocultar formularios (expuesto en window para los onclick del HTML)
@@ -14,13 +18,11 @@ window.mostrarFormulario = mostrarFormulario;
 // Función que escribe mensajes de depuración en el panel o la consola con marca de tiempo.
 function debugLog(msg) {
     try {
-        const el = document.getElementById('debugLogin');
-        if (!el) return console.log('[debug]', msg);
-        el.style.display = 'block';
         const time = new Date().toLocaleTimeString();
-        el.innerHTML = `<div>[${time}] ${String(msg)}</div>` + el.innerHTML;
+        console.log(`[debug ${time}]`, msg);
     } catch (e) { console.log('[debug error]', e, msg); }
 }
+// Ya no se muestra en pantalla, solo consola:
 debugLog('login.js cargado');
 // Envío de datos para login
 // Maneja el submit del formulario de inicio: valida campos y envía la petición al backend.
