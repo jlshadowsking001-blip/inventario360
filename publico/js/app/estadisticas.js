@@ -221,7 +221,9 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
 
         // --- Gráfico de pastel: distribución del capital invertido en inventario ---
         try {
-        const resInventario = await fetch('/productos');
+        const usuario_id = getUsuarioId();
+        if (!usuario_id) throw new Error('Usuario no identificado');
+        const resInventario = await fetch(`/productos?usuario_id=${usuario_id}`);
         if (!resInventario.ok) throw new Error('Error al cargar inventario');
         const inventario = await resInventario.json();
         const productosInventario = aggregateInventario(inventario);

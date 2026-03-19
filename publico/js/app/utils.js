@@ -54,10 +54,18 @@ window.calcularGanancia = function calcularGanancia(precio, costo) {
  */
 window.getUsuarioId = function getUsuarioId() {
     try {
-        const usuarioStr = localStorage.getItem('usuarioActivo');
+        // Preferir el ID guardado explícitamente (más confiable)
+        const idStr = localStorage.getItem('usuarioActivoId');
+        if (idStr) {
+            const id = Number(idStr);
+            if (!Number.isNaN(id)) return id;
+        }
+
+        // Fallback: intentar parsear el objeto previa o actualmente guardado
+        const usuarioStr = localStorage.getItem('usuarioActivo') || localStorage.getItem('perfilUsuario');
         if (!usuarioStr) return null;
         const usuario = JSON.parse(usuarioStr);
-        return usuario.id || null;
+        return usuario && usuario.id ? usuario.id : null;
     } catch (e) {
         console.error('Error obteniendo usuario ID:', e);
         return null;

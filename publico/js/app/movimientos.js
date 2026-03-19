@@ -343,7 +343,9 @@ window.loadStats = async function loadStats() {
         });
 
         // Calcular precio estimado por producto
-        const resP = await fetch('/productos');
+        const usuario_id = getUsuarioId();
+        if (!usuario_id) throw new Error('Usuario no identificado');
+        const resP = await fetch(`/productos?usuario_id=${usuario_id}`);
         const dataP = await resP.json();
         const prods = dataP.productos || [];
         window._productosCache = prods;

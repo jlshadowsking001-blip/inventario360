@@ -55,7 +55,13 @@ document.getElementById("formulario-inicio").addEventListener("submit", async fu
     try { data = await res.json(); } catch (err) { data = { error: 'Respuesta no JSON' }; }
     debugLog('Login: respuesta -> status=' + res.status + ' body=' + JSON.stringify(data));
     if (res.ok) {
-        localStorage.setItem("usuarioActivo", JSON.stringify(data.usuario));
+        // Guardar nombre de usuario para compatibilidad con el resto de la app
+        localStorage.setItem("usuarioActivo", data.usuario.username);
+        // Guardar ID para peticiones que necesitan aislamiento por usuario
+        localStorage.setItem("usuarioActivoId", String(data.usuario.id));
+        // Guardar perfil completo para mostrar datos como nombre y email
+        localStorage.setItem("perfilUsuario", JSON.stringify(data.usuario));
+
         debugLog('Inicio de sesión correcto. Redirigiendo...');
         window.location.href = "inventario360.html";
     } else {

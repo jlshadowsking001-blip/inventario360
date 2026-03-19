@@ -80,13 +80,9 @@ window.guardarCategoria = async function guardarCategoria() {
  * @param {number|string} categoriaId - ID de la categoría.
  */
 window.filtrarPorCategoria = function filtrarPorCategoria(categoriaId) {
-    fetch('/productos')
-        .then(r => r.json())
-        .then(data => {
-        const prods = (data.productos || []).filter(p => Number(p.categoria_id) === Number(categoriaId));
-        renderProductsTable(prods);
-        })
-        .catch(err => console.warn('No se pudo filtrar por categoría:', err));
+    const productos = Array.isArray(window._productosCache) ? window._productosCache : [];
+    const prods = productos.filter(p => Number(p.categoria_id) === Number(categoriaId));
+    renderProductsTable(prods);
 };
 
 /**
