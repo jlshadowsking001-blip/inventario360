@@ -54,11 +54,19 @@ window.guardarProducto = async function guardarProducto() {
         const fileInput = document.getElementById('imagenProducto');
         let dataUrl = null;
 
+        if (!nombre.trim()) return showToast('El nombre es obligatorio', 'error');
+        if (cantidad < 0) return showToast('La cantidad no puede ser negativa', 'error');
+        if (precio < 0) return showToast('El precio no puede ser negativo', 'error');
+        if (costo < 0) return showToast('El costo no puede ser negativo', 'error');
+
+        const usuario_id = getUsuarioId();
+        if (!usuario_id) return showToast('Usuario no identificado', 'error');
+
         if (fileInput?.files?.[0]) {
             dataUrl = await fileToDataUrl(fileInput.files[0]);
         }
 
-        const payload = { nombre, descripcion: null, precio, costo, existencia: cantidad, categoria_id: categoria };
+        const payload = { nombre, descripcion: null, precio, costo, existencia: cantidad, categoria_id: categoria, usuario_id };
         if (dataUrl) payload.dataUrl = dataUrl;
 
         const res = await fetch('/productos', {
@@ -68,14 +76,14 @@ window.guardarProducto = async function guardarProducto() {
         });
 
         const data = await res.json();
-        if (!res.ok) return alert(data.error || 'Error creando producto');
+        if (!res.ok) return showToast(data.error || 'Error creando producto', 'error');
 
-        alert('Producto creado');
+        showToast('Producto creado', 'success');
         loadProducts();
         cargarCategorias();
     } catch (err) {
         console.error('Error guardando producto:', err);
-        alert('Error guardando producto');
+        showToast('Error guardando producto', 'error');
     }
 };
 
@@ -84,7 +92,10 @@ window.guardarProducto = async function guardarProducto() {
  */
 window.loadProducts = async function loadProducts() {
     try {
-        const res = await fetch('/productos');
+        const usuario_id = getUsuarioId();
+        if (!usuario_id) return showToast('Usuario no identificado', 'error');
+
+        const res = await fetch(`/productos?usuario_id=${usuario_id}`);
         const data = await res.json();
         if (res.ok) {
         window._productosCache = data.productos || [];

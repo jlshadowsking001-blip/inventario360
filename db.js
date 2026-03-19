@@ -76,7 +76,9 @@ console.log(`Usando MySQL en ${MYSQL_HOST}:${MYSQL_PORT} DB=${MYSQL_DATABASE}`);
 
         await pool.query(`CREATE TABLE IF NOT EXISTS categorias (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            nombre VARCHAR(255) NOT NULL
+            nombre VARCHAR(255) NOT NULL,
+            usuario_id INT NOT NULL,
+            UNIQUE KEY unique_categoria_usuario (nombre, usuario_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
         await pool.query(`CREATE TABLE IF NOT EXISTS productos (
@@ -89,7 +91,8 @@ console.log(`Usando MySQL en ${MYSQL_HOST}:${MYSQL_PORT} DB=${MYSQL_DATABASE}`);
             categoria_id INT,
             image_url VARCHAR(512),
             created_at BIGINT,
-            updated_at BIGINT
+            updated_at BIGINT,
+            usuario_id INT NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
         await pool.query(`CREATE TABLE IF NOT EXISTS movimientos (
@@ -101,7 +104,8 @@ console.log(`Usando MySQL en ${MYSQL_HOST}:${MYSQL_PORT} DB=${MYSQL_DATABASE}`);
             descripcion TEXT,
             fecha BIGINT,
             cliente_id INT,
-            proveedor_id INT
+            proveedor_id INT,
+            usuario_id INT NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
         // Función auxiliar que verifica si una columna ya existe en information_schema.
@@ -138,7 +142,8 @@ console.log(`Usando MySQL en ${MYSQL_HOST}:${MYSQL_PORT} DB=${MYSQL_DATABASE}`);
             nombre VARCHAR(255) NOT NULL,
             direccion TEXT,
             telefono VARCHAR(50),
-            email VARCHAR(255)
+            email VARCHAR(255),
+            usuario_id INT NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
         await pool.query(`CREATE TABLE IF NOT EXISTS proveedores (
@@ -146,7 +151,8 @@ console.log(`Usando MySQL en ${MYSQL_HOST}:${MYSQL_PORT} DB=${MYSQL_DATABASE}`);
             nombre VARCHAR(255) NOT NULL,
             contacto VARCHAR(255),
             telefono VARCHAR(50),
-            email VARCHAR(255)
+            email VARCHAR(255),
+            usuario_id INT NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
         console.log('Tablas MySQL verificadas/creadas');

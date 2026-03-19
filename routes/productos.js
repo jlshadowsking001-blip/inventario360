@@ -27,11 +27,14 @@ const saveImageFromDataUrl = (name, dataUrlValue) => {
 };
 
 // Devuelve todos los productos junto con la categoría asociada
-router.get('/', (_req, res)=>{
+router.get('/', (req, res)=>{
+  const usuario_id = req.body.usuario_id || req.query.usuario_id;
+  if (!usuario_id) return res.status(400).json({ error: 'usuario_id requerido' });
   db.all(
     `SELECT p.id, p.nombre, p.descripcion, p.precio, p.costo, p.existencia, p.categoria_id, p.image_url, p.created_at, p.updated_at, c.nombre as categoria
-      FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id`,
-    [],
+      FROM productos p LEFT JOIN categorias c ON p.categoria_id = c.id AND c.usuario_id = ?
+      WHERE p.usuario_id = ?`,
+    [usuario_id, usuario_id],
     (err, rows) => {
       if (err) return res.status(500).json({ error: 'Error leyendo productos' });
       res.json({ productos: rows });
@@ -42,7 +45,9 @@ router.get('/', (_req, res)=>{
 // Recupera un producto específico por ID para vistas de detalle/edición
 router.get('/:id', (req, res)=>{
   const id = req.params.id;
-  db.get('SELECT * FROM productos WHERE id = ?', [id], (err, row) => {
+  const usuario_id = req.body.usuario_id || req.query.usuario_id;
+  if (!usuario_id) return res.status(400).json({ error: 'usuario_id requerido' });
+  db.get('SELECT * FROM productos WHERE id = ? AND usuario_id = ?', [id, usuario_id], (err, row) => {
     if (err) return res.status(500).json({ error: 'Error leyendo producto' });
     if (!row) return res.status(404).json({ error: 'Producto no encontrado' });
     res.json({ producto: row });
@@ -51,8 +56,10 @@ router.get('/:id', (req, res)=>{
 
 // Crea un producto nuevo y guarda la imagen enviada en base64 si existe
 router.post('/', (req, res)=>{
-  const { nombre, descripcion, precio, costo, existencia, categoria_id, dataUrl } = req.body;
+  const { nombre, descripcion, precio, costo, existencia, categoria_id, dataUrl, usuario_id } = req.body;
   if (!nombre) return res.status(400).json({ error: 'nombre es obligatorio' });
+  if (!usuario_id) return res.status(400).json({ error: 'usuario_id requerido' });
+  if (precio < 0 || costo < 0 || existencia < 0) return res.status(400).json({ error: 'Valores no pueden ser negativos' });
 
   let image_url = null;
   if (dataUrl) {
@@ -61,8 +68,8 @@ router.post('/', (req, res)=>{
   }
 
   db.run(
-    `INSERT INTO productos (nombre, descripcion, precio, costo, existencia, categoria_id, image_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%s','now'))`,
-    [nombre, descripcion || null, precio || 0, costo || 0, existencia || 0, categoria_id || null, image_url],
+    `INSERT INTO productos (nombre, descripcion, precio, costo, existencia, categoria_id, image_url, created_at, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), ?)`,
+    [nombre, descripcion || null, precio || 0, costo || 0, existencia || 0, categoria_id || null, image_url, usuario_id],
     function (err) {
       if (err) return res.status(500).json({ error: 'Error creando producto' });
       db.get('SELECT * FROM productos WHERE id = ?', [this.lastID], (e, row) => {
@@ -76,9 +83,11 @@ router.post('/', (req, res)=>{
 // Reemplaza todos los campos del producto y actualiza marca de tiempo
 router.put('/:id', (req, res)=>{
   const id = req.params.id;
-  const { nombre, descripcion, precio, costo, existencia, categoria_id } = req.body;
-  const sql = `UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, costo = ?, existencia = ?, categoria_id = ?, updated_at = strftime('%s','now') WHERE id = ?`;
-  db.run(sql, [nombre, descripcion || null, precio || 0, costo || 0, existencia || 0, categoria_id || null, id], function (err) {
+  const { nombre, descripcion, precio, costo, existencia, categoria_id, usuario_id } = req.body;
+  if (!usuario_id) return res.status(400).json({ error: 'usuario_id requerido' });
+  if (precio < 0 || costo < 0 || existencia < 0) return res.status(400).json({ error: 'Valores no pueden ser negativos' });
+  const sql = `UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, costo = ?, existencia = ?, categoria_id = ?, updated_at = UNIX_TIMESTAMP() WHERE id = ? AND usuario_id = ?`;
+  db.run(sql, [nombre, descripcion || null, precio || 0, costo || 0, existencia || 0, categoria_id || null, id, usuario_id], function (err) {
     if (err) return res.status(500).json({ error: 'Error actualizando producto' });
     if (this.changes === 0) return res.status(404).json({ error: 'Producto no encontrado' });
     db.get('SELECT * FROM productos WHERE id = ?', [id], (e, row) => {
@@ -110,7 +119,7 @@ router.patch('/:id', (req, res)=>{
   if (fields.length === 0) return res.status(400).json({ error: 'Nada para actualizar' });
   const shouldStampUpdate = ['existencia', 'precio', 'costo'].some(k => req.body[k] !== undefined) || Boolean(newImageUrl);
   if (shouldStampUpdate) {
-    fields.push("updated_at = strftime('%s','now')");
+    fields.push("updated_at = UNIX_TIMESTAMP()");
   }
   values.push(id);
   const sql = `UPDATE productos SET ${fields.join(', ')} WHERE id = ?`;
@@ -127,7 +136,9 @@ router.patch('/:id', (req, res)=>{
 // Elimina un producto y devuelve error si el registro no existía
 router.delete('/:id', (req, res)=>{
   const id = req.params.id;
-  db.run('DELETE FROM productos WHERE id = ?', [id], function (err) {
+  const usuario_id = req.body.usuario_id || req.query.usuario_id;
+  if (!usuario_id) return res.status(400).json({ error: 'usuario_id requerido' });
+  db.run('DELETE FROM productos WHERE id = ? AND usuario_id = ?', [id, usuario_id], function (err) {
     if (err) return res.status(500).json({ error: 'Error eliminando producto' });
     if (this.changes === 0) return res.status(404).json({ error: 'Producto no encontrado' });
     res.json({ mensaje: 'Producto eliminado' });

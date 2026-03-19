@@ -9,7 +9,10 @@ window.categorias = [];
  */
 window.cargarCategorias = async function cargarCategorias() {
     try {
-        const res = await fetch('/categorias');
+        const usuario_id = getUsuarioId();
+        if (!usuario_id) return showToast('Usuario no identificado', 'error');
+
+        const res = await fetch(`/categorias?usuario_id=${usuario_id}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error cargando categorías');
 
@@ -48,23 +51,27 @@ window.cargarCategorias = async function cargarCategorias() {
  */
 window.guardarCategoria = async function guardarCategoria() {
     const nombre = document.getElementById('nombreCategoria').value.trim();
-    if (!nombre) return alert('El nombre es obligatorio');
+    if (!nombre) return showToast('El nombre es obligatorio', 'error');
+
+    const usuario_id = getUsuarioId();
+    if (!usuario_id) return showToast('Usuario no identificado', 'error');
 
     try {
         const res = await fetch('/categorias', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre })
+        body: JSON.stringify({ nombre, usuario_id })
         });
 
         const data = await res.json();
-        if (!res.ok) return alert(data.error || 'Error creando categoría');
+        if (!res.ok) return showToast(data.error || 'Error creando categoría', 'error');
 
-        alert(`Categoría "${data.categoria.nombre}" creada`);
+        showToast(`Categoría "${data.categoria.nombre}" creada`, 'success');
+        document.getElementById('nombreCategoria').value = ''; // Limpiar input
         await cargarCategorias();
     } catch (err) {
         console.error('Error creando categoría:', err);
-        alert('Error creando categoría');
+        showToast('Error creando categoría', 'error');
     }
 };
 

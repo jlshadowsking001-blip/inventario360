@@ -26,6 +26,7 @@ async function bootstrap() {
       './app/ajustes.js',
       './app/utils.js',
       './app/validaciondecampos.js',
+      './app/toast.js',
       './app/main.js'
     ];
 

@@ -1,7 +1,7 @@
 /* ===============================
     Globals & Resets
    =============================== */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap'); /* Carga las dos familias base utilizadas en toda la app */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'); /* Fuente moderna y legible */
 
 :root{
     /* colores (alineados con el login) */
@@ -17,8 +17,8 @@
     --shadow: rgba(44,40,77,0.06); /* Sombras estándar */
 
   /* tipografías */
-    --font-ui: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; /* Fuente sans para interfaz */
-    --font-heading: 'Playfair Display', serif; /* Fuente serif para títulos */
+    --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; /* Fuente moderna para interfaz */
+    --font-heading: 'Inter', serif; /* Fuente para títulos */
 
   /* medidas */
     --radius-sm: 8px; /* Bordes suaves estándar */

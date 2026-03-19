@@ -55,7 +55,7 @@ document.getElementById("formulario-inicio").addEventListener("submit", async fu
     try { data = await res.json(); } catch (err) { data = { error: 'Respuesta no JSON' }; }
     debugLog('Login: respuesta -> status=' + res.status + ' body=' + JSON.stringify(data));
     if (res.ok) {
-        localStorage.setItem("usuarioActivo", data.usuario.username);
+        localStorage.setItem("usuarioActivo", JSON.stringify(data.usuario));
         debugLog('Inicio de sesión correcto. Redirigiendo...');
         window.location.href = "inventario360.html";
     } else {

@@ -47,3 +47,19 @@ window.formatearMoneda = function formatearMoneda(valor) {
 window.calcularGanancia = function calcularGanancia(precio, costo) {
     return Number(precio) - Number(costo);
 };
+
+/**
+ * Obtiene el ID del usuario activo desde localStorage.
+ * @returns {number|null}
+ */
+window.getUsuarioId = function getUsuarioId() {
+    try {
+        const usuarioStr = localStorage.getItem('usuarioActivo');
+        if (!usuarioStr) return null;
+        const usuario = JSON.parse(usuarioStr);
+        return usuario.id || null;
+    } catch (e) {
+        console.error('Error obteniendo usuario ID:', e);
+        return null;
+    }
+};
