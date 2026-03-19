@@ -79,6 +79,22 @@ window.guardarProducto = async function guardarProducto() {
         if (!res.ok) return showToast(data.error || 'Error creando producto', 'error');
 
         showToast('Producto creado', 'success');
+
+        // Limpiar formulario para permitir crear otro producto enseguida
+        const productoIn = document.getElementById('producto');
+        const categoriaIn = document.getElementById('categoria');
+        const cantidadIn = document.getElementById('cantidad');
+        const precioIn = document.getElementById('precio');
+        const costoIn = document.getElementById('costo');
+        const imagenIn = document.getElementById('imagenProducto');
+
+        if (productoIn) productoIn.value = '';
+        if (categoriaIn) categoriaIn.value = '';
+        if (cantidadIn) cantidadIn.value = '0';
+        if (precioIn) precioIn.value = '0';
+        if (costoIn) costoIn.value = '0';
+        if (imagenIn) imagenIn.value = '';
+
         loadProducts();
         cargarCategorias();
     } catch (err) {
@@ -213,11 +229,12 @@ window.editarProducto = function editarProducto(id) {
                 <div class="producto-img-preview">
                     <img id="previewImagenProducto" src="${imagenActual}" alt="Vista previa del producto">
                 </div>
+                <div id="imagenActualTexto" style="margin-top:6px; font-size:12px; color:#555;"></div>
             </div>
             <div class="col">
                 <label>Actualizar imagen:</label>
                 <input id="imagenProducto" name="imagenProducto" type="file" accept="image/*">
-                <small style="display:block; margin-top:6px; color:var(--color-muted);">Deja vacío si quieres conservar la imagen actual.</small>
+                <small id="imagenProductoAyuda" style="display:block; margin-top:6px; color:var(--color-muted);">Deja vacío si quieres conservar la imagen actual.</small>
             </div>
         </div>
         <div style="text-align:right; margin-top:10px;"><button type="submit" class="btn btn--primary">Guardar Cambios</button></div>
@@ -250,7 +267,20 @@ window.editarProducto = function editarProducto(id) {
         if (producto.categoria_id) categoriaSelect.value = producto.categoria_id;
     }
 
-    if (previewImg) previewImg.src = imagenActual;
+    if (previewImg) {
+        previewImg.src = imagenActual;
+        previewImg.alt = producto.image_url ? `Imagen del producto ${producto.nombre}` : 'Sin imagen';
+    }
+
+    const infoImagen = document.getElementById('imagenActualTexto');
+    if (infoImagen) {
+        infoImagen.textContent = producto.image_url ? 'Imagen actual (puedes cambiarla)' : 'No hay imagen actual. Selecciona un archivo para agregar imagen';
+    }
+
+    const ayudaImagen = document.getElementById('imagenProductoAyuda');
+    if (ayudaImagen) {
+        ayudaImagen.textContent = producto.image_url ? 'Deja vacío si quieres conservar la imagen actual.' : 'Debe seleccionar una imagen si deseas agregar una.';
+    }
 
     if (fileInput && previewImg) {
         fileInput.addEventListener('change', async (event) => {
