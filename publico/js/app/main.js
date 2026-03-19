@@ -10,9 +10,29 @@ async function initApp() {
     if (window.__APP_INITIALIZED) return;
     window.__APP_INITIALIZED = true;
 
-    if (!localStorage.getItem('usuarioActivo')) {
+    const usuarioActivo = localStorage.getItem('usuarioActivo');
+    if (!usuarioActivo) {
         window.location.href = 'login.html';
         return;
+    }
+
+    // Si no tenemos ID del usuario guardado, intentar obtenerlo desde el servidor (por compatibilidad con sesiones antiguas).
+    if (!localStorage.getItem('usuarioActivoId')) {
+        try {
+            const username = typeof usuarioActivo === 'string' ? usuarioActivo : null;
+            if (username) {
+                const perfilRes = await fetch(`/usuarios/perfil/${encodeURIComponent(username)}`);
+                if (perfilRes.ok) {
+                    const payload = await perfilRes.json();
+                    if (payload && payload.usuario && payload.usuario.id) {
+                        localStorage.setItem('usuarioActivoId', String(payload.usuario.id));
+                        localStorage.setItem('perfilUsuario', JSON.stringify(payload.usuario));
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('No se pudo recuperar ID de usuario para sesión existente', e);
+        }
     }
 
     try { window.cargarPerfil && window.cargarPerfil(); } catch (err) { console.warn('No se pudo cargar el perfil', err); }

@@ -7,6 +7,7 @@
  */
 window.cerrarSesion = function cerrarSesion() {
     localStorage.removeItem("usuarioActivo");
+    localStorage.removeItem("usuarioActivoId");
     localStorage.removeItem("perfilUsuario");
     localStorage.removeItem("perfilFoto");
     window.location.href = "login.html";
