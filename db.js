@@ -137,6 +137,11 @@ console.log(`Usando MySQL en ${MYSQL_HOST}:${MYSQL_PORT} DB=${MYSQL_DATABASE}`);
         await ensureColumn('movimientos', 'proveedor_id', 'INT NULL');
         await ensureColumn('movimientos', 'es_credito', 'TINYINT(1) NOT NULL DEFAULT 0');
 
+        await ensureColumn('categorias', 'usuario_id', 'INT NOT NULL DEFAULT 0');
+        await ensureColumn('productos', 'usuario_id', 'INT NOT NULL DEFAULT 0');
+        await ensureColumn('clientes', 'usuario_id', 'INT NOT NULL DEFAULT 0');
+        await ensureColumn('proveedores', 'usuario_id', 'INT NOT NULL DEFAULT 0');
+
         await pool.query(`CREATE TABLE IF NOT EXISTS clientes (
             id INT AUTO_INCREMENT PRIMARY KEY,
             nombre VARCHAR(255) NOT NULL,
