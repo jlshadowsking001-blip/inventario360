@@ -112,7 +112,10 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
     if (!fechaBase) return alert('Selecciona una fecha base');
 
     try {
-        const res = await fetch(`/estadisticas?rango=${encodeURIComponent(rango)}&fechaBase=${encodeURIComponent(fechaBase)}`);
+        const usuario_id = getUsuarioId();
+        if (!usuario_id) throw new Error('Usuario no identificado');
+        const params = new URLSearchParams({ rango, fechaBase, usuario_id: String(usuario_id) });
+        const res = await fetch(`/estadisticas?${params.toString()}`);
         const data = await res.json();
         if (!res.ok) return alert(data.error || 'Error cargando estadísticas');
 

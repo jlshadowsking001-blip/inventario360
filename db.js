@@ -136,6 +136,24 @@ console.log(`Usando MySQL en ${MYSQL_HOST}:${MYSQL_PORT} DB=${MYSQL_DATABASE}`);
         await ensureColumn('movimientos', 'cliente_id', 'INT NULL');
         await ensureColumn('movimientos', 'proveedor_id', 'INT NULL');
         await ensureColumn('movimientos', 'es_credito', 'TINYINT(1) NOT NULL DEFAULT 0');
+        await ensureColumn('movimientos', 'usuario_id', 'INT NOT NULL DEFAULT 0');
+        await ensureColumn('usuarios', 'email_verificado', 'TINYINT(1) NOT NULL DEFAULT 0');
+        await ensureColumn('usuarios', 'telefono_verificado', 'TINYINT(1) NOT NULL DEFAULT 0');
+        await ensureColumn('usuarios', 'telefono_requerido', 'TINYINT(1) NOT NULL DEFAULT 0');
+
+        await pool.query(`CREATE TABLE IF NOT EXISTS codigos_verificacion (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            usuario_id INT NOT NULL,
+            proposito VARCHAR(20) NOT NULL,
+            canal VARCHAR(10) NOT NULL,
+            codigo_hash VARCHAR(100) NOT NULL,
+            expiracion BIGINT NOT NULL,
+            intentos INT NOT NULL DEFAULT 0,
+            consumido TINYINT(1) NOT NULL DEFAULT 0,
+            creado BIGINT NOT NULL,
+            INDEX idx_codigo_usuario (usuario_id, proposito, canal, consumido),
+            INDEX idx_codigo_creado (usuario_id, proposito, canal, creado)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
         await ensureColumn('categorias', 'usuario_id', 'INT NOT NULL DEFAULT 0');
         await ensureColumn('productos', 'usuario_id', 'INT NOT NULL DEFAULT 0');
@@ -159,6 +177,19 @@ console.log(`Usando MySQL en ${MYSQL_HOST}:${MYSQL_PORT} DB=${MYSQL_DATABASE}`);
             email VARCHAR(255),
             usuario_id INT NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+        await pool.query(`UPDATE movimientos m
+            INNER JOIN productos p ON p.id = m.producto_id
+            SET m.usuario_id = p.usuario_id
+            WHERE m.usuario_id = 0 AND p.usuario_id <> 0`);
+        await pool.query(`UPDATE movimientos m
+            INNER JOIN clientes c ON c.id = m.cliente_id
+            SET m.usuario_id = c.usuario_id
+            WHERE m.usuario_id = 0 AND c.usuario_id <> 0`);
+        await pool.query(`UPDATE movimientos m
+            INNER JOIN proveedores p ON p.id = m.proveedor_id
+            SET m.usuario_id = p.usuario_id
+            WHERE m.usuario_id = 0 AND p.usuario_id <> 0`);
 
         console.log('Tablas MySQL verificadas/creadas');
     } catch (err) {

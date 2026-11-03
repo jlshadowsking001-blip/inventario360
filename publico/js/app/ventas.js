@@ -204,6 +204,8 @@ window.vaciarcanasta = function vaciarcanasta() {
  */
 window.terminarventa = async function terminarventa() {
     if (!window._canasta?.length) return alert('Canasta vacía');
+    const usuario_id = getUsuarioId();
+    if (!usuario_id) return alert('Usuario no identificado. Inicia sesión nuevamente.');
     const clienteSelect = document.getElementById('clienteVentaSelect');
     const clienteId = clienteSelect && clienteSelect.value ? clienteSelect.value : null;
     if (window.modoVentaActual === 'credito' && !clienteId) {
@@ -218,6 +220,7 @@ window.terminarventa = async function terminarventa() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
             tipo: 'venta',
+            usuario_id,
             producto_id: item.id,
             cantidad: item.cantidad,
             cliente_id: clienteId || null,
@@ -226,7 +229,7 @@ window.terminarventa = async function terminarventa() {
         });
         const data = await res.json();
         if (!res.ok) {
-            console.warn('Error registrando venta de', item.nombre, data);
+            throw new Error(data.error || `No se pudo registrar la venta de ${item.nombre}`);
         }
         }
 
@@ -240,7 +243,11 @@ window.terminarventa = async function terminarventa() {
         loadStats();
     } catch (err) {
         console.error('Error finalizando venta:', err);
-        alert('Error al registrar la venta');
+        alert(`No se pudo completar la venta. Verifica los movimientos antes de volver a intentarlo. ${err.message}`);
+        loadProducts();
+        loadMovimientos();
+        loadMovimientosUI();
+        loadStats();
     }
 };
 
@@ -274,6 +281,8 @@ window.abrirModalGasto = function abrirModalGasto() {
 window.guardarGasto = async function guardarGasto() {
     const monto = parseFloat(document.getElementById('gastoMonto').value);
     if (!monto || monto <= 0) return alert('El monto es obligatorio');
+    const usuario_id = getUsuarioId();
+    if (!usuario_id) return alert('Usuario no identificado. Inicia sesión nuevamente.');
     const descripcion = (document.getElementById('gastoDescripcion').value || '').trim() || 'Gasto';
     const proveedor = document.getElementById('gastoProveedor').value || null;
 
@@ -281,7 +290,7 @@ window.guardarGasto = async function guardarGasto() {
         const res = await fetch('/movimientos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tipo: 'gasto', monto, descripcion, proveedor_id: proveedor || null })
+            body: JSON.stringify({ tipo: 'gasto', usuario_id, monto, descripcion, proveedor_id: proveedor || null })
         });
         const data = await res.json();
         if (!res.ok) return alert(data.error || 'No se pudo registrar el gasto');

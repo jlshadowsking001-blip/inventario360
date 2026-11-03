@@ -28,7 +28,12 @@ function guardarPerfil() {
     .then(r => r.json().then(body => ({ status: r.status, body })))
     .then(({ status, body }) => {
         if (status >= 200 && status < 300) {
-        alert('Perfil actualizado correctamente');
+        const usuario = body.usuario || {};
+        const verificacionPendiente = !Number(usuario.email_verificado) ||
+            (Number(usuario.telefono_requerido) && !Number(usuario.telefono_verificado));
+        alert(verificacionPendiente
+            ? 'Perfil actualizado. Cierra sesión e inicia de nuevo para verificar los datos de contacto.'
+            : 'Perfil actualizado correctamente');
         try { localStorage.setItem('perfilUsuario', JSON.stringify(body.usuario)); } catch (err) {}
         } else {
         alert(body.error || 'Error actualizando perfil');

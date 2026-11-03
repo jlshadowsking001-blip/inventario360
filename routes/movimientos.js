@@ -66,6 +66,10 @@ function addPeriodo(date, amount, rango) {
 // Registra movimientos de inventario/finanzas y actualiza stock si corresponde
 router.post('/', (req, res) => {
   const { tipo, producto_id, cantidad, monto, descripcion, cliente_id, proveedor_id, es_credito } = req.body;
+  const usuarioId = Number(req.body.usuario_id);
+  if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
+    return res.status(400).json({ error: 'usuario_id válido requerido' });
+  }
   if (!tipo || (tipo === 'venta' && (!producto_id || !cantidad))) {
     return res.status(400).json({ error: 'tipo y (producto_id,cantidad) para venta son requeridos' });
   }
@@ -79,8 +83,8 @@ router.post('/', (req, res) => {
   // Si es venta y no se indicó monto calculamos usando el precio actual
   const doInsertMovimiento = (finalMonto) => {
     db.run(
-      'INSERT INTO movimientos (tipo, producto_id, cantidad, monto, descripcion, fecha, cliente_id, proveedor_id, es_credito) VALUES (?, ?, ?, ?, ?, strftime("%s","now"), ?, ?, ?)',
-      [tipo, producto_id || null, cantidad || 0, finalMonto || 0, descripcion || null, cliente_id || null, proveedor_id || null, esCredito],
+      'INSERT INTO movimientos (tipo, producto_id, cantidad, monto, descripcion, fecha, cliente_id, proveedor_id, es_credito, usuario_id) VALUES (?, ?, ?, ?, ?, strftime("%s","now"), ?, ?, ?, ?)',
+      [tipo, producto_id || null, cantidad || 0, finalMonto || 0, descripcion || null, cliente_id || null, proveedor_id || null, esCredito, usuarioId],
       function (err) {
         if (err) return res.status(500).json({ error: 'Error registrando movimiento' });
         res.json({ mensaje: 'Movimiento registrado', id: this.lastID });
@@ -88,40 +92,65 @@ router.post('/', (req, res) => {
     );
   };
 
-  if (tipo === 'venta') {
-    // Leer producto para obtener precio y existencia
-    db.get('SELECT existencia, precio FROM productos WHERE id = ?', [producto_id], (err, row) => {
-      if (err) return res.status(500).json({ error: 'Error leyendo producto' });
-      if (!row) return res.status(404).json({ error: 'Producto no encontrado' });
-      if (row.existencia < cantidad) return res.status(400).json({ error: 'Stock insuficiente' });
+  const referencias = [
+    ['clientes', cliente_id],
+    ['proveedores', proveedor_id]
+  ];
+  if (tipo !== 'venta' && producto_id) referencias.push(['productos', producto_id]);
 
-      const finalMonto = monto || (row.precio * cantidad);
+  const registrarMovimiento = () => {
+    if (tipo === 'venta') {
+      // Verifica que el producto pertenezca al usuario antes de consultar o reducir su inventario.
+      db.get('SELECT existencia, precio FROM productos WHERE id = ? AND usuario_id = ?', [producto_id, usuarioId], (err, row) => {
+        if (err) return res.status(500).json({ error: 'Error leyendo producto' });
+        if (!row) return res.status(404).json({ error: 'Producto no encontrado' });
+        if (row.existencia < cantidad) return res.status(400).json({ error: 'Stock insuficiente' });
 
-      // Actualizar existencia
-      db.run('UPDATE productos SET existencia = existencia - ? WHERE id = ?', [cantidad, producto_id], function (uerr) {
-        if (uerr) return res.status(500).json({ error: 'Error actualizando stock' });
-        doInsertMovimiento(finalMonto);
+        const finalMonto = monto || (row.precio * cantidad);
+
+        // Actualizar existencia
+        db.run('UPDATE productos SET existencia = existencia - ? WHERE id = ? AND usuario_id = ? AND existencia >= ?', [cantidad, producto_id, usuarioId, cantidad], function (uerr) {
+          if (uerr) return res.status(500).json({ error: 'Error actualizando stock' });
+          if (this.changes === 0) return res.status(400).json({ error: 'Stock insuficiente o producto no disponible' });
+          doInsertMovimiento(finalMonto);
+        });
       });
-    });
-  } else if (tipo === 'gasto') {
-    doInsertMovimiento(monto);
-  } else {
-    // Otros tipos: egreso/ajuste sólo insertan movimiento (puede afectar stock si se desea)
-    if (tipo === 'egreso' && producto_id && cantidad) {
-      // disminuir stock también
-      db.run('UPDATE productos SET existencia = existencia - ? WHERE id = ?', [cantidad, producto_id], function (uerr) {
-        if (uerr) return res.status(500).json({ error: 'Error actualizando stock' });
-        doInsertMovimiento(monto);
-      });
-    } else {
+    } else if (tipo === 'gasto') {
       doInsertMovimiento(monto);
+    } else {
+      // Otros tipos: egreso/ajuste sólo insertan movimiento (puede afectar stock si se desea)
+      if (tipo === 'egreso' && producto_id && cantidad) {
+        db.run('UPDATE productos SET existencia = existencia - ? WHERE id = ? AND usuario_id = ?', [cantidad, producto_id, usuarioId], function (uerr) {
+          if (uerr) return res.status(500).json({ error: 'Error actualizando stock' });
+          if (this.changes === 0) return res.status(404).json({ error: 'Producto no encontrado' });
+          doInsertMovimiento(monto);
+        });
+      } else {
+        doInsertMovimiento(monto);
+      }
     }
   }
+
+  const validarReferencia = (indice) => {
+    if (indice >= referencias.length) return registrarMovimiento();
+    const [tabla, id] = referencias[indice];
+    if (!id) return validarReferencia(indice + 1);
+    db.get(`SELECT id FROM ${tabla} WHERE id = ? AND usuario_id = ?`, [id, usuarioId], (err, row) => {
+      if (err) return res.status(500).json({ error: 'Error validando datos del movimiento' });
+      if (!row) return res.status(404).json({ error: 'Referencia no encontrada para este usuario' });
+      validarReferencia(indice + 1);
+    });
+  };
+  validarReferencia(0);
 });
 
 // Lista movimientos con filtros opcionales por tipo, producto y rango temporal
 router.get('/', (req, res) => {
   const { tipo, producto_id, fechaBase, rango } = req.query;
+  const usuarioId = Number(req.query.usuario_id);
+  if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
+    return res.status(400).json({ error: 'usuario_id válido requerido' });
+  }
   let rangoFiltro = null;
   if (fechaBase) {
     const baseDate = parseFechaFiltro(fechaBase);
@@ -135,9 +164,9 @@ router.get('/', (req, res) => {
       };
     }
   }
-  let sql = 'SELECT m.*, p.nombre as producto, c.nombre as cliente, pr.nombre as proveedor FROM movimientos m LEFT JOIN productos p ON m.producto_id = p.id LEFT JOIN clientes c ON m.cliente_id = c.id LEFT JOIN proveedores pr ON m.proveedor_id = pr.id';
-  const params = [];
-  const where = [];
+  let sql = 'SELECT m.*, p.nombre as producto, c.nombre as cliente, pr.nombre as proveedor FROM movimientos m LEFT JOIN productos p ON m.producto_id = p.id AND p.usuario_id = m.usuario_id LEFT JOIN clientes c ON m.cliente_id = c.id AND c.usuario_id = m.usuario_id LEFT JOIN proveedores pr ON m.proveedor_id = pr.id AND pr.usuario_id = m.usuario_id';
+  const params = [usuarioId];
+  const where = ['m.usuario_id = ?'];
   if (tipo) { where.push('m.tipo = ?'); params.push(tipo); }
   if (producto_id) { where.push('m.producto_id = ?'); params.push(producto_id); }
   if (rangoFiltro) {
@@ -154,16 +183,20 @@ router.get('/', (req, res) => {
 
 // Calcula totales vendidos por producto y cifras generales de ingresos/egresos
 router.get('/estadisticas/resumen', (req, res) => {
+  const usuarioId = Number(req.query.usuario_id);
+  if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
+    return res.status(400).json({ error: 'usuario_id válido requerido' });
+  }
   const sql = `SELECT p.id, p.nombre, SUM(m.cantidad) as total_unidades, SUM(m.monto) as total_monto
                 FROM movimientos m
-                JOIN productos p ON m.producto_id = p.id
-                WHERE m.tipo = 'venta'
+                JOIN productos p ON m.producto_id = p.id AND p.usuario_id = m.usuario_id
+                WHERE m.tipo = 'venta' AND m.usuario_id = ?
                 GROUP BY p.id, p.nombre
                 ORDER BY total_monto DESC`;
-  db.all(sql, [], (err, rows) => {
+  db.all(sql, [usuarioId], (err, rows) => {
     if (err) return res.status(500).json({ error: 'Error calculando estadísticas' });
     // totales generales
-    db.get("SELECT SUM(monto) as total_ingresos, SUM(CASE WHEN tipo='egreso' THEN monto ELSE 0 END) as total_egresos FROM movimientos", [], (e, totals) => {
+    db.get("SELECT SUM(monto) as total_ingresos, SUM(CASE WHEN tipo='egreso' THEN monto ELSE 0 END) as total_egresos FROM movimientos WHERE usuario_id = ?", [usuarioId], (e, totals) => {
       if (e) return res.status(500).json({ error: 'Error calculando totales' });
       res.json({ resumen: rows, totales: totals });
     });

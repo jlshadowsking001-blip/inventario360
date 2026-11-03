@@ -131,6 +131,10 @@ function parseMovimientoFecha(value) {
 router.get('/', (req, res) => {
     const rango = req.query.rango || 'dia';
     const fechaBase = req.query.fechaBase;
+    const usuarioId = Number(req.query.usuario_id);
+    if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
+        return res.status(400).json({ error: 'usuario_id válido requerido' });
+    }
     if (!fechaBase) return res.status(400).json({ error: 'Faltan parámetros' });
 
     const baseDate = parseFechaBase(fechaBase);
@@ -155,10 +159,10 @@ router.get('/', (req, res) => {
 
     const sql = `SELECT m.fecha, m.cantidad, m.monto, p.id as producto_id, p.nombre, p.precio, p.costo
                 FROM movimientos m
-                JOIN productos p ON m.producto_id = p.id
-                WHERE m.tipo = 'venta' AND m.fecha BETWEEN ? AND ?`;
+                JOIN productos p ON m.producto_id = p.id AND p.usuario_id = m.usuario_id
+                WHERE m.tipo = 'venta' AND m.usuario_id = ? AND m.fecha BETWEEN ? AND ?`;
 
-    db.all(sql, [startTs, endTs], (err, rows = []) => {
+    db.all(sql, [usuarioId, startTs, endTs], (err, rows = []) => {
         if (err) {
             console.error('Error en estadísticas:', err);
             return res.status(500).json({ error: 'Error interno del servidor' });

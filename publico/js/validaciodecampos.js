@@ -1,10 +1,10 @@
 // Expresiones regulares para validar los campos
 // Usuario: permitir 3-20 caracteres alfanuméricos o guion bajo (más flexible en desarrollo)
 const usuarioRegex = /^[a-zA-Z0-9_]{3,20}$/;
-// Contraseña: permitir cualquier caracter (excepto nueva línea) entre 4 y 100 chars
-const contraseñaRegex = /^.{4,100}$/;
+// Contraseña: permitir cualquier caracter (excepto nueva línea) entre 8 y 100 chars
+const contraseñaRegex = /^.{8,100}$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const telefonoRegex = /^\d{8,12}$/;
+const telefonoRegex = /^\+[1-9]\d{7,14}$/;
 
 /**
  * Validación visual en tiempo real
@@ -71,9 +71,9 @@ function validarCampo(input, regex, alerta, mensaje) {
  */
 const mensaje = {
     usuario: "Usuario inválido (8-20 caracteres alfanuméricos o _)",
-    contraseña: "Contraseña inválida (8-20 caracteres, admite símbolos !@#$...)",
+    contraseña: "La contraseña debe tener entre 8 y 100 caracteres",
     email: "Formato de correo no válido",
-    telefono: "Teléfono inválido (8-12 dígitos)"
+    telefono: "Usa formato internacional con + y código de país (ejemplo: +50588888888)"
 };
 
 // Exportar a window para uso en scripts tradicionales
