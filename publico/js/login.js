@@ -13,6 +13,30 @@ function mostrarFormulario(formularioId){
     if (formulario) formulario.classList.add('activo');
 }
 window.mostrarFormulario = mostrarFormulario;
+let credencialesPendientes = null;
+let recuperacionPendiente = null;
+
+async function enviarJson(url, payload) {
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+    const data = await response.json().catch(() => ({ error: 'Respuesta inválida del servidor' }));
+    return { response, data };
+}
+
+function mostrarCanalesPendientes(canales) {
+    const select = document.getElementById("verificacion-canal");
+    const etiquetas = { email: "Correo electrónico", sms: "Mensaje SMS" };
+    select.replaceChildren(...(canales || []).map(canal => {
+        const option = document.createElement("option");
+        option.value = canal;
+        option.textContent = etiquetas[canal] || canal;
+        return option;
+    }));
+    if (canales?.length) select.value = canales[0];
+}
 
 // Helper de depuración visible en la página (div #debugLogin)
 // Función que escribe mensajes de depuración en el panel o la consola con marca de tiempo.
@@ -66,6 +90,11 @@ document.getElementById("formulario-inicio").addEventListener("submit", async fu
 
         debugLog('Inicio de sesión correcto. Redirigiendo...');
         window.location.href = "inventario360.html";
+    } else if (res.status === 403 && data.verificacionRequerida) {
+        credencialesPendientes = { username, password };
+        mostrarCanalesPendientes(data.canalesPendientes);
+        document.getElementById("estado-verificacion").textContent = data.errorEnvio || "Verifica los códigos enviados a tu correo y teléfono.";
+        mostrarFormulario("formulario-verificar-cuenta");
     } else {
         const msg = data && data.error ? data.error : ('Error HTTP ' + res.status);
         debugLog('Login fallido: ' + msg);
@@ -87,19 +116,16 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
     const alertaContraseña = document.getElementById("alerta-registro-contraseña");
     const validoUsuario = validarCampo(usuarioInput, usuarioRegex, alertaUsuario, "Usuario inválido");
     const validoContraseña = validarCampo(contraseñaInput, contraseñaRegex, alertaContraseña, "Contraseña inválida");
-    // email y telefono son opcionales; validarlos solo si se ingresan
     const emailVal = emailInput.value.trim();
     const telefonoVal = telefonoInput.value.trim();
-    let validoEmail = true;
-    let validoTelefono = true;
-    if (emailVal) validoEmail = validarCampo(emailInput, emailRegex, alertaEmail, "Email inválido");
-    if (telefonoVal) validoTelefono = validarCampo(telefonoInput, telefonoRegex, alertaTelefono, "Teléfono inválido");
+    const validoEmail = validarCampo(emailInput, emailRegex, alertaEmail, "Email inválido");
+    const validoTelefono = validarCampo(telefonoInput, telefonoRegex, alertaTelefono, mensaje.telefono);
     if (!validoUsuario || !validoContraseña || !validoEmail || !validoTelefono) return;
     const username = usuarioInput.value.trim();
     const email = emailVal;
     const telefono = telefonoVal;
     const password = contraseñaInput.value.trim();
-    debugLog('Registro: payload -> ' + JSON.stringify({ username, email, telefono }));
+    credencialesPendientes = { username, password };
     let res;
     try {
         res = await fetch("/usuarios/registro", {
@@ -115,43 +141,97 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
     try { data = await res.json(); } catch(e){ data = { error: 'Respuesta no JSON' }; }
     debugLog('Registro: respuesta -> status=' + res.status + ' body=' + JSON.stringify(data));
     if (res.ok) {
-        alert("Registro exitoso. Ahora puedes iniciar sesión.");
-        mostrarFormulario("formulario-inicio");
+        mostrarCanalesPendientes(data.canalesPendientes);
+        document.getElementById("estado-verificacion").textContent = data.errorEnvio || data.mensaje;
+        mostrarFormulario("formulario-verificar-cuenta");
     } else {
+        credencialesPendientes = null;
         alert(data.error || 'Error en registro');
     }
 });
 
-// Confirmar recuperación desde enlace con token
-// Callback que, al cargar la página, detecta el token de recuperación en la URL y muestra el formulario correcto.
-document.addEventListener("DOMContentLoaded", () => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    if (token) {
-        mostrarFormulario("formulario-confirmar-recuperacion");
-        document.getElementById("token-recuperacion").value = token;
+document.getElementById("formulario-verificar-cuenta").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    if (!credencialesPendientes) return alert("Inicia sesión nuevamente para solicitar los códigos.");
+    const canal = document.getElementById("verificacion-canal").value;
+    const codigo = document.getElementById("codigo-verificacion").value.trim();
+    try {
+        const { response, data } = await enviarJson("/usuarios/verificar-cuenta", {
+            username: credencialesPendientes.username,
+            canal,
+            codigo
+        });
+        if (!response.ok) return alert(data.error || "No se pudo verificar el código");
+        if (data.verificada) {
+            credencialesPendientes = null;
+            alert(data.telefonoPendiente
+                ? "Correo verificado. Ahora puedes iniciar sesión. Para recuperar tu cuenta por SMS, actualiza y verifica el teléfono desde tu perfil."
+                : "Cuenta verificada. Ahora puedes iniciar sesión.");
+            mostrarFormulario("formulario-inicio");
+            return;
+        }
+        mostrarCanalesPendientes(data.canalesPendientes);
+        document.getElementById("codigo-verificacion").value = "";
+        document.getElementById("estado-verificacion").textContent = data.mensaje;
+    } catch (error) {
+        console.error("Error verificando cuenta:", error);
+        alert("No se pudo conectar al servidor para verificar la cuenta.");
     }
 });
 
-// Maneja el formulario final para establecer una nueva contraseña usando el token recibido por correo.
+document.getElementById("reenviar-codigo").addEventListener("click", async () => {
+    if (!credencialesPendientes) return alert("Inicia sesión nuevamente para solicitar los códigos.");
+    try {
+        const { response, data } = await enviarJson("/usuarios/reenviar-verificacion", credencialesPendientes);
+        if (!response.ok) return alert(data.error || "No se pudieron reenviar los códigos");
+        mostrarCanalesPendientes(data.canalesPendientes);
+        document.getElementById("estado-verificacion").textContent = data.errorEnvio || "Se enviaron nuevamente los códigos pendientes.";
+    } catch (error) {
+        console.error("Error reenviando códigos:", error);
+        alert("No se pudo conectar al servidor para reenviar los códigos.");
+    }
+});
+
+document.getElementById("formulario-recuperar").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const username = document.getElementById("recuperacion-usuario").value.trim();
+    const canal = document.getElementById("recuperacion-canal").value;
+    try {
+        const { response, data } = await enviarJson("/usuarios/solicitar-recuperacion", { username, canal });
+        if (!response.ok) return alert(data.error || "No se pudo solicitar el código");
+        recuperacionPendiente = { username, canal };
+        alert(data.mensaje);
+        mostrarFormulario("formulario-confirmar-recuperacion");
+    } catch (error) {
+        console.error("Error solicitando recuperación:", error);
+        alert("No se pudo conectar al servidor para solicitar el código.");
+    }
+});
+
 document.getElementById("formulario-confirmar-recuperacion").addEventListener("submit", async function (e) {
     e.preventDefault();
-    const token = document.getElementById("token-recuperacion").value;
+    if (!recuperacionPendiente) return alert("Solicita primero un código de recuperación.");
+    const codigo = document.getElementById("codigo-recuperacion").value.trim();
     const nuevaContraseñaInput = document.getElementById("nueva-contraseña");
     const alerta = document.getElementById("alerta-nueva-contraseña");
     const valido = validarCampo(nuevaContraseñaInput, contraseñaRegex, alerta, "Contraseña inválida");
     if (!valido) return;
     const nuevaContraseña = nuevaContraseñaInput.value.trim();
-    const res = await fetch("/usuarios/confirmar-recuperacion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, nuevaContraseña })
-    });
-    const data = await res.json();
-    if (res.ok) {
-        alert("Contraseña actualizada. Ahora puedes iniciar sesión.");
-        window.location.href = "login.html";
-    } else {
-        alert(data.error);
+    try {
+        const { response, data } = await enviarJson("/usuarios/confirmar-recuperacion", {
+            ...recuperacionPendiente,
+            codigo,
+            nuevaContraseña
+        });
+        if (response.ok) {
+            recuperacionPendiente = null;
+            alert("Contraseña actualizada. Ahora puedes iniciar sesión.");
+            mostrarFormulario("formulario-inicio");
+        } else {
+            alert(data.error || "No se pudo actualizar la contraseña.");
+        }
+    } catch (error) {
+        console.error("Error confirmando recuperación:", error);
+        alert("No se pudo conectar al servidor para actualizar la contraseña.");
     }
 });

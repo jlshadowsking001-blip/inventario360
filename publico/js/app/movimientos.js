@@ -168,8 +168,11 @@ window.ensureMovimientosFiltros = function ensureMovimientosFiltros() {
  */
 window.loadMovimientos = async function loadMovimientos() {
     try {
-        const res = await fetch('/movimientos');
+        const usuario_id = getUsuarioId();
+        if (!usuario_id) throw new Error('Usuario no identificado');
+        const res = await fetch(`/movimientos?usuario_id=${encodeURIComponent(usuario_id)}`);
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error cargando movimientos');
         console.log('Movimientos recientes:', data.movimientos?.slice(0, 50));
     } 
     catch (err) {
@@ -188,7 +191,10 @@ window.loadMovimientosUI = async function loadMovimientosUI(options = {}) {
         const rangoSelect = document.getElementById('rangoTiempoMovimientos');
         const rango = rangoSelect?.value || window.movimientosRangoSeleccionado || 'dia';
         window.movimientosRangoSeleccionado = rango;
+        const usuario_id = getUsuarioId();
+        if (!usuario_id) throw new Error('Usuario no identificado');
         const qs = new URLSearchParams();
+        qs.set('usuario_id', usuario_id);
         if (options.applyDateFilter && !fechaBase) {
             return alert('Selecciona una fecha base');
         }
@@ -305,7 +311,9 @@ window.exportMovimientosCSV = function exportMovimientosCSV() {
  */
 window.loadStats = async function loadStats() {
     try {
-        const res = await fetch('/movimientos/estadisticas/resumen');
+        const usuario_id = getUsuarioId();
+        if (!usuario_id) throw new Error('Usuario no identificado');
+        const res = await fetch(`/movimientos/estadisticas/resumen?usuario_id=${encodeURIComponent(usuario_id)}`);
         const data = await res.json();
         if (!res.ok) return console.error('Error estadísticas', data);
 
@@ -343,8 +351,6 @@ window.loadStats = async function loadStats() {
         });
 
         // Calcular precio estimado por producto
-        const usuario_id = getUsuarioId();
-        if (!usuario_id) throw new Error('Usuario no identificado');
         const resP = await fetch(`/productos?usuario_id=${usuario_id}`);
         const dataP = await resP.json();
         const prods = dataP.productos || [];
