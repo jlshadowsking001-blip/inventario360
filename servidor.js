@@ -72,11 +72,7 @@ inventario360.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Logger simple de peticiones para depuración
 inventario360.use((req, res, next) => {
-    console.log(`[REQ] ${new Date().toISOString()} - ${req.method} ${req.url}`);
-    // mostrar body sólo en desarrollo/depuración
-    if (req.method === 'POST' || req.method === 'PUT') {
-        try { console.log('[REQ BODY]', req.body); } catch (e) { }
-    }
+    console.log(`[REQ] ${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
 });
 
@@ -127,15 +123,20 @@ inventario360.use((err, req, res, next) => {
 const http = require('http');
 const server = http.createServer(inventario360);
 
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor backend corriendo en http://0.0.0.0:${PORT} (bind 0.0.0.0)`);
-});
-
-const SECOND_PORT = process.env.PORT2;
-if (SECOND_PORT) {
-    const server2 = http.createServer(inventario360);
-    server2.listen(SECOND_PORT, '0.0.0.0', () => {
-        console.log(`Servidor adicional corriendo en http://0.0.0.0:${SECOND_PORT} (bind 0.0.0.0)`);
+const db = require('./db');
+db.ready.then(() => {
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`Servidor backend corriendo en http://0.0.0.0:${PORT} (bind 0.0.0.0)`);
     });
-}
 
+    const SECOND_PORT = process.env.PORT2;
+    if (SECOND_PORT) {
+        const server2 = http.createServer(inventario360);
+        server2.listen(SECOND_PORT, '0.0.0.0', () => {
+            console.log(`Servidor adicional corriendo en http://0.0.0.0:${SECOND_PORT} (bind 0.0.0.0)`);
+        });
+    }
+}).catch(error => {
+    console.error('Error inicializando MySQL; el servidor no se iniciará:', error);
+    process.exitCode = 1;
+});

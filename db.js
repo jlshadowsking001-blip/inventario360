@@ -18,8 +18,11 @@ async function ensureDatabaseExists() {
         user: MYSQL_USER,
         password: MYSQL_PASSWORD
     });
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
-    await connection.end();
+    try {
+        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    } finally {
+        await connection.end();
+    }
     console.log(`Base de datos MySQL ${MYSQL_DATABASE} verificada/creada`);
 }
 
@@ -48,11 +51,11 @@ const pool = mysql.createPool({
 
 console.log(`Usando MySQL en ${MYSQL_HOST}:${MYSQL_PORT} DB=${MYSQL_DATABASE}`);
 
-(async () => {
+const ready = (async () => {
     try {
         await ensureDatabaseExists();
 
-        await pool.query(`CREATE TABLE IF NOT EXISTS usuarios (
+    await pool.query(`CREATE TABLE IF NOT EXISTS usuarios (
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(191) NOT NULL UNIQUE,
             password TEXT NOT NULL,
@@ -194,10 +197,12 @@ console.log(`Usando MySQL en ${MYSQL_HOST}:${MYSQL_PORT} DB=${MYSQL_DATABASE}`);
         console.log('Tablas MySQL verificadas/creadas');
     } catch (err) {
         console.error('Error creando tablas en MySQL:', err);
+        throw err;
     }
 })();
 
 const db = {
+    ready,
     // Función estilo sqlite que ejecuta INSERT/UPDATE/DELETE y expone insertId/cambios vía callback opcional.
     run: async function(sql, params, cb) {
         if (typeof params === 'function') { cb = params; params = []; }
