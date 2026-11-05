@@ -15,6 +15,40 @@ function createError(message, status = 500) {
 }
 
 async function sendEmailCode(email, code, purpose) {
+    const subject = purpose === 'registro' ? 'Verifica tu cuenta de Inventario 360' : 'Código para recuperar tu cuenta';
+    const text = `Tu código de verificación es ${code}. Vence en 10 minutos. Si no solicitaste este código, ignora este mensaje.`;
+
+    if (process.env.BREVO_API_KEY) {
+        const senderEmail = process.env.BREVO_SENDER_EMAIL;
+        if (!senderEmail) {
+            throw createError('Falta configurar BREVO_SENDER_EMAIL con un remitente verificado en Brevo.');
+        }
+
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'api-key': process.env.BREVO_API_KEY,
+                'Content-Type': 'application/json',
+                accept: 'application/json'
+            },
+            body: JSON.stringify({
+                sender: {
+                    email: senderEmail,
+                    name: process.env.BREVO_SENDER_NAME || 'Inventario 360'
+                },
+                to: [{ email }],
+                subject,
+                textContent: text
+            }),
+            signal: AbortSignal.timeout(15000)
+        });
+        if (!response.ok) {
+            console.error(`Brevo API rechazó el correo (HTTP ${response.status}).`);
+            throw createError(`Brevo no aceptó el correo (HTTP ${response.status}). Revisa la clave API y el remitente verificado.`, 502);
+        }
+        return;
+    }
+
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD } = process.env;
     if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASSWORD) {
         throw createError('El envío de correo no está configurado en el servidor.');
@@ -26,12 +60,11 @@ async function sendEmailCode(email, code, purpose) {
         secure: String(process.env.SMTP_SECURE || Number(SMTP_PORT) === 465) === 'true',
         auth: { user: SMTP_USER, pass: SMTP_PASSWORD }
     });
-    const subject = purpose === 'registro' ? 'Verifica tu cuenta de Inventario 360' : 'Código para recuperar tu cuenta';
     await transporter.sendMail({
         from: process.env.SMTP_FROM || SMTP_USER,
         to: email,
         subject,
-        text: `Tu código de verificación es ${code}. Vence en 10 minutos. Si no solicitaste este código, ignora este mensaje.`
+        text
     });
 }
 
@@ -114,7 +147,7 @@ async function sendAccountCodes(user) {
         if (result.status === 'fulfilled') sent.push(pending[index]);
         else {
             failed.push(pending[index]);
-            console.error(`No se pudo enviar código de verificación (${pending[index]}):`, result.reason);
+            console.error(`No se pudo enviar código de verificación (${pending[index]}):`, result.reason.message);
         }
     });
     return { pending, sent, failed };
