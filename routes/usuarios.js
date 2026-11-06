@@ -9,10 +9,13 @@
 const validarLogin = require('../middlewares/validacionlogin');
 const validarRegistro = require('../middlewares/validacionregistro');
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 const db = require('../db');
 const bcrypt = require('bcryptjs');
 const verificacion = require('../servicios/verificacion');
+const { uploadDir } = require('../servicios/almacenamientoImagenes');
 // Controller centralizado para usuarios
 const usuarioController = require('../controles/usuariocontole');
 
@@ -186,9 +189,6 @@ router.put('/perfil/:username', async (req, res) => {
 });
 
 // Subir foto de perfil (envía JSON { dataUrl })
-const fs = require('fs');
-const path = require('path');
-
 // Persiste una imagen en base64 como archivo físico y guarda la ruta pública en la BD
 router.post('/perfil/:username/foto', (req, res) => {
   const username = req.params.username;
@@ -202,11 +202,8 @@ router.post('/perfil/:username/foto', (req, res) => {
   const ext = matches[2] === 'jpeg' ? 'jpg' : matches[2];
   const base64Data = matches[3];
 
-  const uploadsDir = path.join(__dirname, '..', 'publico', 'uploads');
-  try { if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true }); } catch (err) { console.error('mkdir error', err); }
-
   const filename = `${username.replace(/[^a-z0-9_-]/gi,'')}_${Date.now()}.${ext}`;
-  const filepath = path.join(uploadsDir, filename);
+  const filepath = path.join(uploadDir, filename);
   const publicPath = `/uploads/${filename}`;
 
   const buffer = Buffer.from(base64Data, 'base64');

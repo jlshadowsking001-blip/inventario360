@@ -77,7 +77,8 @@ router.post('/', (req, res) => {
     if (!match) return res.status(400).json({ error: 'Fecha inválida' });
     const [, year, month, day] = match;
     const parsedFecha = new Date(0);
-    parsedFecha.setUTCHours(0, 0, 0, 0);
+    // Guarda al mediodía UTC para que la fecha siga coincidiendo al mostrarla en zonas horarias locales.
+    parsedFecha.setUTCHours(12, 0, 0, 0);
     parsedFecha.setUTCFullYear(Number(year), Number(month) - 1, Number(day));
     if (parsedFecha.toISOString().slice(0, 10) !== fechaMovimiento) {
       return res.status(400).json({ error: 'Fecha inválida' });

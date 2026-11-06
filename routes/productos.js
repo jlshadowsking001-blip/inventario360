@@ -1,12 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const path = require('path');
 const fs = require('fs');
-
-// asegurar carpeta de uploads
-const uploadDir = path.join(__dirname, '..', 'publico', 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+const { uploadDir } = require('../servicios/almacenamientoImagenes');
 
 // Decodifica un dataUrl base64 y lo persiste en disco devolviendo la ruta pública
 const saveImageFromDataUrl = (name, dataUrlValue) => {

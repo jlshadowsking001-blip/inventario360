@@ -35,6 +35,8 @@ try {
 
 // Middleware
 // Servir contenido estático
+const { uploadDir } = require('./servicios/almacenamientoImagenes');
+inventario360.use('/uploads', express.static(uploadDir));
 inventario360.use(express.static(path.join(__dirname,'publico')));
 // Limitar CORS sólo a localhost (evita peticiones desde orígenes externos)
 // Configurar CORS de forma segura según ALLOWED_ORIGINS
