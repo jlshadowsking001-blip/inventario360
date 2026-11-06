@@ -195,10 +195,12 @@ window.renderProductsTable = function renderProductsTable(productos) {
  */
 window.updateProduct = async function updateProduct(id, fields) {
     try {
+        const usuario_id = getUsuarioId();
+        if (!usuario_id) return showToast('Usuario no identificado', 'error');
         const res = await fetch(`/productos/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fields)
+        body: JSON.stringify({ ...fields, usuario_id })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -334,7 +336,9 @@ window.actualizarProductoModal = async function actualizarProductoModal() {
 window.eliminarProducto = async function eliminarProducto(id) {
     if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
     try {
-        const res = await fetch(`/productos/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        const usuario_id = getUsuarioId();
+        if (!usuario_id) return showToast('Usuario no identificado', 'error');
+        const res = await fetch(`/productos/${encodeURIComponent(id)}?usuario_id=${encodeURIComponent(usuario_id)}`, { method: 'DELETE' });
         const data = await res.json();
         if (!res.ok) return alert(data.error || 'No se pudo eliminar');
         alert('Producto eliminado');

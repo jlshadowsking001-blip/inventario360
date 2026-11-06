@@ -9,13 +9,11 @@
 const validarLogin = require('../middlewares/validacionlogin');
 const validarRegistro = require('../middlewares/validacionregistro');
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
 const router = express.Router();
 const db = require('../db');
 const bcrypt = require('bcryptjs');
 const verificacion = require('../servicios/verificacion');
-const { uploadDir } = require('../servicios/almacenamientoImagenes');
+const { parseImageDataUrl } = require('../servicios/imagenes');
 // Controller centralizado para usuarios
 const usuarioController = require('../controles/usuariocontole');
 
@@ -134,12 +132,14 @@ router.get('/debug/test-write', (req, res) => {
 // Devuelve información de perfil filtrada por username sin exponer password
 router.get('/perfil/:username', (req, res) => {
   const username = req.params.username;
-  db.get('SELECT id, username, email, telefono, nombre, direccion, ciudad, pais, codigo_postal, detalles, foto_url FROM usuarios WHERE username = ?', [username], (err, row) => {
+  db.get('SELECT id, username, email, telefono, nombre, direccion, ciudad, pais, codigo_postal, detalles, foto_url, image_mime FROM usuarios WHERE username = ?', [username], (err, row) => {
     if (err) {
       console.error('Error al leer usuario:', err);
       return res.status(500).json({ error: 'Error interno' });
     }
     if (!row) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (row.image_mime) row.foto_url = `/usuarios/perfil/${encodeURIComponent(username)}/foto`;
+    delete row.image_mime;
     res.json({ usuario: row });
   });
 });
@@ -188,38 +188,43 @@ router.put('/perfil/:username', async (req, res) => {
   }
 });
 
-// Subir foto de perfil (envía JSON { dataUrl })
-// Persiste una imagen en base64 como archivo físico y guarda la ruta pública en la BD
+router.get('/perfil/:username/foto', (req, res) => {
+  db.get(
+    'SELECT image_data, image_mime FROM usuarios WHERE username = ?',
+    [req.params.username],
+    (err, row) => {
+      if (err) return res.status(500).json({ error: 'Error leyendo foto de perfil' });
+      if (!row || !row.image_data || !row.image_mime) return res.status(404).json({ error: 'Foto no encontrada' });
+      res.set('Cache-Control', 'private, max-age=86400');
+      res.type(row.image_mime).send(row.image_data);
+    }
+  );
+});
+
+// Subir foto de perfil (envía JSON { dataUrl }) y guardar sus bytes en MySQL.
 router.post('/perfil/:username/foto', (req, res) => {
   const username = req.params.username;
   const { dataUrl } = req.body;
   if (!dataUrl) return res.status(400).json({ error: 'dataUrl requerido' });
 
-  // dataUrl example: data:image/png;base64,AAAABBBB...
-  const matches = dataUrl.match(/^data:(image\/(png|jpeg|jpg));base64,(.+)$/);
-  if (!matches) return res.status(400).json({ error: 'Formato dataUrl inválido' });
-  const mime = matches[1];
-  const ext = matches[2] === 'jpeg' ? 'jpg' : matches[2];
-  const base64Data = matches[3];
+  const image = parseImageDataUrl(dataUrl);
+  if (!image) return res.status(400).json({ error: 'Imagen inválida o supera el límite de 6 MB' });
 
-  const filename = `${username.replace(/[^a-z0-9_-]/gi,'')}_${Date.now()}.${ext}`;
-  const filepath = path.join(uploadDir, filename);
-  const publicPath = `/uploads/${filename}`;
-
-  const buffer = Buffer.from(base64Data, 'base64');
-  fs.writeFile(filepath, buffer, (err) => {
-    if (err) {
-      console.error('Error guardando imagen:', err);
-      return res.status(500).json({ error: 'No se pudo guardar la imagen' });
-    }
-    // actualizar columna foto_url en usuarios
-    db.run('UPDATE usuarios SET foto_url = ? WHERE username = ?', [publicPath, username], function (uerr) {
-      if (uerr) {
-        console.error('Error guardando foto_url en DB:', uerr);
-        return res.status(500).json({ error: 'No se pudo guardar referencia en la BD' });
+  const publicPath = `/usuarios/perfil/${encodeURIComponent(username)}/foto`;
+  db.get('SELECT id FROM usuarios WHERE username = ?', [username], (lookupError, usuario) => {
+    if (lookupError) return res.status(500).json({ error: 'No se pudo buscar el usuario' });
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    db.run(
+      'UPDATE usuarios SET image_data = ?, image_mime = ?, foto_url = ? WHERE username = ?',
+      [image.buffer, image.mime, publicPath, username],
+      (err) => {
+        if (err) {
+          console.error('Error guardando foto de perfil en MySQL:', err);
+          return res.status(500).json({ error: 'No se pudo guardar la foto en la base de datos' });
+        }
+        res.json({ foto_url: publicPath });
       }
-      res.json({ foto_url: publicPath });
-    });
+    );
   });
 });
 
