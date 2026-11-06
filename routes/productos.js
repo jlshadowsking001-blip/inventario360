@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const fs = require('fs');
+const path = require('path');
 const { uploadDir } = require('../servicios/almacenamientoImagenes');
 
 // Decodifica un dataUrl base64 y lo persiste en disco devolviendo la ruta pública
