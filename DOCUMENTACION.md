@@ -93,7 +93,7 @@ Este documento resume la responsabilidad de cada archivo principal (frontend, ba
 - `publico/js/app/secion.js`: `window.cerrarSesion()` limpia credenciales locales y lleva a `login.html`.
 - `publico/js/app/modulo-ui.js`: versión ligera de `mostrarModulo` (mantiene compatibilidad con llamado inline).
 - `publico/js/app/validaciondecampos.js`: importa `../validaciodecampos.js` para que las validaciones queden disponibles en el namespace `window`.
-- `publico/js/login.js`: controla formularios de inicio/registro/recuperación, permite elegir SMS o WhatsApp para verificar el teléfono, usa helpers `validarCampo`, almacena `usuarioActivo` y redirige tras login exitoso.
+- `publico/js/login.js`: controla formularios de inicio/registro/recuperación; la verificación de cuenta y recuperación usan el correo electrónico, mientras el teléfono es opcional y solo de contacto.
 - `publico/js/validaciodecampos.js`: contiene las regex de usuario/contraseña/email/teléfono y expone `configurarValidacion` + `validarCampo`.
 
 ## 2. Backend (carpeta raíz)
@@ -115,11 +115,11 @@ Este documento resume la responsabilidad de cada archivo principal (frontend, ba
 
 ### 2.4 Middlewares (`middlewares/*.js`)
 - `validacionlogin.js`: exige `username` y `password` (mínimo 8 caracteres) antes de permitir `POST /usuarios/login`.
-- `validacionregistro.js`: valida `username`, `password`, normaliza `telefono` (8-12 dígitos) y chequea email cuando existe.
+- `validacionregistro.js`: valida `username`, `password` y correo, y valida el teléfono internacional solo si se proporciona.
 - `valdacionususarios.js`: versión genérica usada para endpoints que comparten validaciones; aplica reglas adicionales cuando la ruta incluye `registro`.
 
 ### 2.5 Rutas REST (`routes/*.js`)
-- `routes/usuarios.js`: monta endpoints de registro/login (delegados al controlador), recuperación con códigos por correo o por el canal telefónico elegido (SMS/WhatsApp), debug (`/debug/list`, `/debug/test-write`) y el CRUD del perfil. Las nuevas fotos se guardan en MySQL y se sirven desde `/perfil/:username/foto`; se conservan las URLs antiguas de `/uploads`.
+- `routes/usuarios.js`: monta endpoints de registro/login (delegados al controlador), verificación y recuperación por correo, debug (`/debug/list`, `/debug/test-write`) y el CRUD del perfil. Las nuevas fotos se guardan en MySQL y se sirven desde `/perfil/:username/foto`; se conservan las URLs antiguas de `/uploads`.
 - `routes/categorias.js`: CRUD básico para categorías (GET/POST/PUT/DELETE) usando la tabla `categorias`.
 - `routes/productos.js`: CRUD completo con soporte para guardar imágenes base64 de hasta 6 MB como BLOB en MySQL, servirlas por usuario sin incluir los bytes en listados y actualizar campos parcial o completamente. Las URLs antiguas de `/uploads` siguen siendo compatibles.
 - `routes/movimientos.js`: además del CRUD de movimientos, ahora acepta `fechaBase` + `rango` para devolver sólo el tramo solicitado. El helper interno alinea la fecha al inicio del periodo (día, semana ISO, mes o año) y convierte cualquier formato de fecha almacenado en segundos/milisegundos.

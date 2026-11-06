@@ -51,15 +51,10 @@
                     <div id="alerta-registro-usuario" class="alerta"></div>
                 </div>
                 <div class="telefono">
-                    <label for="registro-telefono">Teléfono con código de país</label>
-                    <input type="tel" id="registro-telefono" name="telefono" placeholder="+50588888888" autocomplete="tel" required/>
+                    <label for="registro-telefono">Teléfono de contacto (opcional)</label>
+                    <input type="tel" id="registro-telefono" name="telefono" placeholder="+50588888888" autocomplete="tel"/>
                     <div id="alerta-telefono" class="alerta"></div>
                 </div>
-                <label for="registro-canal-telefono">Verificar teléfono mediante</label>
-                <select id="registro-canal-telefono" name="canalTelefono" required>
-                    <option value="sms">SMS</option>
-                    <option value="whatsapp">WhatsApp</option>
-                </select>
                 <!--campo para ingresar el correo electronico del registro-->
                 <div class="email"><!--clase para correo electronico-->
                     <label for="registro-email">Correo Electrónico</label>
@@ -80,11 +75,7 @@
                 <h2>Recuperar contraseña</h2>
                 <label for="recuperacion-usuario">Nombre de usuario</label>
                 <input type="text" id="recuperacion-usuario" placeholder="Usuario registrado" required />
-                <label for="recuperacion-canal">Enviar código a</label>
-                <select id="recuperacion-canal" required>
-                    <option value="email">Correo verificado</option>
-                    <option value="telefono">Teléfono verificado (SMS o WhatsApp registrado)</option>
-                </select>
+                <p>El código se enviará al correo verificado de tu cuenta.</p>
                 <div id="alerta-recuperacion-email" class="alerta"></div>
                 <button type="submit">Enviar código de recuperación</button>
                 <p><a href="#" onclick="mostrarFormulario('formulario-inicio')">Volver al inicio</a></p>
@@ -100,18 +91,12 @@
             </form>
             <form id="formulario-verificar-cuenta" class="formulario">
                 <h2>Verifica tu cuenta</h2>
-                <p>Ingresa el código enviado al canal pendiente para completar la verificación de tu cuenta.</p>
-                <label for="verificacion-canal">Canal pendiente</label>
-                <select id="verificacion-canal" required>
-                    <option value="email">Correo electrónico</option>
-                    <option value="sms">Mensaje SMS</option>
-                    <option value="whatsapp">WhatsApp</option>
-                </select>
+                <p>Ingresa el código enviado a tu correo electrónico para completar la verificación de tu cuenta.</p>
                 <label for="codigo-verificacion">Código de seis dígitos</label>
                 <input type="text" id="codigo-verificacion" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required />
                 <div id="estado-verificacion" class="alerta"></div>
                 <button type="submit">Verificar código</button>
-                <button type="button" id="reenviar-codigo">Reenviar códigos</button>
+                <button type="button" id="reenviar-codigo">Reenviar código por correo</button>
                 <p><a href="#" onclick="mostrarFormulario('formulario-inicio')">Volver al inicio</a></p>
             </form>
         </div><!--fin del encabezado de la pagina-->

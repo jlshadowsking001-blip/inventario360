@@ -1,7 +1,6 @@
 // Middleware que valida y normaliza el payload de registro (usuario, contraseña, email y teléfono).
 module.exports = (req, res, next) => {
-    const { username, password, email, canalTelefono } = req.body;
-    const { telefono } = req.body || {};
+    const { username, password, email, telefono } = req.body;
     if (!username || typeof username !== 'string' || username.trim() === '') {
         return res.status(400).json({ error: 'El nombre de usuario es obligatorio' });
     }
@@ -11,13 +10,14 @@ module.exports = (req, res, next) => {
     if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
         return res.status(400).json({ error: 'Ingresa un correo electrónico válido' });
     }
-    if (typeof telefono !== 'string' || !/^\+[1-9]\d{7,14}$/.test(telefono.trim())) {
-        return res.status(400).json({ error: 'Ingresa el teléfono en formato internacional, por ejemplo +50588888888' });
+    if (telefono !== undefined && telefono !== null && typeof telefono !== 'string') {
+        return res.status(400).json({ error: 'El teléfono debe ser texto en formato internacional' });
     }
-    if (!['sms', 'whatsapp'].includes(canalTelefono)) {
-        return res.status(400).json({ error: 'Selecciona SMS o WhatsApp para verificar tu teléfono' });
+    const telefonoNormalizado = typeof telefono === 'string' ? telefono.trim() : '';
+    if (telefonoNormalizado && !/^\+[1-9]\d{7,14}$/.test(telefonoNormalizado)) {
+        return res.status(400).json({ error: 'El teléfono debe estar en formato internacional, por ejemplo +50588888888' });
     }
     req.body.email = email.trim().toLowerCase();
-    req.body.telefono = telefono.trim();
+    req.body.telefono = telefonoNormalizado || null;
     next();
 };

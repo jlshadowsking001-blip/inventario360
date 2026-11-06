@@ -26,18 +26,6 @@ async function enviarJson(url, payload) {
     return { response, data };
 }
 
-function mostrarCanalesPendientes(canales) {
-    const select = document.getElementById("verificacion-canal");
-    const etiquetas = { email: "Correo electrónico", sms: "Mensaje SMS", whatsapp: "WhatsApp" };
-    select.replaceChildren(...(canales || []).map(canal => {
-        const option = document.createElement("option");
-        option.value = canal;
-        option.textContent = etiquetas[canal] || canal;
-        return option;
-    }));
-    if (canales?.length) select.value = canales[0];
-}
-
 // Helper de depuración visible en la página (div #debugLogin)
 // Función que escribe mensajes de depuración en el panel o la consola con marca de tiempo.
 function debugLog(msg) {
@@ -92,8 +80,7 @@ document.getElementById("formulario-inicio").addEventListener("submit", async fu
         window.location.href = "inventario360.html";
     } else if (res.status === 403 && data.verificacionRequerida) {
         credencialesPendientes = { username, password };
-        mostrarCanalesPendientes(data.canalesPendientes);
-        document.getElementById("estado-verificacion").textContent = data.errorEnvio || "Verifica los códigos enviados a tu correo y al canal telefónico seleccionado.";
+        document.getElementById("estado-verificacion").textContent = data.errorEnvio || "Verifica el código enviado a tu correo.";
         mostrarFormulario("formulario-verificar-cuenta");
     } else {
         const msg = data && data.error ? data.error : ('Error HTTP ' + res.status);
@@ -109,7 +96,6 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
     const usuarioInput = document.getElementById("registro-username");
     const emailInput = document.getElementById("registro-email");
     const telefonoInput = document.getElementById("registro-telefono");
-    const canalTelefono = document.getElementById("registro-canal-telefono").value;
     const contraseñaInput = document.getElementById("registro-contraseña");
     const alertaUsuario = document.getElementById("alerta-registro-usuario");
     const alertaEmail = document.getElementById("alerta-registro-email");
@@ -120,11 +106,17 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
     const emailVal = emailInput.value.trim();
     const telefonoVal = telefonoInput.value.trim();
     const validoEmail = validarCampo(emailInput, emailRegex, alertaEmail, "Email inválido");
-    const validoTelefono = validarCampo(telefonoInput, telefonoRegex, alertaTelefono, mensaje.telefono);
+    const validoTelefono = !telefonoVal || validarCampo(telefonoInput, telefonoRegex, alertaTelefono, mensaje.telefono);
+    if (!telefonoVal) {
+        alertaTelefono.textContent = "";
+        alertaTelefono.classList.remove("invalido", "valido");
+        telefonoInput.classList.remove("input-invalido", "input-valido");
+        alertaTelefono.style.display = "none";
+    }
     if (!validoUsuario || !validoContraseña || !validoEmail || !validoTelefono) return;
     const username = usuarioInput.value.trim();
     const email = emailVal;
-    const telefono = telefonoVal;
+    const telefono = telefonoVal || null;
     const password = contraseñaInput.value.trim();
     credencialesPendientes = { username, password };
     let res;
@@ -132,7 +124,7 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
         res = await fetch("/usuarios/registro", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password, email, telefono, canalTelefono })
+            body: JSON.stringify({ username, password, email, telefono })
         });
     } catch (err) {
         debugLog('Error enviando registro: ' + (err && err.message ? err.message : String(err)) );
@@ -142,7 +134,6 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
     try { data = await res.json(); } catch(e){ data = { error: 'Respuesta no JSON' }; }
     debugLog('Registro: respuesta -> status=' + res.status + ' body=' + JSON.stringify(data));
     if (res.ok) {
-        mostrarCanalesPendientes(data.canalesPendientes);
         document.getElementById("estado-verificacion").textContent = data.errorEnvio || data.mensaje;
         mostrarFormulario("formulario-verificar-cuenta");
     } else {
@@ -154,24 +145,20 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
 document.getElementById("formulario-verificar-cuenta").addEventListener("submit", async function (e) {
     e.preventDefault();
     if (!credencialesPendientes) return alert("Inicia sesión nuevamente para solicitar los códigos.");
-    const canal = document.getElementById("verificacion-canal").value;
     const codigo = document.getElementById("codigo-verificacion").value.trim();
     try {
         const { response, data } = await enviarJson("/usuarios/verificar-cuenta", {
             username: credencialesPendientes.username,
-            canal,
+            canal: "email",
             codigo
         });
         if (!response.ok) return alert(data.error || "No se pudo verificar el código");
         if (data.verificada) {
             credencialesPendientes = null;
-            alert(data.telefonoPendiente
-                ? "Correo verificado. Ahora puedes iniciar sesión. Para recuperar tu cuenta por teléfono, actualiza y verifica el canal seleccionado desde tu perfil."
-                : "Cuenta verificada. Ahora puedes iniciar sesión.");
+            alert("Correo verificado. Ahora puedes iniciar sesión.");
             mostrarFormulario("formulario-inicio");
             return;
         }
-        mostrarCanalesPendientes(data.canalesPendientes);
         document.getElementById("codigo-verificacion").value = "";
         document.getElementById("estado-verificacion").textContent = data.mensaje;
     } catch (error) {
@@ -185,8 +172,7 @@ document.getElementById("reenviar-codigo").addEventListener("click", async () =>
     try {
         const { response, data } = await enviarJson("/usuarios/reenviar-verificacion", credencialesPendientes);
         if (!response.ok) return alert(data.error || "No se pudieron reenviar los códigos");
-        mostrarCanalesPendientes(data.canalesPendientes);
-        document.getElementById("estado-verificacion").textContent = data.errorEnvio || "Se enviaron nuevamente los códigos pendientes.";
+        document.getElementById("estado-verificacion").textContent = data.errorEnvio || "Se envió nuevamente el código al correo.";
     } catch (error) {
         console.error("Error reenviando códigos:", error);
         alert("No se pudo conectar al servidor para reenviar los códigos.");
@@ -196,7 +182,7 @@ document.getElementById("reenviar-codigo").addEventListener("click", async () =>
 document.getElementById("formulario-recuperar").addEventListener("submit", async function (e) {
     e.preventDefault();
     const username = document.getElementById("recuperacion-usuario").value.trim();
-    const canal = document.getElementById("recuperacion-canal").value;
+    const canal = "email";
     try {
         const { response, data } = await enviarJson("/usuarios/solicitar-recuperacion", { username, canal });
         if (!response.ok) return alert(data.error || "No se pudo solicitar el código");
