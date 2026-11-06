@@ -132,9 +132,15 @@
 }
 
 .inventario-categorias button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex: 0 0 auto;
+    min-height: 40px;
     white-space: nowrap;
-    padding: 10px 24px;
+    line-height: 1.2;
+    text-align: center;
+    padding: 8px clamp(12px, 1.5vw, 24px);
     border-radius: 10px;
     background: var(--inv-yellow);
     border: none;

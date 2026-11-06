@@ -16,10 +16,12 @@
     border-radius: 28px; /* Esquinas redondeadas grandes */
     padding: 32px; /* Espaciado interno amplio */
     background: linear-gradient(180deg, #ffffff 0%, #fdf9ff 100%); /* Degradado suave para dar profundidad */
-    display: flex; /* Sitúa catálogo y carrito uno al lado del otro */
-    gap: 32px; /* Separación entre las dos columnas */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    align-items: stretch;
+    gap: 24px;
     box-shadow: 0 18px 35px rgba(22, 7, 77, 0.15); /* Sombra suave para efecto flotante */
-    flex-wrap: wrap; /* Permite que los paneles bajen cuando no hay ancho */
+    min-width: 0;
 }
 
 /* Base para cada panel interno (catálogo/carrito) */
@@ -28,12 +30,12 @@
     display: flex; /* Permite apilar componentes verticalmente */
     flex-direction: column; /* Coloca cada bloque uno encima del otro */
     gap: 20px; /* Separación uniforme entre secciones internas */
+    min-width: 0;
 }
 
 /* Panel dedicado a la lista de productos disponibles */
 .ventas-panel--catalogo {
-    flex: 1 1 520px; /* Ocupa mayor espacio y puede reducirse hasta 520px */
-    padding-right: 32px; /* Espacio para separar visualmente del carrito */
+    padding-right: 24px;
     border-right: 2px solid var(--ventas-borde); /* Línea divisoria entre columnas */
     position: sticky; /* Se mantiene visible al hacer scroll */
     top: 20px; /* Margen superior cuando se fija */
@@ -47,12 +49,13 @@
     flex-direction: column; /* Coloca los bloques uno debajo del otro */
     gap: 20px; /* Separación uniforme */
     height: 100%; /* Ocupa toda la altura disponible del panel sticky */
+    min-width: 0;
 }
 
 /* Panel que contiene el carrito y acciones finales */
 .ventas-panel--cart {
-    flex: 0 0 360px; /* Ancho fijo de referencia para el carrito */
-    max-width: 420px; /* Permite crecer un poco en pantallas amplias */
+    width: 100%;
+    min-width: 0;
     position: sticky; /* Siempre visible mientras se hace scroll */
     top: 20px; /* Pegado con margen superior */
     height: calc(100vh - 140px); /* Ajuste a la altura de la ventana */
@@ -67,6 +70,7 @@
     align-items: center; /* Centra verticalmente */
     gap: 20px; /* Espacio entre título y buscador */
     justify-content: space-between; /* Empuja buscador al extremo derecho */
+    min-width: 0;
 }
 
 /* Título principal del panel */
@@ -80,6 +84,7 @@
 /* Barra de búsqueda de productos */
 .ventas-search {
     flex: 1; /* Se expande para ocupar el espacio disponible */
+    min-width: 0;
     display: flex; /* Ubica ícono, input y botón en línea */
     align-items: center; /* Centra verticalmente los elementos internos */
     gap: 10px; /* Separación entre ícono, input y botón */
@@ -161,14 +166,16 @@
 .ventas-grid-wrapper {
     flex: 1; /* Ocupa todo el alto disponible */
     overflow-y: auto; /* Activa scroll vertical interno */
+    min-width: 0;
     padding-right: 6px; /* Espacio para que la barra de scroll no tape contenido */
 }
 
 /* Grilla que distribuye las tarjetas de producto */
 .ventas-grid {
     display: grid; /* Coloca productos en columnas uniformes */
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Ajusta cantidad de columnas según ancho */
+    grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr));
     gap: 18px; /* Espaciado entre tarjetas */
+    min-width: 0;
 }
 
 /* Tarjeta individual de producto */
@@ -432,28 +439,40 @@
     background: #faf8ff; /* Fondo lila muy claro */
 }
 
-/* Ajustes generales para tablets y laptops pequeñas */
+/* Reduce el espacio interno sin cambiar el orden de las columnas. */
 @media (max-width: 1024px) {
     .ventas-layout {
-        padding: 20px; /* Reduce margen interno para aprovechar espacio */
-        border-width: 1px; /* Borde más delgado para pantallas chicas */
+        grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+        gap: 16px;
+        padding: 20px;
+    }
+    .ventas-panel--catalogo { padding-right: 16px; }
+}
+
+/* Apila el carrito solo en pantallas realmente estrechas. */
+@media (max-width: 760px) {
+    .ventas-layout {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 16px;
     }
     .ventas-panel--catalogo {
-        border-right: none; /* Quita línea divisoria para mayor fluidez */
-        padding-right: 0; /* Elimina separación adicional */
-        position: static; /* Deja de ser sticky en pantallas pequeñas */
-        height: auto; /* Permite que la altura se ajuste al contenido */
-        max-height: none; /* Remueve restricciones de viewport */
-    }
-    .ventas-panel--cart {
-        flex: 1 1 100%; /* Carrito pasa a ocupar todo el ancho disponible */
-        position: static; /* Ya no es sticky */
+        border-right: none;
+        padding-right: 0;
+        position: static;
         height: auto;
         max-height: none;
     }
+    .ventas-panel--cart {
+        position: static;
+        height: auto;
+        max-height: none;
+        min-height: 420px;
+    }
+    .ventas-grid-wrapper {
+        min-height: 320px;
+    }
 }
 
-/* Ajustes específicos para móviles */
 @media (max-width: 640px) {
     .ventas-panel-header {
         flex-direction: column; /* Título y buscador uno debajo del otro */
