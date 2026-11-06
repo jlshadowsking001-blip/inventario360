@@ -239,6 +239,11 @@
     width: 100%; /* Hace que el select llene su contenedor */
 }
 
+/* Selector de fecha aplicado a la venta completa */
+.ventas-fecha-select input {
+    width: 100%;
+}
+
 /* Botones que alternan el tipo de pago */
 .ventas-pago-toggle {
     display: flex; /* Coloca opciones una junto a otra */

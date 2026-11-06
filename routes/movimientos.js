@@ -67,8 +67,22 @@ function addPeriodo(date, amount, rango) {
 router.post('/', (req, res) => {
   const { tipo, producto_id, cantidad, monto, descripcion, cliente_id, proveedor_id, es_credito } = req.body;
   const usuarioId = Number(req.body.usuario_id);
+  const fechaMovimiento = req.body.fecha;
   if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
     return res.status(400).json({ error: 'usuario_id válido requerido' });
+  }
+  let fechaTimestamp = Math.floor(Date.now() / 1000);
+  if (fechaMovimiento !== undefined) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fechaMovimiento);
+    if (!match) return res.status(400).json({ error: 'Fecha inválida' });
+    const [, year, month, day] = match;
+    const parsedFecha = new Date(0);
+    parsedFecha.setUTCHours(0, 0, 0, 0);
+    parsedFecha.setUTCFullYear(Number(year), Number(month) - 1, Number(day));
+    if (parsedFecha.toISOString().slice(0, 10) !== fechaMovimiento) {
+      return res.status(400).json({ error: 'Fecha inválida' });
+    }
+    fechaTimestamp = Math.floor(parsedFecha.getTime() / 1000);
   }
   if (!tipo || (tipo === 'venta' && (!producto_id || !cantidad))) {
     return res.status(400).json({ error: 'tipo y (producto_id,cantidad) para venta son requeridos' });
@@ -83,8 +97,8 @@ router.post('/', (req, res) => {
   // Si es venta y no se indicó monto calculamos usando el precio actual
   const doInsertMovimiento = (finalMonto) => {
     db.run(
-      'INSERT INTO movimientos (tipo, producto_id, cantidad, monto, descripcion, fecha, cliente_id, proveedor_id, es_credito, usuario_id) VALUES (?, ?, ?, ?, ?, strftime("%s","now"), ?, ?, ?, ?)',
-      [tipo, producto_id || null, cantidad || 0, finalMonto || 0, descripcion || null, cliente_id || null, proveedor_id || null, esCredito, usuarioId],
+      'INSERT INTO movimientos (tipo, producto_id, cantidad, monto, descripcion, fecha, cliente_id, proveedor_id, es_credito, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [tipo, producto_id || null, cantidad || 0, finalMonto || 0, descripcion || null, fechaTimestamp, cliente_id || null, proveedor_id || null, esCredito, usuarioId],
       function (err) {
         if (err) return res.status(500).json({ error: 'Error registrando movimiento' });
         res.json({ mensaje: 'Movimiento registrado', id: this.lastID });
