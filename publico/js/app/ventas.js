@@ -67,7 +67,9 @@ window.renderSalesInventory = function renderSalesInventory(productos) {
     if (!contenedor) return;
     contenedor.innerHTML = '';
 
-    const lista = Array.isArray(productos) ? productos : [];
+    const lista = Array.isArray(productos)
+        ? [...productos].sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' }))
+        : [];
     if (!lista.length) {
         const mensaje = window._busquedaVentas?.trim()
             ? 'No se encontraron productos.'

@@ -424,5 +424,6 @@ window.searchProducts = function searchProducts(q) {
             .toLowerCase();
         return query.split(/\s+/).every(term => searchable.includes(term));
     });
+    filtered.sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' }));
     renderProductsTable(filtered);
 };
