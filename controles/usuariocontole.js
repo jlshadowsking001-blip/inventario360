@@ -16,12 +16,10 @@ exports.iniciarSesion = async (req, res) => {
         }
 
         const emailPendiente = !Number(usuario.email_verificado);
-        const telefonoPendiente = Number(usuario.telefono_requerido) && !Number(usuario.telefono_verificado);
-        if (emailPendiente || telefonoPendiente) {
-            if ((emailPendiente && (!usuario.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(usuario.email))) ||
-                (telefonoPendiente && (!usuario.telefono || !/^\+[1-9]\d{7,14}$/.test(usuario.telefono)))) {
+        if (emailPendiente) {
+            if (!usuario.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(usuario.email)) {
                 return res.status(409).json({
-                    error: 'Falta un correo o teléfono válido para verificar la cuenta. Contacta al administrador para actualizar tus datos.'
+                    error: 'Falta un correo válido para verificar la cuenta. Contacta al administrador para actualizar tus datos.'
                 });
             }
             const verificacionPendiente = await verificacion.sendAccountCodes(usuario);
@@ -30,7 +28,7 @@ exports.iniciarSesion = async (req, res) => {
                 username: usuario.username,
                 canalesPendientes: verificacionPendiente.pending,
                 canalesEnviados: verificacionPendiente.sent,
-                errorEnvio: verificacionPendiente.failed.length ? 'No se pudieron enviar todos los códigos. Revisa la configuración o solicita reenviarlos.' : null
+                errorEnvio: verificacionPendiente.failed.length ? 'No se pudo enviar el código al correo. Revisa la configuración o solicita reenviarlo.' : null
             });
         }
 
@@ -60,8 +58,8 @@ exports.registrarUsuario = async (req, res) => {
         const hash = bcrypt.hashSync(password, 10);
         const usuarioId = await new Promise((resolve, reject) => {
             db.run(
-                'INSERT INTO usuarios (username, password, email, telefono, telefono_canal, email_verificado, telefono_verificado, telefono_requerido) VALUES (?, ?, ?, ?, ?, 0, 0, 1)',
-                [username, hash, email, telefono, req.body.canalTelefono],
+                'INSERT INTO usuarios (username, password, email, telefono, email_verificado, telefono_verificado, telefono_requerido) VALUES (?, ?, ?, ?, 0, 0, 0)',
+                [username, hash, email, telefono],
                 function (error) {
                     if (error) return reject(error);
                     resolve(this.lastID);
@@ -69,16 +67,16 @@ exports.registrarUsuario = async (req, res) => {
             );
         });
         const usuario = await db.get(
-            'SELECT id, username, email, telefono, telefono_canal, email_verificado, telefono_verificado, telefono_requerido FROM usuarios WHERE id = ?',
+            'SELECT id, username, email, email_verificado FROM usuarios WHERE id = ?',
             [usuarioId]
         );
         const envio = await verificacion.sendAccountCodes(usuario);
         return res.status(201).json({
-            mensaje: 'Cuenta creada. Confirma los códigos enviados a tu correo y al canal telefónico seleccionado.',
+            mensaje: 'Cuenta creada. Confirma el código enviado a tu correo.',
             usuario: { id: usuario.id, username: usuario.username },
             canalesPendientes: envio.pending,
             canalesEnviados: envio.sent,
-            errorEnvio: envio.failed.length ? 'No se pudieron enviar todos los códigos. Configura los servicios y vuelve a iniciar sesión para reenviarlos.' : null
+            errorEnvio: envio.failed.length ? 'No se pudo enviar el código al correo. Configura el servicio y vuelve a iniciar sesión para reenviarlo.' : null
         });
     } catch (error) {
         console.error('Error registrando usuario:', error);
@@ -94,14 +92,14 @@ exports.reenviarVerificacion = async (req, res) => {
         if (!usuario || !bcrypt.compareSync(password, usuario.password)) {
             return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
         }
-        if (Number(usuario.email_verificado) && (!Number(usuario.telefono_requerido) || Number(usuario.telefono_verificado))) {
+        if (Number(usuario.email_verificado)) {
             return res.json({ verificado: true, mensaje: 'La cuenta ya está verificada.' });
         }
         const envio = await verificacion.sendAccountCodes(usuario);
         return res.json({
             canalesPendientes: envio.pending,
             canalesEnviados: envio.sent,
-            errorEnvio: envio.failed.length ? 'No se pudieron enviar todos los códigos. Revisa la configuración del proveedor.' : null
+            errorEnvio: envio.failed.length ? 'No se pudo enviar el código al correo. Revisa la configuración del proveedor.' : null
         });
     } catch (error) {
         console.error('Error reenviando códigos de verificación:', error);

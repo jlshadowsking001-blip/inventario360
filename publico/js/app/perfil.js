@@ -17,8 +17,7 @@ function guardarPerfil() {
         codigo_postal: document.getElementById("codigoPostalUsuario").value,
         detalles: document.getElementById("detallesUsuario").value,
         email: document.getElementById("correoUsuario").value,
-        telefono: document.getElementById("telefonoUsuario").value,
-        canalTelefono: document.getElementById("canalTelefonoUsuario").value
+        telefono: document.getElementById("telefonoUsuario").value
     };
 
     fetch(`/usuarios/perfil/${encodeURIComponent(currentUser)}`, {
@@ -30,8 +29,7 @@ function guardarPerfil() {
     .then(({ status, body }) => {
         if (status >= 200 && status < 300) {
         const usuario = body.usuario || {};
-        const verificacionPendiente = !Number(usuario.email_verificado) ||
-            (Number(usuario.telefono_requerido) && !Number(usuario.telefono_verificado));
+        const verificacionPendiente = !Number(usuario.email_verificado);
         alert(verificacionPendiente
             ? 'Perfil actualizado. Cierra sesión e inicia de nuevo para verificar los datos de contacto.'
             : 'Perfil actualizado correctamente');
@@ -74,7 +72,6 @@ window.cargarPerfil = async function cargarPerfil() {
         setValue('detallesUsuario', perfil.detalles);
         setValue('correoUsuario', perfil.email);
         setValue('telefonoUsuario', perfil.telefono);
-        setValue('canalTelefonoUsuario', perfil.telefono_canal === 'whatsapp' ? 'whatsapp' : 'sms');
 
         const preview = document.getElementById('previewFoto');
         if (preview && perfil.foto_url) preview.src = perfil.foto_url;
