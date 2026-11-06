@@ -22,6 +22,7 @@
     "nodemailer": "^7.0.10"
   },
   "devDependencies": {
+    "nodemon": "^3.0.0",
     "npm-force-resolutions": "^0.0.10"
   },
   "resolutions": {

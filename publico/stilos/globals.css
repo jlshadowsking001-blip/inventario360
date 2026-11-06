@@ -62,7 +62,7 @@ label{
 }
 
 /* Estilos compartidos por inputs y selects */
-input[type="text"], input[type="number"], input[type="email"], input[type="tel"], select, textarea, .modal-form-control{
+input[type="text"], input[type="number"], input[type="email"], input[type="tel"], input[type="date"], select, textarea, .modal-form-control{
     width:100%; /* Ocupan el ancho del contenedor */
     padding: 10px 12px; /* Relleno interno cómodo */
     border: 1px solid var(--border); /* Borde gris suave */
