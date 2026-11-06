@@ -251,20 +251,24 @@ window.updateProduct = async function updateProduct(id, fields) {
         });
         const data = await res.json();
         if (!res.ok) {
-        alert(data.error || 'Error actualizando producto');
+        showToast(data.error || 'Error actualizando producto', 'error');
+        return false;
         } else {
-        loadProducts();
-        loadStats();
+        await loadProducts();
+        await loadStats();
+        return true;
         }
     } catch (err) {
         console.error('Error actualizando producto:', err);
+        showToast('Error actualizando producto', 'error');
+        return false;
     }
 };
 
 // Función que llena y muestra el modal de edición con los datos del producto seleccionado.
 window.editarProducto = function editarProducto(id) {
     const producto = (window._productosCache || []).find(p => Number(p.id) === Number(id));
-    if (!producto) return alert('Producto no encontrado');
+    if (!producto) return showToast('Producto no encontrado', 'error');
 
     const imagenActual = producto.image_url || DEFAULT_PRODUCT_IMAGE;
 
@@ -350,10 +354,10 @@ window.editarProducto = function editarProducto(id) {
 // Función que toma los valores del modal de edición y envía la actualización al servidor.
 window.actualizarProductoModal = async function actualizarProductoModal() {
     const form = document.getElementById('modal-form');
-    if (!form?.dataset?.productId) return alert('Producto no válido');
+    if (!form?.dataset?.productId) return showToast('Producto no válido', 'error');
 
     const nombre = document.getElementById('producto').value.trim();
-    if (!nombre) return alert('El nombre es obligatorio');
+    if (!nombre) return showToast('El nombre es obligatorio', 'error');
 
     const payload = {
         nombre,
@@ -369,14 +373,15 @@ window.actualizarProductoModal = async function actualizarProductoModal() {
             payload.dataUrl = await fileToDataUrl(fileInput.files[0]);
         } catch (error) {
             console.error('Error convirtiendo imagen', error);
-            alert('No se pudo leer la imagen seleccionada');
+            showToast('No se pudo leer la imagen seleccionada', 'error');
             return;
         }
     }
 
-    await updateProduct(form.dataset.productId, payload);
+    const updated = await updateProduct(form.dataset.productId, payload);
+    if (!updated) return;
     cerrarModal();
-    alert('Producto actualizado');
+    showToast('Producto actualizado', 'success');
 };
 
 // Función que elimina un producto tras confirmar y refresca los datos relacionados.
@@ -390,9 +395,9 @@ window.eliminarProducto = async function eliminarProducto(id) {
         if (!res.ok) return showToast(data.error || 'No se pudo eliminar', 'error');
         cerrarModal();
         showToast('Producto eliminado', 'success');
-        loadProducts();
-        loadMovimientos();
-        loadStats();
+        await loadProducts();
+        await loadMovimientos();
+        await loadStats();
     } catch (err) {
         console.error('Error eliminando producto:', err);
         showToast('Error eliminando producto', 'error');

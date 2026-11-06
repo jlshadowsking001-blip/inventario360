@@ -130,14 +130,14 @@ async function initApp() {
                         if (preview) preview.src = fotoUrl;
                         window.aplicarFotoPerfil(body.foto_url);
                         try { localStorage.setItem('perfilFoto', body.foto_url); } catch (err) {}
-                        alert('Foto subida correctamente');
+                        showToast('Foto subida correctamente', 'success');
                         window.cargarPerfil && window.cargarPerfil();
                     } else {
-                        alert(body.error || 'No se pudo subir la foto');
+                        showToast(body.error || 'No se pudo subir la foto', 'error');
                     }
                 } catch (err) {
                     console.error('Error subiendo foto:', err);
-                    alert('Error subiendo foto');
+                    showToast('Error subiendo foto', 'error');
                 }
             };
             reader.readAsDataURL(file);

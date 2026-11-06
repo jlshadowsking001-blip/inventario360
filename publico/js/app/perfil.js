@@ -7,7 +7,7 @@
  */
 function guardarPerfil() {
     const currentUser = localStorage.getItem('usuarioActivo');
-    if (!currentUser) return alert('No hay usuario activo');
+    if (!currentUser) return showToast('No hay usuario activo', 'error');
 
     const payload = {
         nombre: document.getElementById("nombreUsuario").value,
@@ -30,17 +30,17 @@ function guardarPerfil() {
         if (status >= 200 && status < 300) {
         const usuario = body.usuario || {};
         const verificacionPendiente = !Number(usuario.email_verificado);
-        alert(verificacionPendiente
+        showToast(verificacionPendiente
             ? 'Perfil actualizado. Cierra sesión e inicia de nuevo para verificar los datos de contacto.'
-            : 'Perfil actualizado correctamente');
+            : 'Perfil actualizado correctamente', 'success');
         try { localStorage.setItem('perfilUsuario', JSON.stringify(body.usuario)); } catch (err) {}
         } else {
-        alert(body.error || 'Error actualizando perfil');
+        showToast(body.error || 'Error actualizando perfil', 'error');
         }
     })
     .catch(err => {
         console.error('Error al enviar perfil:', err);
-        alert('Error al comunicarse con el servidor');
+        showToast('Error al comunicarse con el servidor', 'error');
     });
 }
 

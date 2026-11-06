@@ -109,7 +109,7 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
     window.ensureEstadisticasFiltros();
     const fechaBase = document.getElementById('fechaBaseEstadisticas')?.value;
     const rango = document.getElementById('rangoTiempoEstadisticas')?.value || 'dia';
-    if (!fechaBase) return alert('Selecciona una fecha base');
+    if (!fechaBase) return showToast('Selecciona una fecha base', 'error');
 
     try {
         const usuario_id = getUsuarioId();
@@ -117,7 +117,7 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
         const params = new URLSearchParams({ rango, fechaBase, usuario_id: String(usuario_id) });
         const res = await fetch(`/estadisticas?${params.toString()}`);
         const data = await res.json();
-        if (!res.ok) return alert(data.error || 'Error cargando estadísticas');
+        if (!res.ok) return showToast(data.error || 'Error cargando estadísticas', 'error');
 
         const resumen = data.resumen || [];
         let periodos = data.periodos || [];
@@ -281,7 +281,7 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
         }
     } catch (err) {
         console.error('Error cargando estadísticas:', err);
-        alert('Error al cargar estadísticas');
+        showToast('Error al cargar estadísticas', 'error');
     }
 };
 // Carga automática al iniciar la página

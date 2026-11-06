@@ -103,7 +103,7 @@ window.renderProveedoresTable = function renderProveedoresTable(items) {
  */
 window.agregarProveedor = async function agregarProveedor() {
     const nombre = document.getElementById('nuevoProveedor').value.trim();
-    if (!nombre) return alert('Nombre requerido');
+    if (!nombre) return showToast('Nombre requerido', 'error');
     try {
         const res = await fetch('/proveedores', {
         method: 'POST',
@@ -111,12 +111,12 @@ window.agregarProveedor = async function agregarProveedor() {
         body: JSON.stringify({ nombre })
         });
         const data = await res.json();
-        if (!res.ok) return alert(data.error || 'Error creando proveedor');
+        if (!res.ok) return showToast(data.error || 'Error creando proveedor', 'error');
         document.getElementById('nuevoProveedor').value = '';
         loadProveedores();
     } catch (err) {
         console.error('Error creando proveedor:', err);
-        alert('Error creando proveedor');
+        showToast('Error creando proveedor', 'error');
     }
 };
 
@@ -129,7 +129,7 @@ window.guardarProveedor = async function guardarProveedor() {
     const direccion = (document.getElementById('direccionProveedor') || {}).value || '';
     const correo = (document.getElementById('correoProveedor') || {}).value || '';
 
-    if (!nombre.trim()) return alert('Nombre es obligatorio');
+    if (!nombre.trim()) return showToast('Nombre es obligatorio', 'error');
 
     try {
         const res = await fetch('/proveedores', {
@@ -138,12 +138,12 @@ window.guardarProveedor = async function guardarProveedor() {
             body: JSON.stringify({ nombre: nombre.trim(), contacto: direccion.trim() || null, telefono: telefono.trim(), email: correo.trim() })
         });
         const data = await res.json();
-        if (!res.ok) return alert(data.error || 'Error creando proveedor');
-        alert(`Proveedor "${data.proveedor?.nombre || nombre}" creado`);
+        if (!res.ok) return showToast(data.error || 'Error creando proveedor', 'error');
+        showToast(`Proveedor "${data.proveedor?.nombre || nombre}" creado`, 'success');
         if (typeof window.loadProveedores === 'function') await window.loadProveedores();
         if (typeof window.cerrarModal === 'function') window.cerrarModal();
     } catch (err) {
         console.error('Error creando proveedor:', err);
-        alert('Error creando proveedor');
+        showToast('Error creando proveedor', 'error');
     }
 };
