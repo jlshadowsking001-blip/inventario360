@@ -36,7 +36,7 @@ Este documento resume la responsabilidad de cada archivo principal (frontend, ba
 
 ### 1.7 `publico/js/app/productos.js`
 - Cache global `_productosCache` y resumen `actualizarResumenInventario()`.
-- `guardarProducto()`: recoge campos (incluye imagen opcional en base64) y realiza `POST /productos`.
+- `guardarProducto()`: recoge campos (incluye imagen opcional en base64) y realiza `POST /productos`; las imágenes se guardan como BLOB en MySQL.
 - `loadProducts()`: trae todos los productos, actualiza caches, tablas y paneles.
 - `renderProductsTable(productos)`: genera la tabla editable del inventario y conecta inputs a `updateProduct`.
 - `updateProduct(id, fields)`: `PATCH` parcial y refresca inventario/estadísticas.
@@ -105,7 +105,7 @@ Este documento resume la responsabilidad de cada archivo principal (frontend, ba
 
 ### 2.2 `db.js`
 - Abstrae el acceso a datos con dos modos:
-  - **MySQL** (`DB_TYPE=mysql`): crea pool `mysql2`, garantiza que las tablas existan, traduce expresiones `strftime` a `DATE_FORMAT` y expone una API estilo sqlite (`run`, `get`, `all`).
+  - **MySQL** (`DB_TYPE=mysql`): crea pool `mysql2`, garantiza que las tablas existan, migra los BLOB y MIME de imágenes de productos/perfiles, traduce expresiones `strftime` a `DATE_FORMAT` y expone una API estilo sqlite (`run`, `get`, `all`).
   - **SQLite** (por defecto): crea el archivo `inventario360.db`, inicializa tablas básicas y añade columnas faltantes.
 - Esta capa se requiere en todas las rutas para mantener compatibilidad.
 
@@ -119,9 +119,9 @@ Este documento resume la responsabilidad de cada archivo principal (frontend, ba
 - `valdacionususarios.js`: versión genérica usada para endpoints que comparten validaciones; aplica reglas adicionales cuando la ruta incluye `registro`.
 
 ### 2.5 Rutas REST (`routes/*.js`)
-- `routes/usuarios.js`: monta endpoints de registro/login (delegados al controlador), recuperación con tokens (`solicitar-recuperacion`, `confirmar-recuperacion`), debug (`/debug/list`, `/debug/test-write`) y el CRUD del perfil (incluida la subida de foto usando dataURL -> archivo en `publico/uploads`).
+- `routes/usuarios.js`: monta endpoints de registro/login (delegados al controlador), recuperación con tokens (`solicitar-recuperacion`, `confirmar-recuperacion`), debug (`/debug/list`, `/debug/test-write`) y el CRUD del perfil. Las nuevas fotos se guardan en MySQL y se sirven desde `/perfil/:username/foto`; se conservan las URLs antiguas de `/uploads`.
 - `routes/categorias.js`: CRUD básico para categorías (GET/POST/PUT/DELETE) usando la tabla `categorias`.
-- `routes/productos.js`: CRUD completo con soporte para guardar imágenes base64 en `/uploads` y actualizar campos parcial o completamente.
+- `routes/productos.js`: CRUD completo con soporte para guardar imágenes base64 de hasta 6 MB como BLOB en MySQL, servirlas por usuario sin incluir los bytes en listados y actualizar campos parcial o completamente. Las URLs antiguas de `/uploads` siguen siendo compatibles.
 - `routes/movimientos.js`: además del CRUD de movimientos, ahora acepta `fechaBase` + `rango` para devolver sólo el tramo solicitado. El helper interno alinea la fecha al inicio del periodo (día, semana ISO, mes o año) y convierte cualquier formato de fecha almacenado en segundos/milisegundos.
 - `routes/estadisticas.js`: recibe `rango` + `fechaBase`, agrupa las ventas por periodo y producto, entrega totales (`total_unidades`, `total_monto`, `total_costo`).
 - `routes/clientes.js`: CRUD de clientes + resumen (`totalClientes`, `totalPorCobrar`) calculado desde la tabla de movimientos.

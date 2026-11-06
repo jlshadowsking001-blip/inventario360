@@ -121,7 +121,7 @@ const ready = (async () => {
             return total > 0;
         };
 
-        // Función auxiliar que agrega una columna si aún no está presente, ignorando errores de duplicado.
+        // Función auxiliar que agrega una columna si aún no está presente.
         const ensureColumn = async (table, column, definition) => {
             try {
                 const exists = await columnExists(table, column);
@@ -133,6 +133,7 @@ const ready = (async () => {
                 if (err && err.code === 'ER_DUP_FIELDNAME') return;
                 if (msg.includes('Duplicate column name')) return;
                 console.error(`No se pudo añadir columna ${column} en ${table}:`, err);
+                throw err;
             }
         };
 
@@ -143,6 +144,8 @@ const ready = (async () => {
         await ensureColumn('usuarios', 'email_verificado', 'TINYINT(1) NOT NULL DEFAULT 0');
         await ensureColumn('usuarios', 'telefono_verificado', 'TINYINT(1) NOT NULL DEFAULT 0');
         await ensureColumn('usuarios', 'telefono_requerido', 'TINYINT(1) NOT NULL DEFAULT 0');
+        await ensureColumn('usuarios', 'image_data', 'MEDIUMBLOB NULL');
+        await ensureColumn('usuarios', 'image_mime', 'VARCHAR(32) NULL');
 
         await pool.query(`CREATE TABLE IF NOT EXISTS codigos_verificacion (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -160,8 +163,8 @@ const ready = (async () => {
 
         await ensureColumn('categorias', 'usuario_id', 'INT NOT NULL DEFAULT 0');
         await ensureColumn('productos', 'usuario_id', 'INT NOT NULL DEFAULT 0');
-        await ensureColumn('clientes', 'usuario_id', 'INT NOT NULL DEFAULT 0');
-        await ensureColumn('proveedores', 'usuario_id', 'INT NOT NULL DEFAULT 0');
+        await ensureColumn('productos', 'image_data', 'MEDIUMBLOB NULL');
+        await ensureColumn('productos', 'image_mime', 'VARCHAR(32) NULL');
 
         await pool.query(`CREATE TABLE IF NOT EXISTS clientes (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -180,6 +183,9 @@ const ready = (async () => {
             email VARCHAR(255),
             usuario_id INT NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+
+        await ensureColumn('clientes', 'usuario_id', 'INT NOT NULL DEFAULT 0');
+        await ensureColumn('proveedores', 'usuario_id', 'INT NOT NULL DEFAULT 0');
 
         await pool.query(`UPDATE movimientos m
             INNER JOIN productos p ON p.id = m.producto_id
