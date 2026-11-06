@@ -117,12 +117,22 @@
 .ventas-categorias-chips {
     display: flex; /* Los chips se alinean en fila */
     gap: 12px; /* Separación constante entre chips */
-    flex-wrap: wrap; /* Permite que los chips bajen si no caben */
+    flex-wrap: nowrap;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    overscroll-behavior-x: contain;
 }
 
 /* Aspecto base de los chips de categoría y botones compactos */
 .ventas-categorias-chips button,
 .ventas-chip-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
     border: none; /* Quita los bordes para un look plano */
     background: var(--ventas-acento); /* Usa el amarillo de acento */
     color: #5d4205; /* Texto marrón para contraste */

@@ -69,7 +69,10 @@ window.renderSalesInventory = function renderSalesInventory(productos) {
 
     const lista = Array.isArray(productos) ? productos : [];
     if (!lista.length) {
-        contenedor.innerHTML = '<p class="ventas-empty">No hay productos disponibles.</p>';
+        const mensaje = window._busquedaVentas?.trim()
+            ? 'No se encontraron productos.'
+            : 'No hay productos disponibles.';
+        contenedor.innerHTML = `<p class="ventas-empty">${mensaje}</p>`;
         return;
     }
 

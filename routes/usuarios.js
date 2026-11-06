@@ -196,7 +196,7 @@ router.post('/perfil/:username/foto', (req, res) => {
   if (!dataUrl) return res.status(400).json({ error: 'dataUrl requerido' });
 
   const image = parseImageDataUrl(dataUrl);
-  if (!image) return res.status(400).json({ error: 'Imagen inválida o supera el límite de 6 MB' });
+  if (!image) return res.status(400).json({ error: 'Imagen inválida o supera el límite de 15 MB' });
 
   const publicPath = `/usuarios/perfil/${encodeURIComponent(username)}/foto`;
   db.get('SELECT id FROM usuarios WHERE username = ?', [username], (lookupError, usuario) => {

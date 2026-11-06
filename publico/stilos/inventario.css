@@ -119,11 +119,21 @@
 
 .inventario-categorias {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: auto;
+    overflow-y: hidden;
     gap: 14px;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    overscroll-behavior-x: contain;
 }
 
 .inventario-categorias button {
+    flex: 0 0 auto;
+    white-space: nowrap;
     padding: 10px 24px;
     border-radius: 10px;
     background: var(--inv-yellow);
@@ -136,6 +146,16 @@
 
 .inventario-categorias button:hover {
     filter: brightness(1.03); /* Ligero realce al pasar el mouse */
+}
+
+.inventario-categorias button.is-active {
+    filter: brightness(0.94);
+}
+
+.inventario-empty {
+    padding: 24px;
+    color: #736ba1;
+    text-align: center;
 }
 
 .inventario-tabla-wrapper {

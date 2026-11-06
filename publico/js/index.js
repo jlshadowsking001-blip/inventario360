@@ -28,13 +28,18 @@ async function bootstrap() {
       './app/validaciondecampos.js',
       './app/toast.js',
       './app/secion.js',
-      './app/main.js'
     ];
 
     await Promise.all(modules.map(m => import(m).catch(err => {
       console.error('Error importando módulo', m, err);
       return null;
     })));
+
+    // main.js registers listeners and uses helpers initialized by the other modules.
+    await import('./app/main.js').catch(err => {
+      console.error('Error importando módulo ./app/main.js', err);
+      return null;
+    });
 
     // Comprobar sesión simple: si no hay usuario activo, redirigir al login
     // Permitir modo desarrollo para saltar auth mediante:

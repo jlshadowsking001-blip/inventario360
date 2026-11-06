@@ -66,14 +66,7 @@ async function initApp() {
     const buscadorVentas = document.getElementById('buscadorVentas');
     if (buscadorVentas) {
         buscadorVentas.addEventListener('input', debounce((e) => {
-            const query = e.target.value.toLowerCase();
-            const filtrados = (window._productosCache || []).filter(p =>
-                (p.nombre || '').toLowerCase().includes(query) ||
-                String(p.id).includes(query) ||
-                (p.codigo || '').toLowerCase().includes(query)
-            );
-            searchProducts(query);
-            renderSalesInventory(filtrados);
+            window.filtrarVentasPorTexto(e.target.value);
         }, 220));
     }
 
