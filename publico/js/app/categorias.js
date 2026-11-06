@@ -96,6 +96,59 @@ window.guardarCategoria = async function guardarCategoria() {
     }
 };
 
+window.abrirModalEliminarCategoria = function abrirModalEliminarCategoria() {
+    if (!categorias.length) return showToast('No hay categorías para eliminar', 'info');
+
+    abrirModal('Eliminar categoría', `
+        <label for="categoriaEliminarSelect">Selecciona la categoría:</label>
+        <select id="categoriaEliminarSelect" required></select>
+        <p class="inventario-delete-warning">Los productos de esta categoría quedarán sin categoría.</p>
+        <div class="inventario-delete-actions">
+            <button type="button" class="btn btn--ghost" id="cancelarEliminarCategoria">Cancelar</button>
+            <button type="button" class="btn inventario-action-btn--danger" id="confirmarEliminarCategoria">Eliminar categoría</button>
+        </div>
+    `);
+
+    const select = document.getElementById('categoriaEliminarSelect');
+    categorias.forEach(categoria => {
+        const option = document.createElement('option');
+        option.value = categoria.id;
+        option.textContent = categoria.nombre;
+        select.appendChild(option);
+    });
+    document.getElementById('cancelarEliminarCategoria').addEventListener('click', cerrarModal);
+    document.getElementById('confirmarEliminarCategoria').addEventListener('click', async () => {
+        const categoria = categorias.find(item => String(item.id) === select.value);
+        if (!categoria) return showToast('Selecciona una categoría válida', 'error');
+        if (!confirm(`¿Eliminar la categoría "${categoria.nombre}"?`)) return;
+
+        try {
+            const usuario_id = getUsuarioId();
+            if (!usuario_id) return showToast('Usuario no identificado', 'error');
+            const res = await fetch(`/categorias/${encodeURIComponent(categoria.id)}?usuario_id=${encodeURIComponent(usuario_id)}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (!res.ok) return showToast(data.error || 'No se pudo eliminar la categoría', 'error');
+
+            cerrarModal();
+            showToast('Categoría eliminada', 'success');
+            if (String(window._categoriaInventarioActiva) === String(categoria.id)) {
+                window._categoriaInventarioActiva = null;
+            }
+            if (String(window._categoriaVentaActiva) === String(categoria.id)) {
+                window._categoriaVentaActiva = null;
+            }
+            await cargarCategorias();
+            window.searchProducts(document.getElementById('buscador')?.value || '');
+            window.filtrarVentasPorTexto(window._busquedaVentas);
+        } catch (err) {
+            console.error('Error eliminando categoría:', err);
+            showToast('Error eliminando categoría', 'error');
+        }
+    });
+};
+
 /**
  * Filtra los productos por categoría seleccionada.
  * @param {number|string} categoriaId - ID de la categoría.
