@@ -11,6 +11,9 @@ window.mostrarModulo = function(nombreModulo) {
         sec.style.display = 'none';
         sec.classList.remove('activo');
     });
+    document.querySelectorAll('.sidebar [data-modulo]').forEach(item => {
+        item.classList.toggle('active', item.dataset.modulo === nombreModulo);
+    });
 
   // Mostrar el módulo seleccionado
     const target = document.getElementById(nombreModulo);
