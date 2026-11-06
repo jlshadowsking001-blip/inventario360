@@ -5,6 +5,18 @@
 window._canasta = window._canasta || [];
 window.modoVentaActual = window.modoVentaActual || 'contado';
 
+function fechaLocalParaInput() {
+    const hoy = new Date();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    return `${hoy.getFullYear()}-${mes}-${dia}`;
+}
+
+const fechaVentaInput = document.getElementById('fechaVenta');
+if (fechaVentaInput && !fechaVentaInput.value) {
+    fechaVentaInput.value = fechaLocalParaInput();
+}
+
 // Función que muestra u oculta el aviso cuando se intenta vender a crédito sin cliente asignado.
 function actualizarAvisoCredito() {
     const aviso = document.getElementById('ventasCreditoAviso');
@@ -212,6 +224,8 @@ window.terminarventa = async function terminarventa() {
         actualizarAvisoCredito();
         return alert('Selecciona un cliente para registrar una venta a crédito.');
     }
+    const fecha = document.getElementById('fechaVenta')?.value;
+    if (!fecha) return alert('Selecciona la fecha de la venta.');
 
     try {
         for (const item of window._canasta) {
@@ -221,6 +235,7 @@ window.terminarventa = async function terminarventa() {
             body: JSON.stringify({
             tipo: 'venta',
             usuario_id,
+            fecha,
             producto_id: item.id,
             cantidad: item.cantidad,
             cliente_id: clienteId || null,
@@ -236,6 +251,8 @@ window.terminarventa = async function terminarventa() {
         alert('Venta registrada correctamente');
         window._canasta = [];
         renderCanasta();
+        const fechaInput = document.getElementById('fechaVenta');
+        if (fechaInput) fechaInput.value = fechaLocalParaInput();
         seleccionarModoVenta('contado');
         loadProducts();
         loadMovimientos();
@@ -269,6 +286,8 @@ window.abrirModalGasto = function abrirModalGasto() {
                 </select>
             </div>
         </div>
+        <label for="gastoFecha">Fecha del gasto</label>
+        <input id="gastoFecha" type="date" value="${fechaLocalParaInput()}" required>
         <label>Descripción</label>
         <textarea id="gastoDescripcion" rows="3" placeholder="Describe el gasto"></textarea>
         <div style="text-align:right; margin-top:12px;">
@@ -285,12 +304,14 @@ window.guardarGasto = async function guardarGasto() {
     if (!usuario_id) return alert('Usuario no identificado. Inicia sesión nuevamente.');
     const descripcion = (document.getElementById('gastoDescripcion').value || '').trim() || 'Gasto';
     const proveedor = document.getElementById('gastoProveedor').value || null;
+    const fecha = document.getElementById('gastoFecha').value;
+    if (!fecha) return alert('Selecciona la fecha del gasto.');
 
     try {
         const res = await fetch('/movimientos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tipo: 'gasto', usuario_id, monto, descripcion, proveedor_id: proveedor || null })
+            body: JSON.stringify({ tipo: 'gasto', usuario_id, fecha, monto, descripcion, proveedor_id: proveedor || null })
         });
         const data = await res.json();
         if (!res.ok) return alert(data.error || 'No se pudo registrar el gasto');
