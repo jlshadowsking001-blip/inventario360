@@ -74,12 +74,21 @@ window.cargarPerfil = async function cargarPerfil() {
         setValue('telefonoUsuario', perfil.telefono);
 
         const preview = document.getElementById('previewFoto');
-        if (preview && perfil.foto_url) preview.src = perfil.foto_url;
+        if (preview && perfil.foto_url) preview.src = `${perfil.foto_url}?v=${Date.now()}`;
 
         const topbarNombre = document.getElementById('topbarNombre');
-        const topbarFoto = document.getElementById('topbarFoto');
         if (topbarNombre) topbarNombre.textContent = perfil.nombre || perfil.username || currentUser;
-        if (topbarFoto && perfil.foto_url) topbarFoto.src = perfil.foto_url;
+        if (perfil.foto_url) {
+            try { localStorage.setItem('perfilFoto', perfil.foto_url); } catch (err) {}
+            if (typeof window.aplicarFotoPerfil === 'function') {
+                window.aplicarFotoPerfil(perfil.foto_url);
+            }
+        } else {
+            try { localStorage.removeItem('perfilFoto'); } catch (err) {}
+            if (typeof window.aplicarFotoPerfil === 'function') {
+                window.aplicarFotoPerfil(null);
+            }
+        }
 
         try { localStorage.setItem('perfilUsuario', JSON.stringify(perfil)); } catch (err) {}
     } catch (err) {

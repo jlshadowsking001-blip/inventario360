@@ -2,6 +2,21 @@
 // Inicialización global al cargar la app
 // ===============================
 
+const DEFAULT_PROFILE_IMAGE = 'assets/logoinventario360.png';
+
+window.aplicarFotoPerfil = function aplicarFotoPerfil(url) {
+    const imagen = url || DEFAULT_PROFILE_IMAGE;
+    const cacheBust = imagen === DEFAULT_PROFILE_IMAGE || imagen.startsWith('data:')
+        ? imagen
+        : `${imagen}${imagen.includes('?') ? '&' : '?'}v=${Date.now()}`;
+
+    const fotoPerfil = document.getElementById('topbarFoto');
+    if (fotoPerfil) fotoPerfil.src = cacheBust;
+
+    const favicon = document.getElementById('user-favicon');
+    if (favicon) favicon.href = cacheBust;
+};
+
 /**
  * Punto de entrada del frontend (después de index.js).
  * Garantiza una única inicialización, chequea sesión y dispara las cargas base.
@@ -72,12 +87,11 @@ async function initApp() {
 
     const fotoinput = document.getElementById('fotoperfil');
     const preview = document.getElementById('previewFoto');
-    const topbarFoto = document.getElementById('topbarFoto');
     const topbarNombre = document.getElementById('topbarNombre');
 
     try {
         const fotoData = localStorage.getItem('perfilFoto');
-        if (topbarFoto && fotoData) topbarFoto.src = fotoData;
+        window.aplicarFotoPerfil(fotoData);
 
         const storedUsuario = localStorage.getItem('perfilUsuario') || localStorage.getItem('usuarioActivo');
         if (topbarNombre && storedUsuario) {
@@ -112,7 +126,9 @@ async function initApp() {
 
                     const body = await res.json();
                     if (res.ok && body.foto_url) {
-                        if (preview) preview.src = body.foto_url;
+                        const fotoUrl = `${body.foto_url}?v=${Date.now()}`;
+                        if (preview) preview.src = fotoUrl;
+                        window.aplicarFotoPerfil(body.foto_url);
                         try { localStorage.setItem('perfilFoto', body.foto_url); } catch (err) {}
                         alert('Foto subida correctamente');
                         window.cargarPerfil && window.cargarPerfil();

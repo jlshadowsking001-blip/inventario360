@@ -989,6 +989,16 @@
   color: var(--palette-heading);
 }
 
+.sidebar li.nav-item.active {
+  color: #fff;
+  background: rgba(255, 220, 85, 0.16);
+  box-shadow: inset 3px 0 0 var(--palette-yellow);
+}
+
+.sidebar li.nav-item.active .nav-icon {
+  color: var(--palette-yellow);
+}
+
 .inventario-card,
 .ventas-layout,
 .movimientos-card,

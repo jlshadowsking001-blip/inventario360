@@ -108,9 +108,42 @@
     border-radius: 8px; /* Suaviza cada item */
     display: flex; /* Ícono + texto alineados */
     align-items: center; /* Centrado vertical */
-    gap: 10px; /* Espacio entre icono y label */
+    gap: 14px; /* Espacio entre icono y label */
     color: #fff; /* Texto blanco */
     transition: background .12s, transform .06s; /* Feedback rápido */
+}
+.sidebar li.nav-item {
+    min-height: 48px;
+    padding: 10px 12px;
+}
+.sidebar .nav-icon {
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.sidebar .nav-icon--filled {
+    fill: currentColor;
+    stroke: none;
+}
+.sidebar .nav-section-title {
+    min-height: auto;
+    margin: 18px 10px 4px;
+    padding: 0;
+    color: rgba(255,255,255,0.65);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: default;
+}
+.sidebar .nav-section-title:hover {
+    background: transparent;
+    transform: none;
 }
 .sidebar li .icon {
     opacity: 0.95; /* Ícono ligeramente translúcido */
