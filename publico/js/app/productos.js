@@ -116,8 +116,14 @@ window.loadProducts = async function loadProducts() {
         if (res.ok) {
         window._productosCache = data.productos || [];
         window.actualizarResumenInventario(window._productosCache);
-        renderProductsTable(window._productosCache);
-        try { renderSalesInventory(window._productosCache); } catch (e) {}
+        const buscador = document.getElementById('buscador');
+        window.searchProducts(buscador ? buscador.value : '');
+        const buscadorVentas = document.getElementById('buscadorVentas');
+        if (typeof window.filtrarVentasPorTexto === 'function') {
+            window.filtrarVentasPorTexto(buscadorVentas ? buscadorVentas.value : '');
+        } else {
+            renderSalesInventory(window._productosCache);
+        }
         try { renderCanasta(); } catch (e) {}
         } else {
         console.error('Error cargando productos', data);
@@ -135,6 +141,11 @@ window.renderProductsTable = function renderProductsTable(productos) {
     const tbody = document.getElementById('tablaInventarioBody');
     if (!tbody) return;
     tbody.innerHTML = '';
+
+    if (!productos.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="inventario-empty">No se encontraron productos.</td></tr>';
+        return;
+    }
 
     productos.forEach(p => {
         const fila = document.createElement('tr');
@@ -371,18 +382,19 @@ window.eliminarProducto = async function eliminarProducto(id) {
  */
 window.searchProducts = function searchProducts(q) {
     if (!window._productosCache) return;
-    const query = String(q || '').trim().toLowerCase();
-    if (!query) {
-        renderProductsTable(window._productosCache);
-        return;
-    }
+    const query = String(q || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const categoriaId = window._categoriaInventarioActiva;
     const filtered = window._productosCache.filter(p => {
         if (!p) return false;
-        const nombre = (p.nombre || '').toLowerCase();
-        const id = p.id != null ? String(p.id) : '';
-        const codigo = p.codigo != null ? String(p.codigo).toLowerCase() : '';
-        return nombre.includes(query) || id.includes(query) || codigo.includes(query);
+        if (categoriaId != null && String(p.categoria_id) !== String(categoriaId)) return false;
+        if (!query) return true;
+        const searchable = [p.nombre, p.id, p.codigo]
+            .filter(value => value != null)
+            .join(' ')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+        return query.split(/\s+/).every(term => searchable.includes(term));
     });
     renderProductsTable(filtered);
-    try { renderSalesInventory(filtered); } catch (e) {}
 };
