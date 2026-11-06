@@ -109,7 +109,7 @@ window.renderSalesInventory = function renderSalesInventory(productos) {
  */
 window.addToCanasta = function addToCanasta(id, cantidad) {
     const prod = (window._productosCache || []).find(x => String(x.id) === String(id));
-    if (!prod) return alert('Producto no encontrado');
+    if (!prod) return showToast('Producto no encontrado', 'error');
     const exist = window._canasta.find(i => String(i.id) === String(id));
     if (exist) {
         exist.cantidad = Number(exist.cantidad) + Number(cantidad);
@@ -210,17 +210,17 @@ window.vaciarcanasta = function vaciarcanasta() {
  * Finaliza la venta actual y registra los movimientos en el servidor.
  */
 window.terminarventa = async function terminarventa() {
-    if (!window._canasta?.length) return alert('Canasta vacía');
+    if (!window._canasta?.length) return showToast('Canasta vacía', 'info');
     const usuario_id = getUsuarioId();
-    if (!usuario_id) return alert('Usuario no identificado. Inicia sesión nuevamente.');
+    if (!usuario_id) return showToast('Usuario no identificado. Inicia sesión nuevamente.', 'error');
     const clienteSelect = document.getElementById('clienteVentaSelect');
     const clienteId = clienteSelect && clienteSelect.value ? clienteSelect.value : null;
     if (window.modoVentaActual === 'credito' && !clienteId) {
         actualizarAvisoCredito();
-        return alert('Selecciona un cliente para registrar una venta a crédito.');
+        return showToast('Selecciona un cliente para registrar una venta a crédito.', 'error');
     }
     const fecha = document.getElementById('fechaVenta')?.value;
-    if (!fecha) return alert('Selecciona la fecha de la venta.');
+    if (!fecha) return showToast('Selecciona la fecha de la venta.', 'error');
 
     try {
         for (const item of window._canasta) {
@@ -243,7 +243,7 @@ window.terminarventa = async function terminarventa() {
         }
         }
 
-        alert('Venta registrada correctamente');
+        showToast('Venta registrada correctamente', 'success');
         window._canasta = [];
         renderCanasta();
         const fechaInput = document.getElementById('fechaVenta');
@@ -255,7 +255,7 @@ window.terminarventa = async function terminarventa() {
         loadStats();
     } catch (err) {
         console.error('Error finalizando venta:', err);
-        alert(`No se pudo completar la venta. Verifica los movimientos antes de volver a intentarlo. ${err.message}`);
+        showToast(`No se pudo completar la venta. Verifica los movimientos antes de volver a intentarlo. ${err.message}`, 'error', 6000);
         loadProducts();
         loadMovimientos();
         loadMovimientosUI();
@@ -294,13 +294,13 @@ window.abrirModalGasto = function abrirModalGasto() {
 // Función que valida el formulario del modal de gasto y crea el movimiento vía API.
 window.guardarGasto = async function guardarGasto() {
     const monto = parseFloat(document.getElementById('gastoMonto').value);
-    if (!monto || monto <= 0) return alert('El monto es obligatorio');
+    if (!monto || monto <= 0) return showToast('El monto es obligatorio', 'error');
     const usuario_id = getUsuarioId();
-    if (!usuario_id) return alert('Usuario no identificado. Inicia sesión nuevamente.');
+    if (!usuario_id) return showToast('Usuario no identificado. Inicia sesión nuevamente.', 'error');
     const descripcion = (document.getElementById('gastoDescripcion').value || '').trim() || 'Gasto';
     const proveedor = document.getElementById('gastoProveedor').value || null;
     const fecha = document.getElementById('gastoFecha').value;
-    if (!fecha) return alert('Selecciona la fecha del gasto.');
+    if (!fecha) return showToast('Selecciona la fecha del gasto.', 'error');
 
     try {
         const res = await fetch('/movimientos', {
@@ -309,13 +309,13 @@ window.guardarGasto = async function guardarGasto() {
             body: JSON.stringify({ tipo: 'gasto', usuario_id, fecha, monto, descripcion, proveedor_id: proveedor || null })
         });
         const data = await res.json();
-        if (!res.ok) return alert(data.error || 'No se pudo registrar el gasto');
-        alert('Gasto registrado');
+        if (!res.ok) return showToast(data.error || 'No se pudo registrar el gasto', 'error');
+        showToast('Gasto registrado', 'success');
         cerrarModal();
         loadMovimientos();
         loadMovimientosUI();
     } catch (err) {
         console.error('Error guardando gasto:', err);
-        alert('Error guardando gasto');
+        showToast('Error guardando gasto', 'error');
     }
 };

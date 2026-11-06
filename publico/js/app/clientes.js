@@ -115,7 +115,7 @@ window.agregarCliente = async function agregarCliente() {
     const input = document.getElementById('nuevoCliente');
     if (!input) return;
     const nombre = input.value.trim();
-    if (!nombre) return alert('Nombre requerido');
+    if (!nombre) return showToast('Nombre requerido', 'error');
 
     try {
         const res = await fetch('/clientes', {
@@ -124,12 +124,12 @@ window.agregarCliente = async function agregarCliente() {
             body: JSON.stringify({ nombre })
         });
         const data = await res.json();
-        if (!res.ok) return alert(data.error || 'Error creando cliente');
+        if (!res.ok) return showToast(data.error || 'Error creando cliente', 'error');
         input.value = '';
         loadClientes();
     } catch (err) {
         console.error('Error creando cliente:', err);
-        alert('Error creando cliente');
+        showToast('Error creando cliente', 'error');
     }
 };
 
@@ -142,7 +142,7 @@ window.guardarCliente = async function guardarCliente() {
     const direccion = (document.getElementById('direccionCliente') || {}).value || '';
     const correo = (document.getElementById('correoCliente') || {}).value || '';
 
-    if (!nombre.trim()) return alert('Nombre es obligatorio');
+    if (!nombre.trim()) return showToast('Nombre es obligatorio', 'error');
 
     try {
         const res = await fetch('/clientes', {
@@ -151,34 +151,40 @@ window.guardarCliente = async function guardarCliente() {
             body: JSON.stringify({ nombre: nombre.trim(), telefono: telefono.trim(), direccion: direccion.trim(), email: correo.trim() })
         });
         const data = await res.json();
-        if (!res.ok) return alert(data.error || 'Error creando cliente');
-        alert(`Cliente "${data.cliente?.nombre || nombre}" creado`);
+        if (!res.ok) return showToast(data.error || 'Error creando cliente', 'error');
+        showToast(`Cliente "${data.cliente?.nombre || nombre}" creado`, 'success');
         await loadClientes();
         if (typeof window.cerrarModal === 'function') window.cerrarModal();
     } catch (err) {
         console.error('Error creando cliente:', err);
-        alert('Error creando cliente');
+        showToast('Error creando cliente', 'error');
     }
 };
 
 // Función interna que abre prompts rápidos para ajustar los datos de un cliente y guarda los cambios.
 async function editarCliente(cliente) {
     const nuevoNombre = prompt('Nombre', cliente.nombre || '') || '';
-    if (!nuevoNombre.trim()) return alert('Nombre es obligatorio');
+    if (!nuevoNombre.trim()) return showToast('Nombre es obligatorio', 'error');
     const nuevoTelefono = prompt('Teléfono', cliente.telefono || '') || '';
     const nuevoEmail = prompt('Email', cliente.email || '') || '';
     const nuevaDireccion = prompt('Dirección', cliente.direccion || '') || '';
 
     try {
-        await fetch('/clientes/' + encodeURIComponent(cliente.id), {
+        const res = await fetch('/clientes/' + encodeURIComponent(cliente.id), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nombre: nuevoNombre.trim(), telefono: nuevoTelefono.trim(), email: nuevoEmail.trim(), direccion: nuevaDireccion.trim() })
         });
-        loadClientes();
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            showToast(data.error || 'Error actualizando cliente', 'error');
+            return;
+        }
+        showToast('Cliente actualizado', 'success');
+        await loadClientes();
     } catch (err) {
         console.error('Error actualizando cliente:', err);
-        alert('Error actualizando cliente');
+        showToast('Error actualizando cliente', 'error');
     }
 }
 
@@ -189,12 +195,14 @@ async function eliminarCliente(id) {
         const res = await fetch('/clientes/' + encodeURIComponent(id), { method: 'DELETE' });
         if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            alert(data.error || 'No se pudo eliminar');
+            showToast(data.error || 'No se pudo eliminar', 'error');
+            return;
         }
+        showToast('Cliente eliminado', 'success');
         loadClientes();
     } catch (err) {
         console.error('Error eliminando cliente:', err);
-        alert('Error eliminando cliente');
+        showToast('Error eliminando cliente', 'error');
     }
 }
 

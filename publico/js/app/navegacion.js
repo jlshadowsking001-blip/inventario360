@@ -85,9 +85,6 @@ function normalizeInlineOnclicks(){
                     return fn.call(this, evt);
                 } catch(err){
                     console.error('Error ejecutando onclick:', code, err);
-                    // Mostrar aviso ligero al usuario pero sin romper la app
-                    // (descomenta alert si quieres notificar directamente)
-                    // alert('Error interno al ejecutar acción');
                 }
             });
         });
@@ -175,6 +172,6 @@ document.addEventListener('submit', async (e) => {
         await handler();
     } catch (err) {
         console.error('Error procesando formulario modal:', err);
-        alert('Error procesando formulario');
+        showToast('Error procesando formulario', 'error');
     }
 });

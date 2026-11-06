@@ -63,7 +63,7 @@ document.getElementById("formulario-inicio").addEventListener("submit", async fu
         });
     } catch (err) {
         debugLog('Error enviando petición: ' + (err && err.message ? err.message : String(err)));
-        return alert('Error comunicándose con el servidor. Revisa la conexión y la consola.');
+        return window.showToast('Error comunicándose con el servidor. Revisa la conexión y la consola.', 'error');
     }
     let data;
     try { data = await res.json(); } catch (err) { data = { error: 'Respuesta no JSON' }; }
@@ -85,7 +85,7 @@ document.getElementById("formulario-inicio").addEventListener("submit", async fu
     } else {
         const msg = data && data.error ? data.error : ('Error HTTP ' + res.status);
         debugLog('Login fallido: ' + msg);
-        alert(msg);
+        window.showToast(msg, 'error');
     }
 });
 
@@ -128,7 +128,7 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
         });
     } catch (err) {
         debugLog('Error enviando registro: ' + (err && err.message ? err.message : String(err)) );
-        return alert('No se pudo conectar al servidor');
+        return window.showToast('No se pudo conectar al servidor', 'error');
     }
     let data;
     try { data = await res.json(); } catch(e){ data = { error: 'Respuesta no JSON' }; }
@@ -138,13 +138,13 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
         mostrarFormulario("formulario-verificar-cuenta");
     } else {
         credencialesPendientes = null;
-        alert(data.error || 'Error en registro');
+        window.showToast(data.error || 'Error en registro', 'error');
     }
 });
 
 document.getElementById("formulario-verificar-cuenta").addEventListener("submit", async function (e) {
     e.preventDefault();
-    if (!credencialesPendientes) return alert("Inicia sesión nuevamente para solicitar los códigos.");
+    if (!credencialesPendientes) return window.showToast("Inicia sesión nuevamente para solicitar los códigos.", 'error');
     const codigo = document.getElementById("codigo-verificacion").value.trim();
     try {
         const { response, data } = await enviarJson("/usuarios/verificar-cuenta", {
@@ -152,10 +152,10 @@ document.getElementById("formulario-verificar-cuenta").addEventListener("submit"
             canal: "email",
             codigo
         });
-        if (!response.ok) return alert(data.error || "No se pudo verificar el código");
+        if (!response.ok) return window.showToast(data.error || "No se pudo verificar el código", 'error');
         if (data.verificada) {
             credencialesPendientes = null;
-            alert("Correo verificado. Ahora puedes iniciar sesión.");
+            window.showToast("Correo verificado. Ahora puedes iniciar sesión.", 'success');
             mostrarFormulario("formulario-inicio");
             return;
         }
@@ -163,19 +163,19 @@ document.getElementById("formulario-verificar-cuenta").addEventListener("submit"
         document.getElementById("estado-verificacion").textContent = data.mensaje;
     } catch (error) {
         console.error("Error verificando cuenta:", error);
-        alert("No se pudo conectar al servidor para verificar la cuenta.");
+        window.showToast("No se pudo conectar al servidor para verificar la cuenta.", 'error');
     }
 });
 
 document.getElementById("reenviar-codigo").addEventListener("click", async () => {
-    if (!credencialesPendientes) return alert("Inicia sesión nuevamente para solicitar los códigos.");
+    if (!credencialesPendientes) return window.showToast("Inicia sesión nuevamente para solicitar los códigos.", 'error');
     try {
         const { response, data } = await enviarJson("/usuarios/reenviar-verificacion", credencialesPendientes);
-        if (!response.ok) return alert(data.error || "No se pudieron reenviar los códigos");
+        if (!response.ok) return window.showToast(data.error || "No se pudieron reenviar los códigos", 'error');
         document.getElementById("estado-verificacion").textContent = data.errorEnvio || "Se envió nuevamente el código al correo.";
     } catch (error) {
         console.error("Error reenviando códigos:", error);
-        alert("No se pudo conectar al servidor para reenviar los códigos.");
+        window.showToast("No se pudo conectar al servidor para reenviar los códigos.", 'error');
     }
 });
 
@@ -185,19 +185,19 @@ document.getElementById("formulario-recuperar").addEventListener("submit", async
     const canal = "email";
     try {
         const { response, data } = await enviarJson("/usuarios/solicitar-recuperacion", { username, canal });
-        if (!response.ok) return alert(data.error || "No se pudo solicitar el código");
+        if (!response.ok) return window.showToast(data.error || "No se pudo solicitar el código", 'error');
         recuperacionPendiente = { username, canal };
-        alert(data.mensaje);
+        window.showToast(data.mensaje, 'success');
         mostrarFormulario("formulario-confirmar-recuperacion");
     } catch (error) {
         console.error("Error solicitando recuperación:", error);
-        alert("No se pudo conectar al servidor para solicitar el código.");
+        window.showToast("No se pudo conectar al servidor para solicitar el código.", 'error');
     }
 });
 
 document.getElementById("formulario-confirmar-recuperacion").addEventListener("submit", async function (e) {
     e.preventDefault();
-    if (!recuperacionPendiente) return alert("Solicita primero un código de recuperación.");
+    if (!recuperacionPendiente) return window.showToast("Solicita primero un código de recuperación.", 'error');
     const codigo = document.getElementById("codigo-recuperacion").value.trim();
     const nuevaContraseñaInput = document.getElementById("nueva-contraseña");
     const alerta = document.getElementById("alerta-nueva-contraseña");
@@ -212,13 +212,13 @@ document.getElementById("formulario-confirmar-recuperacion").addEventListener("s
         });
         if (response.ok) {
             recuperacionPendiente = null;
-            alert("Contraseña actualizada. Ahora puedes iniciar sesión.");
+            window.showToast("Contraseña actualizada. Ahora puedes iniciar sesión.", 'success');
             mostrarFormulario("formulario-inicio");
         } else {
-            alert(data.error || "No se pudo actualizar la contraseña.");
+            window.showToast(data.error || "No se pudo actualizar la contraseña.", 'error');
         }
     } catch (error) {
         console.error("Error confirmando recuperación:", error);
-        alert("No se pudo conectar al servidor para actualizar la contraseña.");
+        window.showToast("No se pudo conectar al servidor para actualizar la contraseña.", 'error');
     }
 });

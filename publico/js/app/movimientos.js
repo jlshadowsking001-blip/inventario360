@@ -196,7 +196,7 @@ window.loadMovimientosUI = async function loadMovimientosUI(options = {}) {
         const qs = new URLSearchParams();
         qs.set('usuario_id', usuario_id);
         if (options.applyDateFilter && !fechaBase) {
-            return alert('Selecciona una fecha base');
+            return showToast('Selecciona una fecha base', 'error');
         }
         if (fechaBase) qs.set('fechaBase', fechaBase);
         if (rango) qs.set('rango', rango);
@@ -277,7 +277,7 @@ function crearFilaMovimiento(m) {
  * Exporta los movimientos actuales a un archivo CSV descargable.
  */
 window.exportMovimientosCSV = function exportMovimientosCSV() {
-    if (!window.lastMovimientos?.length) return alert('No hay movimientos para exportar');
+    if (!window.lastMovimientos?.length) return showToast('No hay movimientos para exportar', 'info');
 
     const rows = [['fecha', 'tipo', 'producto', 'cantidad', 'monto', 'descripcion', 'cliente', 'proveedor']];
     window.lastMovimientos.forEach(m => {
