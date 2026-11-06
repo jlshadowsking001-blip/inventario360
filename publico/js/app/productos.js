@@ -152,7 +152,7 @@ window.renderProductsTable = function renderProductsTable(productos) {
         <td><input data-id="${p.id}" class="input-existencia" type="number" value="${p.existencia || 0}" style="width:70px"></td>
         <td><input data-id="${p.id}" class="input-precio" type="number" step="0.01" value="${p.precio || 0}" style="width:80px"></td>
         <td>${estimado}</td>
-        <td>${p.costo != null ? ('$' + Number(p.costo).toFixed(2)) : '—'}</td>
+        <td><input data-id="${p.id}" class="input-costo" type="number" min="0" step="0.01" value="${p.costo ?? 0}" style="width:80px"></td>
         <td>$${ganancia}</td>
         <td>
             <button class="btn-editar" data-id="${p.id}">Editar</button>
@@ -176,6 +176,20 @@ window.renderProductsTable = function renderProductsTable(productos) {
         const id = e.target.dataset.id;
         const existencia = parseInt(e.target.value) || 0;
         updateProduct(id, { existencia });
+        });
+    });
+
+    document.querySelectorAll('.input-costo').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+        const id = e.target.dataset.id;
+        const costo = Number(e.target.value);
+        if (!Number.isFinite(costo) || costo < 0) {
+            showToast('El costo no puede ser negativo', 'error');
+            const producto = (window._productosCache || []).find(p => Number(p.id) === Number(id));
+            e.target.value = producto?.costo ?? 0;
+            return;
+        }
+        updateProduct(id, { costo });
         });
     });
 

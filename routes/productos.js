@@ -103,6 +103,13 @@ router.patch('/:id', (req, res)=>{
   const values = [];
   const usuario_id = req.body.usuario_id;
   if (!usuario_id) return res.status(400).json({ error: 'usuario_id requerido' });
+  for (const campo of ['precio', 'costo', 'existencia']) {
+    if (req.body[campo] === undefined) continue;
+    const valor = req.body[campo];
+    if (valor === null || valor === '' || !Number.isFinite(Number(valor)) || Number(valor) < 0) {
+      return res.status(400).json({ error: 'El precio, costo y existencia deben ser valores no negativos' });
+    }
+  }
   ['precio', 'existencia', 'nombre', 'descripcion', 'costo', 'categoria_id'].forEach(k => {
     if (req.body[k] !== undefined) {
       fields.push(`${k} = ?`);
