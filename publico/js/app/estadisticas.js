@@ -1,7 +1,7 @@
 /**
  * Paleta fija para replicar los colores del mockup compartido.
  */
-const STATS_COLOR_SWATCH = ['#6fd4e9', '#7cb5ff', '#6c5ce7', '#8f53ff', '#c47dff', '#f19bff'];
+const STATS_COLOR_SWATCH = ['#3e4395', '#ffdc55', '#7cb5ff', '#6fd4e9', '#292746', '#a8c9ec'];
 const buildStatsPalette = (len) => Array.from({ length: len }, (_, i) => STATS_COLOR_SWATCH[i % STATS_COLOR_SWATCH.length]);
 
 // Función que resume el inventario para el gráfico de pastel, calculando costo total por producto.
@@ -183,18 +183,18 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
             {
                 label: `Ventas por ${rango}`,
                 data: safeMontos,
-                backgroundColor: '#4d2ed1',
+                backgroundColor: '#3e4395',
                 borderRadius: 12,
                 borderSkipped: false,
-                borderColor: '#4d2ed1'
+                borderColor: '#3e4395'
             },
             {
                 label: 'Promedio acumulado',
                 data: safePromedios,
-                backgroundColor: '#cab9ff',
+                backgroundColor: '#ffdc55',
                 borderRadius: 12,
                 borderSkipped: false,
-                borderColor: '#cab9ff'
+                borderColor: '#ffdc55'
             }
             ]
         },
@@ -203,7 +203,7 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
             maintainAspectRatio: false,
             plugins: {
             tooltip: {
-                backgroundColor: '#2b1c52',
+                backgroundColor: '#292746',
                 padding: 10,
                 titleFont: { size: 14, family: 'Poppins' },
                 bodyFont: { size: 12 }
@@ -215,7 +215,7 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
                 ticks: { color: '#4a4171', font: { weight: 600 } }
             },
             y: {
-                grid: { color: 'rgba(77,55,166,0.12)', drawBorder: false },
+                grid: { color: 'rgba(41,39,70,0.12)', drawBorder: false },
                 ticks: { color: '#4a4171' }
             }
             }

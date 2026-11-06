@@ -3,11 +3,11 @@
    =============================== */
 
 :root {
-    --inv-purple: #4d2fb4; /* Morado principal del módulo */
-    --inv-purple-dark: #2e1d76; /* Variante oscura para contrastes */
-    --inv-yellow: #fddc69; /* Acentos amarillos para categorías */
-    --inv-bg: #f7f5ff; /* Fondo lavanda muy claro */
-    --inv-text: #2f2a60; /* Texto principal legible */
+    --inv-purple: var(--palette-heading);
+    --inv-purple-dark: var(--palette-ink);
+    --inv-yellow: var(--palette-yellow);
+    --inv-bg: #fff;
+    --inv-text: var(--palette-ink);
 }
 
 #inventario {
@@ -15,10 +15,10 @@
 }
 
 .inventario-card {
-    background: linear-gradient(180deg, #ffffff 0%, #faf8ff 100%); /* Tarjeta degradada */
+    background: #fff;
     border-radius: 32px; /* Bordes suaves estilo mockup */
-    border: 2px solid rgba(77, 47, 180, 0.25); /* Contorno translúcido */
-    box-shadow: 0 18px 35px rgba(40, 19, 92, 0.12); /* Profundidad elevada */
+    border: 1px solid var(--palette-border);
+    box-shadow: 0 12px 28px rgba(41, 39, 70, 0.08);
     padding: 32px; /* Relleno generoso */
     display: flex; /* Organiza secciones verticalmente */
     flex-direction: column;
@@ -36,15 +36,7 @@
 .inventario-hero-text h2 {
     font-size: 2.8rem; /* Título protagonista */
     margin: 0;
-    color: var(--inv-text);
-}
-
-.inventario-hero-subtitle {
-    text-transform: uppercase; /* Se ve como etiqueta */
-    letter-spacing: 0.15em; /* Separación amplia entre letras */
-    font-size: 0.85rem;
-    color: #7b75a7; /* Tono lavanda medio */
-    margin: 0 0 4px; /* Separa respecto al título */
+    color: var(--palette-heading);
 }
 
 .inventario-actions {
@@ -174,7 +166,9 @@
 }
 
 .inventario-categorias button.is-active {
-    filter: brightness(0.94);
+    background: var(--palette-heading);
+    color: #fff;
+    box-shadow: none;
 }
 
 .inventario-empty {
@@ -184,7 +178,7 @@
 }
 
 .inventario-tabla-wrapper {
-    border: 2px solid var(--inv-purple);
+    border: 1px solid var(--palette-heading);
     border-radius: 28px;
     background: #fff;
     flex: 1 1 auto; /* Ocupa el espacio restante sin invadir las categorías */
@@ -214,24 +208,24 @@
 .tabla-inventario thead th {
     position: sticky; /* Encabezado fijo durante el scroll */
     top: 0;
-    background: #e5e7ff;
+    background: var(--palette-blue-light);
     color: var(--inv-text);
     font-weight: 700;
     padding: 14px 12px;
-    border-bottom: 2px solid var(--inv-purple);
+    border-bottom: 2px solid var(--palette-heading);
     text-transform: capitalize;
 }
 
 .tabla-inventario tbody td {
     padding: 12px;
     text-align: center;
-    border-bottom: 1px solid rgba(116, 106, 168, 0.2);
+    border-bottom: 1px solid var(--palette-border);
     color: var(--inv-text);
-    background: rgba(229, 231, 255, 0.45);
+    background: #fff;
 }
 
 .tabla-inventario tbody tr:nth-child(even) td {
-    background: rgba(247, 248, 255, 0.9); /* Alterna filas para mejorar lectura */
+    background: var(--palette-row);
 }
 
 .tabla-inventario tbody tr:last-child td {

@@ -140,7 +140,7 @@
     margin-left: 220px; /* Compensa el ancho del sidebar fijo */
     padding: 40px; /* Espacio alrededor del contenido */
     flex: 1; /* Ocupa el resto del ancho */
-    background-color: #f4f4f4; /* Mismo fondo que body */
+    background-color: #fff;
     overflow-y: auto; /* Permite scroll interno */
     min-height: 100vh; /* Garantiza altura completa */
 }
@@ -177,8 +177,8 @@ section{
     color: #4752ae; /* Texto en azul violeta */
 }
 section button{
-    background-color: #fea43f; /* Botón naranja */
-    color: #4752ae; /* Texto azul */
+    background-color: #ffdc55;
+    color: #292746;
     border: none; /* Sin borde clásico */
     padding: 10px 15px; /* Relleno estándar */
     font-weight: bold; /* Destaca la acción */
@@ -186,8 +186,8 @@ section button{
     border-radius: 5px; /* Esquinas suaves */
 }
 section button:hover {
-    background-color: #4752ae; /* Invierte colores al pasar el cursor */
-    color: #fea43f;
+    background-color: #f5ca32;
+    color: #292746;
 }
 section h2{
     font-family: var(--font-heading); /* Usa la serif elegante */
