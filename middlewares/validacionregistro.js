@@ -1,6 +1,6 @@
 // Middleware que valida y normaliza el payload de registro (usuario, contraseña, email y teléfono).
 module.exports = (req, res, next) => {
-    const { username, password, email } = req.body;
+    const { username, password, email, canalTelefono } = req.body;
     const { telefono } = req.body || {};
     if (!username || typeof username !== 'string' || username.trim() === '') {
         return res.status(400).json({ error: 'El nombre de usuario es obligatorio' });
@@ -13,6 +13,9 @@ module.exports = (req, res, next) => {
     }
     if (typeof telefono !== 'string' || !/^\+[1-9]\d{7,14}$/.test(telefono.trim())) {
         return res.status(400).json({ error: 'Ingresa el teléfono en formato internacional, por ejemplo +50588888888' });
+    }
+    if (!['sms', 'whatsapp'].includes(canalTelefono)) {
+        return res.status(400).json({ error: 'Selecciona SMS o WhatsApp para verificar tu teléfono' });
     }
     req.body.email = email.trim().toLowerCase();
     req.body.telefono = telefono.trim();

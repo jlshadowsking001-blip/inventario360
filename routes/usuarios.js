@@ -17,6 +17,8 @@ const { parseImageDataUrl } = require('../servicios/imagenes');
 // Controller centralizado para usuarios
 const usuarioController = require('../controles/usuariocontole');
 
+const phoneVerificationChannel = (user) => user.telefono_canal === 'whatsapp' ? 'whatsapp' : 'sms';
+
 // ENRUTAMIENTO PARA EL REGISTRO DE USUARIOS
 // Delegar registro al controlador para evitar duplicación de lógica
 router.post('/registro', validarRegistro, usuarioController.registrarUsuario);
@@ -28,20 +30,25 @@ router.post('/reenviar-verificacion', usuarioController.reenviarVerificacion);
 
 router.post('/verificar-cuenta', async (req, res) => {
   const { username, canal, codigo } = req.body;
-  if (!username || !['email', 'sms'].includes(canal) || !/^\d{6}$/.test(String(codigo || ''))) {
+  if (!username || !['email', 'sms', 'whatsapp'].includes(canal) || !/^\d{6}$/.test(String(codigo || ''))) {
     return res.status(400).json({ error: 'Usuario, canal y código de seis dígitos son requeridos' });
   }
   try {
-    const usuario = await db.get('SELECT id FROM usuarios WHERE username = ?', [username]);
+    const usuario = await db.get('SELECT id, telefono_canal FROM usuarios WHERE username = ?', [username]);
     if (!usuario) return res.status(400).json({ error: 'No se pudo verificar el código' });
+    if (canal !== 'email' && canal !== phoneVerificationChannel(usuario)) {
+      return res.status(400).json({ error: 'El código no corresponde al canal telefónico seleccionado' });
+    }
     await verificacion.verifyCode(usuario.id, 'registro', canal, codigo);
     const estado = await db.get(
-      'SELECT email_verificado, telefono_verificado, telefono_requerido FROM usuarios WHERE id = ?',
+      'SELECT email_verificado, telefono_verificado, telefono_requerido, telefono_canal FROM usuarios WHERE id = ?',
       [usuario.id]
     );
     const canalesPendientes = [];
     if (!Number(estado.email_verificado)) canalesPendientes.push('email');
-    if (Number(estado.telefono_requerido) && !Number(estado.telefono_verificado)) canalesPendientes.push('sms');
+    if (Number(estado.telefono_requerido) && !Number(estado.telefono_verificado)) {
+      canalesPendientes.push(phoneVerificationChannel(estado));
+    }
     return res.json({
       verificada: canalesPendientes.length === 0,
       telefonoPendiente: !Number(estado.telefono_requerido) && !Number(estado.telefono_verificado),
@@ -56,18 +63,23 @@ router.post('/verificar-cuenta', async (req, res) => {
 
 router.post('/solicitar-recuperacion', async (req, res) => {
   const { username, canal } = req.body;
-  if (!username || !['email', 'sms'].includes(canal)) {
-    return res.status(400).json({ error: 'Usuario y canal de recuperación requeridos' });
+  if (!username || !['email', 'telefono', 'sms', 'whatsapp'].includes(canal)) {
+    return res.status(400).json({ error: 'Usuario y un canal de recuperación válido son requeridos' });
   }
   try {
     const usuario = await db.get(
-      'SELECT id, email, telefono, email_verificado, telefono_verificado FROM usuarios WHERE username = ?',
+      'SELECT id, email, telefono, telefono_canal, email_verificado, telefono_verificado FROM usuarios WHERE username = ?',
       [username]
     );
-    const canalVerificado = usuario && (canal === 'email'
+    const canalReal = !usuario ? null : canal === 'email'
+      ? 'email'
+      : (canal === 'telefono' || canal === phoneVerificationChannel(usuario))
+        ? phoneVerificationChannel(usuario)
+        : null;
+    const canalVerificado = usuario && canalReal && (canalReal === 'email'
       ? Number(usuario.email_verificado)
       : Number(usuario.telefono_verificado));
-    if (canalVerificado) await verificacion.issueCode(usuario, 'recuperacion', canal);
+    if (canalVerificado) await verificacion.issueCode(usuario, 'recuperacion', canalReal);
     return res.json({ mensaje: 'Si la cuenta y el canal son válidos, recibirás un código de recuperación.' });
   } catch (error) {
     console.error('Error solicitando recuperación:', error);
@@ -77,16 +89,22 @@ router.post('/solicitar-recuperacion', async (req, res) => {
 
 router.post('/confirmar-recuperacion', async (req, res) => {
   const { username, canal, codigo, nuevaContraseña } = req.body;
-  if (!username || !['email', 'sms'].includes(canal) || !/^\d{6}$/.test(String(codigo || ''))) {
+  if (!username || !['email', 'telefono', 'sms', 'whatsapp'].includes(canal) || !/^\d{6}$/.test(String(codigo || ''))) {
     return res.status(400).json({ error: 'Usuario, canal y código de seis dígitos son requeridos' });
   }
   if (typeof nuevaContraseña !== 'string' || nuevaContraseña.length < 8 || nuevaContraseña.length > 100) {
     return res.status(400).json({ error: 'La contraseña debe tener entre 8 y 100 caracteres' });
   }
   try {
-    const usuario = await db.get('SELECT id FROM usuarios WHERE username = ?', [username]);
+    const usuario = await db.get('SELECT id, telefono_canal FROM usuarios WHERE username = ?', [username]);
     if (!usuario) return res.status(400).json({ error: 'El código no es válido o ya fue utilizado.' });
-    await verificacion.verifyCode(usuario.id, 'recuperacion', canal, codigo);
+    const canalReal = canal === 'email'
+      ? 'email'
+      : (canal === 'telefono' || canal === phoneVerificationChannel(usuario))
+        ? phoneVerificationChannel(usuario)
+        : null;
+    if (!canalReal) return res.status(400).json({ error: 'El código no es válido o ya fue utilizado.' });
+    await verificacion.verifyCode(usuario.id, 'recuperacion', canalReal, codigo);
     const hashed = bcrypt.hashSync(nuevaContraseña, 10);
     await db.run('UPDATE usuarios SET password = ? WHERE id = ?', [hashed, usuario.id]);
     return res.json({ mensaje: 'Contraseña actualizada correctamente' });
@@ -132,7 +150,7 @@ router.get('/debug/test-write', (req, res) => {
 // Devuelve información de perfil filtrada por username sin exponer password
 router.get('/perfil/:username', (req, res) => {
   const username = req.params.username;
-  db.get('SELECT id, username, email, telefono, nombre, direccion, ciudad, pais, codigo_postal, detalles, foto_url, image_mime FROM usuarios WHERE username = ?', [username], (err, row) => {
+  db.get('SELECT id, username, email, telefono, telefono_canal, nombre, direccion, ciudad, pais, codigo_postal, detalles, foto_url, image_mime FROM usuarios WHERE username = ?', [username], (err, row) => {
     if (err) {
       console.error('Error al leer usuario:', err);
       return res.status(500).json({ error: 'Error interno' });
@@ -147,17 +165,21 @@ router.get('/perfil/:username', (req, res) => {
 // Actualiza datos de contacto/dirección del usuario y devuelve el registro actualizado
 router.put('/perfil/:username', async (req, res) => {
   const username = req.params.username;
-  const { nombre, direccion, ciudad, pais, codigo_postal, detalles, email, telefono } = req.body;
+  const { nombre, direccion, ciudad, pais, codigo_postal, detalles, email, telefono, canalTelefono } = req.body;
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
     return res.status(400).json({ error: 'Correo electrónico inválido' });
   }
   if (telefono && !/^\+[1-9]\d{7,14}$/.test(String(telefono).trim())) {
     return res.status(400).json({ error: 'El teléfono debe estar en formato internacional, por ejemplo +50588888888' });
   }
+  if (canalTelefono !== undefined && !['sms', 'whatsapp'].includes(canalTelefono)) {
+    return res.status(400).json({ error: 'El canal telefónico debe ser SMS o WhatsApp' });
+  }
   const emailNormalizado = email ? String(email).trim().toLowerCase() : null;
   const telefonoNormalizado = telefono ? String(telefono).trim() : null;
   const params = [
     emailNormalizado, telefonoNormalizado, telefonoNormalizado, telefonoNormalizado,
+    canalTelefono || null,
     nombre || null, direccion || null, ciudad || null, pais || null, codigo_postal || null,
     detalles || null, emailNormalizado, telefonoNormalizado, username
   ];
@@ -165,6 +187,7 @@ router.put('/perfil/:username', async (req, res) => {
     email_verificado = IF(COALESCE(email, '') = COALESCE(?, ''), email_verificado, 0),
     telefono_verificado = IF(COALESCE(telefono, '') = COALESCE(?, ''), telefono_verificado, 0),
     telefono_requerido = IF(? IS NULL, 0, IF(COALESCE(telefono, '') <> COALESCE(?, ''), 1, IF(telefono_verificado = 0, 1, telefono_requerido))),
+    telefono_canal = COALESCE(?, telefono_canal),
     nombre = ?, direccion = ?, ciudad = ?, pais = ?, codigo_postal = ?, detalles = ?, email = ?, telefono = ?
     WHERE username = ?`;
   try {
@@ -178,7 +201,7 @@ router.put('/perfil/:username', async (req, res) => {
 
     await db.run(sql, params);
     const actualizado = await db.get(
-      'SELECT id, username, email, telefono, nombre, direccion, ciudad, pais, codigo_postal, detalles, foto_url, email_verificado, telefono_verificado, telefono_requerido FROM usuarios WHERE username = ?',
+      'SELECT id, username, email, telefono, telefono_canal, nombre, direccion, ciudad, pais, codigo_postal, detalles, foto_url, email_verificado, telefono_verificado, telefono_requerido FROM usuarios WHERE username = ?',
       [username]
     );
     return res.json({ usuario: actualizado });

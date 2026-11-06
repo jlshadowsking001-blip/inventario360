@@ -144,8 +144,11 @@ const ready = (async () => {
         await ensureColumn('usuarios', 'email_verificado', 'TINYINT(1) NOT NULL DEFAULT 0');
         await ensureColumn('usuarios', 'telefono_verificado', 'TINYINT(1) NOT NULL DEFAULT 0');
         await ensureColumn('usuarios', 'telefono_requerido', 'TINYINT(1) NOT NULL DEFAULT 0');
+        await ensureColumn('usuarios', 'telefono_canal', 'VARCHAR(20) NULL');
         await ensureColumn('usuarios', 'image_data', 'MEDIUMBLOB NULL');
         await ensureColumn('usuarios', 'image_mime', 'VARCHAR(32) NULL');
+        await pool.query(`UPDATE usuarios SET telefono_canal = 'sms'
+            WHERE telefono_canal IS NULL AND telefono IS NOT NULL AND telefono <> ''`);
 
         await pool.query(`CREATE TABLE IF NOT EXISTS codigos_verificacion (
             id INT AUTO_INCREMENT PRIMARY KEY,

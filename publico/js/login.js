@@ -28,7 +28,7 @@ async function enviarJson(url, payload) {
 
 function mostrarCanalesPendientes(canales) {
     const select = document.getElementById("verificacion-canal");
-    const etiquetas = { email: "Correo electrónico", sms: "Mensaje SMS" };
+    const etiquetas = { email: "Correo electrónico", sms: "Mensaje SMS", whatsapp: "WhatsApp" };
     select.replaceChildren(...(canales || []).map(canal => {
         const option = document.createElement("option");
         option.value = canal;
@@ -93,7 +93,7 @@ document.getElementById("formulario-inicio").addEventListener("submit", async fu
     } else if (res.status === 403 && data.verificacionRequerida) {
         credencialesPendientes = { username, password };
         mostrarCanalesPendientes(data.canalesPendientes);
-        document.getElementById("estado-verificacion").textContent = data.errorEnvio || "Verifica los códigos enviados a tu correo y teléfono.";
+        document.getElementById("estado-verificacion").textContent = data.errorEnvio || "Verifica los códigos enviados a tu correo y al canal telefónico seleccionado.";
         mostrarFormulario("formulario-verificar-cuenta");
     } else {
         const msg = data && data.error ? data.error : ('Error HTTP ' + res.status);
@@ -109,6 +109,7 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
     const usuarioInput = document.getElementById("registro-username");
     const emailInput = document.getElementById("registro-email");
     const telefonoInput = document.getElementById("registro-telefono");
+    const canalTelefono = document.getElementById("registro-canal-telefono").value;
     const contraseñaInput = document.getElementById("registro-contraseña");
     const alertaUsuario = document.getElementById("alerta-registro-usuario");
     const alertaEmail = document.getElementById("alerta-registro-email");
@@ -131,7 +132,7 @@ document.getElementById("formulario-registro").addEventListener("submit", async 
         res = await fetch("/usuarios/registro", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password, email, telefono })
+            body: JSON.stringify({ username, password, email, telefono, canalTelefono })
         });
     } catch (err) {
         debugLog('Error enviando registro: ' + (err && err.message ? err.message : String(err)) );
@@ -165,7 +166,7 @@ document.getElementById("formulario-verificar-cuenta").addEventListener("submit"
         if (data.verificada) {
             credencialesPendientes = null;
             alert(data.telefonoPendiente
-                ? "Correo verificado. Ahora puedes iniciar sesión. Para recuperar tu cuenta por SMS, actualiza y verifica el teléfono desde tu perfil."
+                ? "Correo verificado. Ahora puedes iniciar sesión. Para recuperar tu cuenta por teléfono, actualiza y verifica el canal seleccionado desde tu perfil."
                 : "Cuenta verificada. Ahora puedes iniciar sesión.");
             mostrarFormulario("formulario-inicio");
             return;

@@ -55,6 +55,11 @@
                     <input type="tel" id="registro-telefono" name="telefono" placeholder="+50588888888" autocomplete="tel" required/>
                     <div id="alerta-telefono" class="alerta"></div>
                 </div>
+                <label for="registro-canal-telefono">Verificar teléfono mediante</label>
+                <select id="registro-canal-telefono" name="canalTelefono" required>
+                    <option value="sms">SMS</option>
+                    <option value="whatsapp">WhatsApp</option>
+                </select>
                 <!--campo para ingresar el correo electronico del registro-->
                 <div class="email"><!--clase para correo electronico-->
                     <label for="registro-email">Correo Electrónico</label>
@@ -78,7 +83,7 @@
                 <label for="recuperacion-canal">Enviar código a</label>
                 <select id="recuperacion-canal" required>
                     <option value="email">Correo verificado</option>
-                    <option value="sms">Teléfono verificado por SMS</option>
+                    <option value="telefono">Teléfono verificado (SMS o WhatsApp registrado)</option>
                 </select>
                 <div id="alerta-recuperacion-email" class="alerta"></div>
                 <button type="submit">Enviar código de recuperación</button>
@@ -100,6 +105,7 @@
                 <select id="verificacion-canal" required>
                     <option value="email">Correo electrónico</option>
                     <option value="sms">Mensaje SMS</option>
+                    <option value="whatsapp">WhatsApp</option>
                 </select>
                 <label for="codigo-verificacion">Código de seis dígitos</label>
                 <input type="text" id="codigo-verificacion" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required />
