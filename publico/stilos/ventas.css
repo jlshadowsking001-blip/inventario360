@@ -4,10 +4,10 @@
 
 /* Paleta específica del módulo de ventas */
 :root {
-    --ventas-borde: #4d3aa7; /* Color para bordes principales */
-    --ventas-acento: #fddc69; /* Amarillo para resaltar chips y totales */
-    --ventas-lila: #f4f1ff; /* Fondo lila muy claro */
-    --ventas-texto: #2c2b5d; /* Texto principal en morado oscuro */
+    --ventas-borde: var(--palette-heading);
+    --ventas-acento: var(--palette-yellow);
+    --ventas-lila: #fff;
+    --ventas-texto: var(--palette-ink);
 }
 
 /* Contenedor general que aloja catálogo y carrito */
@@ -15,7 +15,7 @@
     border: 2px solid var(--ventas-borde); /* Borde morado para encuadrar la tarjeta */
     border-radius: 28px; /* Esquinas redondeadas grandes */
     padding: 32px; /* Espaciado interno amplio */
-    background: linear-gradient(180deg, #ffffff 0%, #fdf9ff 100%); /* Degradado suave para dar profundidad */
+    background: #fff;
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
     align-items: stretch;
@@ -76,7 +76,7 @@
 /* Título principal del panel */
 .ventas-panel-header h2 {
     font-size: 2.25rem; /* Tamaño grande para jerarquía */
-    color: var(--ventas-texto); /* Usa el morado de texto */
+    color: var(--palette-heading);
     margin: 0; /* Elimina espacios adicionales */
     font-weight: 700; /* Negrita marcada */
 }
@@ -152,8 +152,9 @@
 /* Estado activo de cada chip */
 .ventas-categorias-chips button.is-active,
 .ventas-chip-btn.is-active {
-    background: #f7c735; /* Amarillo más intenso */
-    box-shadow: inset 0 -3px rgba(255,255,255,0.4); /* Luz interna para resaltarlo */
+    background: var(--palette-heading);
+    color: #fff;
+    box-shadow: none;
 }
 
 /* Pequeño levante al pasar el cursor */

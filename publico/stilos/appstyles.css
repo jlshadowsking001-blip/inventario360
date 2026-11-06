@@ -47,14 +47,6 @@
   gap: 4px;
 }
 
-.movimientos-tagline {
-  font-size: 0.85rem;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: #998fd1;
-  margin: 0;
-}
-
 .movimientos-hero h2 {
   font-size: 2.1rem;
   margin: 0;
@@ -477,13 +469,6 @@
   font-size: 1.4rem;
   color: #2b1c52;
   margin: 0;
-}
-
-.stats-header .section-tag {
-  letter-spacing: 0.1em; /* Amplía letras para estilo etiqueta */
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  color: #a396df;
 }
 
 .stats-focus-row {
@@ -973,4 +958,164 @@
   font-size: 0.95rem;
   color: var(--color-text);
   background: #fff;
+}
+
+:root {
+  --inv-purple: var(--palette-heading);
+  --inv-purple-dark: var(--palette-ink);
+  --inv-yellow: var(--palette-yellow);
+  --inv-text: var(--palette-ink);
+  --ventas-borde: var(--palette-heading);
+  --ventas-acento: var(--palette-yellow);
+  --ventas-texto: var(--palette-ink);
+}
+
+.contenido {
+  background: #fff;
+}
+
+.sidebar li:hover {
+  background: rgba(255, 220, 85, 0.16);
+  transform: none;
+}
+
+.sidebar li.active {
+  background: var(--palette-yellow);
+  box-shadow: inset 4px 0 0 var(--palette-heading);
+  color: var(--palette-ink);
+}
+
+.sidebar li.active .icon {
+  color: var(--palette-heading);
+}
+
+.inventario-card,
+.ventas-layout,
+.movimientos-card,
+.stats-card,
+.contact-card {
+  background: #fff;
+  border-color: var(--palette-border);
+  box-shadow: 0 12px 30px rgba(41, 39, 70, 0.08);
+}
+
+.inventario-hero-text h2,
+.ventas-panel-header h2,
+.movimientos-hero h2,
+.stats-header h2,
+.contact-card__header h2 {
+  color: var(--palette-heading);
+}
+
+.movimientos-header-sticky {
+  background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0));
+}
+
+.movimientos-hero-summary,
+.contact-pill {
+  background: #fff;
+  border-color: var(--palette-border);
+}
+
+.mov-resumen-item span,
+.contact-pill span,
+.stats-card .metric-card span {
+  color: #596173;
+}
+
+.mov-resumen-item strong,
+.contact-pill strong,
+.stats-card .metric-card strong,
+.stats-card .metric-card--focus strong {
+  color: var(--palette-heading);
+}
+
+.mov-vista-actual {
+  background: var(--palette-blue-light);
+  color: var(--palette-heading);
+}
+
+.mov-chip,
+.mov-pill {
+  border-color: var(--palette-border);
+  background: #fff;
+  color: var(--palette-heading);
+}
+
+.mov-chip--solid,
+.mov-pill.active,
+.inventario-categorias button,
+.ventas-categorias-chips button,
+.ventas-chip-btn,
+.ventas-pago-btn.is-active {
+  border-color: var(--palette-yellow);
+  background: var(--palette-yellow);
+  color: var(--palette-ink);
+  box-shadow: none;
+}
+
+.mov-chip--solid:hover,
+.mov-pill.active:hover,
+.inventario-categorias button:hover,
+.ventas-categorias-chips button:hover,
+.ventas-chip-btn:hover,
+.ventas-pago-btn.is-active:hover {
+  background: var(--palette-yellow-hover);
+  color: var(--palette-ink);
+}
+
+.movimientos-tabla-wrapper,
+.contact-table {
+  border-color: var(--palette-border);
+}
+
+.movimientos-tabla-scroll th,
+.contact-table thead th {
+  background: var(--palette-blue-light);
+  border-bottom-color: var(--palette-border);
+  color: var(--palette-ink);
+}
+
+.movimientos-tabla-scroll td {
+  border-bottom-color: var(--palette-border);
+  color: var(--palette-ink);
+}
+
+.mov-periodo-row td,
+.contact-table tbody td {
+  background: var(--palette-row);
+  color: var(--palette-ink);
+}
+
+.stats-card .metric-card,
+.stats-filter-card {
+  border-color: var(--palette-border);
+  box-shadow: 0 8px 18px rgba(41, 39, 70, 0.07);
+}
+
+.stats-filter-card__label,
+.stats-filter-card__icon,
+.metric-card--focus strong {
+  color: var(--palette-heading);
+}
+
+.stats-filter-card input[type="date"],
+.stats-filter-card select,
+.metric-card--focus {
+  background: var(--palette-blue-light);
+  border-color: var(--palette-border);
+}
+
+.contact-table button,
+.contact-table .btn-editar-cliente,
+.contact-table .btn-eliminar-cliente,
+.contact-table .btn-delete-proveedor {
+  color: var(--palette-heading);
+}
+
+.contact-table button:hover,
+.contact-table .btn-editar-cliente:hover,
+.contact-table .btn-eliminar-cliente:hover,
+.contact-table .btn-delete-proveedor:hover {
+  background: rgba(62, 67, 149, 0.1);
 }

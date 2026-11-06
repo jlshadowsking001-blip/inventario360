@@ -4,17 +4,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'); /* Fuente moderna y legible */
 
 :root{
+    --palette-ink: #292746;
+    --palette-heading: #3e4395;
+    --palette-yellow: #ffdc55;
+    --palette-yellow-hover: #f5ca32;
+    --palette-blue-light: #dceeff;
+    --palette-border: #d5dce5;
+    --palette-row: #f7f9fc;
     /* colores (alineados con el login) */
-        --color-primary: #2c284d; /* Azul corporativo principal */
-        --color-primary-2: #2e2a4f; /* Variante más profunda para fondos */
-        --color-accent: #ffbe70; /* Detalles suaves en naranja */
-        --color-cta: #fea43f; /* Botones de llamada a la acción */
-        --color-text: #2c284d; /* Color base para textos */
-        --color-muted: #2e2a4f; /* Textos secundarios */
-    --bg: #f4f4f4; /* Fondo general gris claro */
+    --color-primary: var(--palette-heading);
+    --color-primary-2: var(--palette-ink);
+    --color-accent: var(--palette-yellow);
+    --color-cta: var(--palette-yellow);
+    --color-text: var(--palette-ink);
+    --color-muted: #555b6d;
+    --bg: #ffffff;
     --surface: #ffffff; /* Lienzo de tarjetas y modales */
-    --border: #e6e4ef; /* Líneas divisorias suaves */
-    --shadow: rgba(44,40,77,0.06); /* Sombras estándar */
+    --border: var(--palette-border);
+    --shadow: rgba(41,39,70,0.08);
 
   /* tipografías */
     --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; /* Fuente moderna para interfaz */
@@ -77,7 +84,7 @@ input[type="text"], input[type="number"], input[type="email"], input[type="tel"]
 input:focus, select:focus, textarea:focus{
     outline: none; /* Quita contorno azul del navegador */
     border-color: var(--color-primary); /* Usa el azul corporativo */
-    box-shadow: 0 4px 18px rgba(71,82,174,0.2); /* Brillo suave exterior */
+    box-shadow: 0 4px 18px rgba(62,67,149,0.18); /* Brillo suave exterior */
 }
 
 /* Botón CTA clásico previo al sistema .btn */
@@ -117,7 +124,7 @@ button.btn-primary:hover{
 .btn {
     padding: 10px 18px; /* Relleno consistente */
     border-radius: 999px; /* Forma de píldora como en login */
-    border: 2px solid var(--color-primary); /* Borde azul */
+    border: 2px solid var(--palette-heading); /* Borde azul */
     background: var(--surface); /* Fondo claro */
     color: var(--color-primary); /* Texto azul */
     font-weight: 600; /* Texto destacado */
@@ -125,9 +132,10 @@ button.btn-primary:hover{
     transition: transform .12s, box-shadow .12s, background .12s, color .12s; /* Animación suave */
 }
 .btn--primary {
-    background: var(--color-cta); /* Naranja corporativo */
-    color: var(--color-primary); /* Texto azul */
-    box-shadow: 0 8px 20px rgba(71,82,174,0.15); /* Sombra según paleta */
+    background: var(--color-cta);
+    border-color: var(--palette-yellow);
+    color: var(--palette-ink);
+    box-shadow: 0 8px 20px rgba(41,39,70,0.12);
 }
 .btn--ghost {
     background: transparent; /* Botón hueco */
@@ -139,6 +147,12 @@ button.btn-primary:hover{
     background: var(--color-primary);
     color: #fff;
     box-shadow: 0 10px 24px rgba(71,82,174,0.25);
+}
+
+.btn--primary:hover {
+    background: var(--palette-yellow-hover);
+    border-color: var(--palette-yellow-hover);
+    color: var(--palette-ink);
 }
 
 /* Inputs dentro del modal */
