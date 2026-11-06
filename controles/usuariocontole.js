@@ -58,7 +58,7 @@ exports.registrarUsuario = async (req, res) => {
         const hash = bcrypt.hashSync(password, 10);
         const usuarioId = await new Promise((resolve, reject) => {
             db.run(
-                'INSERT INTO usuarios (username, password, email, telefono, email_verificado, telefono_verificado, telefono_requerido) VALUES (?, ?, ?, ?, 0, 0, 0)',
+                'INSERT INTO usuarios (username, password, email, telefono, email_verificado) VALUES (?, ?, ?, ?, 0)',
                 [username, hash, email, telefono],
                 function (error) {
                     if (error) return reject(error);
