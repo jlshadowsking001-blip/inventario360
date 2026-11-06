@@ -134,7 +134,7 @@ window.loadProducts = async function loadProducts() {
 };
 
 /**
- * Renderiza la tabla principal del inventario con inputs editables y botones de acción.
+ * Renderiza la tabla principal del inventario con inputs editables.
  * @param {Array} productos - Lista de productos.
  */
 window.renderProductsTable = function renderProductsTable(productos) {
@@ -143,7 +143,7 @@ window.renderProductsTable = function renderProductsTable(productos) {
     tbody.innerHTML = '';
 
     if (!productos.length) {
-        tbody.innerHTML = '<tr><td colspan="10" class="inventario-empty">No se encontraron productos.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="inventario-empty">No se encontraron productos.</td></tr>';
         return;
     }
 
@@ -154,21 +154,19 @@ window.renderProductsTable = function renderProductsTable(productos) {
         const imagenSrc = p.image_url || DEFAULT_PRODUCT_IMAGE;
         const fechaRef = p.updated_at || p.created_at;
         fila.innerHTML = `
-        <td>${p.id}</td>
-        <td>${p.nombre}</td>
-        <td class="inventario-img-cell">
-            <img class="inventario-img" src="${imagenSrc}" alt="Producto ${p.nombre || p.id}">
-        </td>
-        <td>${fechaRef ? new Date(fechaRef * 1000).toLocaleDateString() : '—'}</td>
-        <td><input data-id="${p.id}" class="input-existencia" type="number" value="${p.existencia || 0}" style="width:70px"></td>
-        <td><input data-id="${p.id}" class="input-precio" type="number" step="0.01" value="${p.precio || 0}" style="width:80px"></td>
-        <td>${estimado}</td>
-        <td><input data-id="${p.id}" class="input-costo" type="number" min="0" step="0.01" value="${p.costo ?? 0}" style="width:80px"></td>
-        <td>$${ganancia}</td>
         <td>
-            <button class="btn-editar" data-id="${p.id}">Editar</button>
-            <button class="btn-eliminar" data-id="${p.id}">Eliminar</button>
+            <div class="inventario-product-cell">
+                <img class="inventario-img" src="${imagenSrc}" alt="Producto ${p.nombre || ''}">
+                <span>${p.nombre}</span>
+            </div>
         </td>
+        <td><input data-id="${p.id}" class="input-precio" type="number" step="0.01" value="${p.precio || 0}" style="width:80px"></td>
+        <td><input data-id="${p.id}" class="input-costo" type="number" min="0" step="0.01" value="${p.costo ?? 0}" style="width:80px"></td>
+        <td><input data-id="${p.id}" class="input-existencia" type="number" value="${p.existencia || 0}" style="width:70px"></td>
+        <td>$${ganancia}</td>
+        <td>${estimado}</td>
+        <td>${fechaRef ? new Date(fechaRef * 1000).toLocaleDateString() : '—'}</td>
+        <td><button class="btn-editar" data-id="${p.id}">Editar</button></td>
         `;
         tbody.appendChild(fila);
     });
@@ -208,9 +206,33 @@ window.renderProductsTable = function renderProductsTable(productos) {
         editarProducto(e.target.dataset.id);
     }));
 
-    tbody.querySelectorAll('.btn-eliminar').forEach(b => b.addEventListener('click', (e) => {
-        eliminarProducto(e.target.dataset.id);
-    }));
+};
+
+window.abrirModalEliminarProducto = function abrirModalEliminarProducto() {
+    const productos = window._productosCache || [];
+    if (!productos.length) return showToast('No hay productos para eliminar', 'info');
+
+    abrirModal('Eliminar producto', `
+        <label for="productoEliminarSelect">Selecciona el producto:</label>
+        <select id="productoEliminarSelect" required></select>
+        <p class="inventario-delete-warning">Esta acción no se puede deshacer.</p>
+        <div class="inventario-delete-actions">
+            <button type="button" class="btn btn--ghost" id="cancelarEliminarProducto">Cancelar</button>
+            <button type="button" class="btn inventario-action-btn--danger" id="confirmarEliminarProducto">Eliminar producto</button>
+        </div>
+    `);
+
+    const select = document.getElementById('productoEliminarSelect');
+    productos.forEach(producto => {
+        const option = document.createElement('option');
+        option.value = producto.id;
+        option.textContent = producto.nombre;
+        select.appendChild(option);
+    });
+    document.getElementById('cancelarEliminarProducto').addEventListener('click', cerrarModal);
+    document.getElementById('confirmarEliminarProducto').addEventListener('click', async () => {
+        await eliminarProducto(select.value);
+    });
 };
 
 /**
@@ -365,14 +387,15 @@ window.eliminarProducto = async function eliminarProducto(id) {
         if (!usuario_id) return showToast('Usuario no identificado', 'error');
         const res = await fetch(`/productos/${encodeURIComponent(id)}?usuario_id=${encodeURIComponent(usuario_id)}`, { method: 'DELETE' });
         const data = await res.json();
-        if (!res.ok) return alert(data.error || 'No se pudo eliminar');
-        alert('Producto eliminado');
+        if (!res.ok) return showToast(data.error || 'No se pudo eliminar', 'error');
+        cerrarModal();
+        showToast('Producto eliminado', 'success');
         loadProducts();
         loadMovimientos();
         loadStats();
     } catch (err) {
         console.error('Error eliminando producto:', err);
-        alert('Error eliminando producto');
+        showToast('Error eliminando producto', 'error');
     }
 };
 

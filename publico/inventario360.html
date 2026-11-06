@@ -100,7 +100,9 @@
                         </div>
                         <div class="inventario-actions">
                             <button id="btnCrearCategoria" class="btn btn--primary inventario-action-btn" onclick="crearCategorias()">Crear Categoría</button>
+                            <button id="btnEliminarCategoria" class="btn inventario-action-btn inventario-action-btn--danger" onclick="abrirModalEliminarCategoria()">Eliminar Categoría</button>
                             <button id="btnCrearProducto" class="btn btn--primary inventario-action-btn" onclick="crearProducto()">Crear Producto</button>
+                            <button id="btnEliminarProducto" class="btn inventario-action-btn inventario-action-btn--danger" onclick="abrirModalEliminarProducto()">Eliminar Producto</button>
                         </div>
                     </header>
 
@@ -128,15 +130,13 @@
                             <table class="tabla-inventario">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
                                         <th>Producto</th>
-                                        <th>Imagen</th>
-                                        <th>Última actualización</th>
-                                        <th>Cantidad</th>
                                         <th>Precio</th>
-                                        <th>Estimado</th>
                                         <th>Costo</th>
+                                        <th>Cantidad disponible</th>
                                         <th>Ganancia</th>
+                                        <th>Estimado</th>
+                                        <th>Última actualización</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -206,7 +206,6 @@
                             <strong id="canastaTotal">C$0.00</strong>
                         </div>
                         <div class="ventas-footer-actions">
-                            <button type="button" class="btn btn--ghost" onclick="Nuevaventa()">Nueva venta</button>
                             <button type="button" class="btn btn--primary" onclick="terminarventa()">Finalizar venta</button>
                         </div>
                     </div>

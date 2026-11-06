@@ -419,12 +419,10 @@
 
 /* Botonera inferior del carrito (guardar, pagar, etc.) */
 .ventas-footer-actions {
-    display: flex; /* Coloca botones lado a lado */
-    flex-direction: fill; /* (Nota) valor no estándar, conserva intención original */
-    gap: 12px; /* Espacio entre botones */
+    display: flex;
 }
 
-/* Botones dentro del footer ocupan todo el ancho disponible */
+/* El único botón de acción queda a todo el ancho del carrito. */
 .ventas-footer-actions .btn {
     width: 100%;
 }

@@ -49,6 +49,8 @@
 
 .inventario-actions {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 12px; /* Distancia consistente entre botones */
 }
 
@@ -62,20 +64,34 @@
     font-size: 1rem;
 }
 
+.inventario-action-btn--danger {
+    border-color: #a52b3a;
+    color: #a52b3a;
+}
+
+.inventario-action-btn--danger:hover {
+    background: #a52b3a;
+    color: #fff;
+}
+
 .inventario-search-row {
     display: flex;
-    gap: 24px;
+    gap: 16px;
     flex-wrap: wrap; /* Rompe a segunda fila si no cabe */
     align-items: center;
+    justify-content: space-between;
+    min-width: 0;
 }
 
 .inventario-search {
-    flex: 1 1 320px; /* Crece pero respeta ancho mínimo */
+    flex: 0 1 560px;
+    max-width: 100%;
+    min-width: min(100%, 280px);
     display: flex;
     align-items: center;
     border: 1.5px solid #c8c1f5; /* Borde lavanda con buena visibilidad */
     border-radius: 999px;
-    padding: 8px 18px;
+    padding: 6px 14px;
     background: #fff;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6); /* Brillo interior */
 }
@@ -89,6 +105,7 @@
     border: none; /* Aprovecha el borde del contenedor */
     outline: none;
     flex: 1; /* Ocupa el resto del buscador */
+    min-width: 0;
     font-size: 1rem;
     color: var(--inv-text);
     background: transparent;
@@ -96,8 +113,9 @@
 
 .inventario-summary {
     display: flex;
-    gap: 32px;
+    gap: 24px;
     flex-wrap: wrap; /* Métricas saltan a una segunda línea */
+    margin-left: auto;
 }
 
 .inventario-summary-item {
@@ -129,6 +147,7 @@
     padding-bottom: 8px;
     scrollbar-width: thin;
     overscroll-behavior-x: contain;
+    flex: 0 0 auto;
 }
 
 .inventario-categorias button {
@@ -168,16 +187,21 @@
     border: 2px solid var(--inv-purple);
     border-radius: 28px;
     background: #fff;
-    flex: 1; /* Ocupa todo el alto disponible */
+    flex: 1 1 auto; /* Ocupa el espacio restante sin invadir las categorías */
+    min-height: 0;
+    min-width: 0;
     display: flex;
     flex-direction: column; /* Header + scroll apilados */
     overflow: hidden; /* Esquinas redondeadas también dentro */
+    position: relative;
+    isolation: isolate;
 }
 
 .inventario-tabla-scroll {
-    flex: 1;
-    overflow-y: auto; /* Activa scroll independiente */
-    max-height: calc(100vh - 240px); /* Mantiene visible el resto del card */
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    overflow: auto;
 }
 
 .tabla-inventario {
@@ -214,12 +238,20 @@
     border-bottom: none; /* Quita línea final para terminar limpio */
 }
 
-.tabla-inventario td:first-child {
-    font-weight: 100%; /* Mantiene el peso definido originalmente */
+.inventario-product-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
 }
 
-.inventario-img-cell {
-    width: 100px; /* Reserva espacio para las miniaturas */
+.inventario-product-cell .inventario-img {
+    flex: 0 0 52px;
+}
+
+.inventario-product-cell span {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .inventario-img {
@@ -258,6 +290,23 @@
     border-radius: 10px; /* Botones interiores mantienen el lenguaje visual */
 }
 
+.inventario-delete-warning {
+    margin-top: 12px;
+    color: #a52b3a;
+    font-size: 0.9rem;
+}
+
+.inventario-delete-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.inventario-delete-actions .btn {
+    width: auto;
+}
+
 .inventario-card .btn-editar,
 .inventario-card .btn-eliminar {
     padding: 6px 12px;
@@ -293,9 +342,6 @@
     }
     .inventario-summary {
         flex-direction: column;
-    }
-    .inventario-tabla-wrapper {
-        overflow-x: auto; /* Permite desplazar columnas en móviles */
     }
     .inventario-card {
         padding: 20px; /* Reduce el padding para ganar espacio útil */

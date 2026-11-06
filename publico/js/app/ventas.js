@@ -197,21 +197,13 @@ window.renderCanasta = function renderCanasta() {
 };
 
 /**
- * Limpia la canasta actual y reinicia la venta.
- */
-window.Nuevaventa = function Nuevaventa() {
-    if (!confirm('Iniciar nueva venta y vaciar canasta actual?')) return;
-    window._canasta = [];
-    renderCanasta();
-};
-
-/**
  * Vacía la canasta sin registrar venta.
  */
 window.vaciarcanasta = function vaciarcanasta() {
-    if (!confirm('Vaciar canasta?')) return;
+    if (!window._canasta.length) return;
     window._canasta = [];
     renderCanasta();
+    window.showToast('La canasta se vació correctamente', 'success');
 };
 
 /**

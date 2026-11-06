@@ -49,10 +49,13 @@ router.delete('/:id', (req, res) => {
   const id = req.params.id;
   const usuario_id = req.body.usuario_id || req.query.usuario_id;
   if (!usuario_id) return res.status(400).json({ error: 'usuario_id requerido' });
-  db.run('DELETE FROM categorias WHERE id = ? AND usuario_id = ?', [id, usuario_id], function (err) {
-    if (err) return res.status(500).json({ error: 'Error eliminando categoría' });
-    if (this.changes === 0) return res.status(404).json({ error: 'Categoría no encontrada' });
-    res.json({ mensaje: 'Categoría eliminada' });
+  db.run('UPDATE productos SET categoria_id = NULL WHERE categoria_id = ? AND usuario_id = ?', [id, usuario_id], (updateErr) => {
+    if (updateErr) return res.status(500).json({ error: 'Error actualizando productos de la categoría' });
+    db.run('DELETE FROM categorias WHERE id = ? AND usuario_id = ?', [id, usuario_id], function (err) {
+      if (err) return res.status(500).json({ error: 'Error eliminando categoría' });
+      if (this.changes === 0) return res.status(404).json({ error: 'Categoría no encontrada' });
+      res.json({ mensaje: 'Categoría eliminada' });
+    });
   });
 });
 
