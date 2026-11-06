@@ -68,37 +68,83 @@ async function sendEmailCode(email, code, purpose) {
     });
 }
 
+function requireBrevoApiKey() {
+    if (!process.env.BREVO_API_KEY) {
+        throw createError('Falta configurar BREVO_API_KEY para enviar códigos por SMS o WhatsApp.');
+    }
+}
+
 async function sendSmsCode(phone, code, purpose) {
-    const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER } = process.env;
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
-        throw createError('El envío de SMS no está configurado en el servidor.');
+    requireBrevoApiKey();
+    const sender = process.env.BREVO_SMS_SENDER;
+    if (!sender || !(/^[a-z0-9]{1,11}$/i.test(sender) || /^\d{12,15}$/.test(sender))) {
+        throw createError('Configura BREVO_SMS_SENDER con el remitente SMS aprobado (hasta 11 caracteres alfanuméricos o 15 dígitos).');
     }
 
-    const body = new URLSearchParams({
-        To: phone,
-        From: TWILIO_PHONE_NUMBER,
-        Body: `Inventario 360: tu código para ${purpose === 'registro' ? 'verificar la cuenta' : 'recuperar la cuenta'} es ${code}. Vence en 10 minutos.`
-    });
-    const authorization = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
-    const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(TWILIO_ACCOUNT_SID)}/Messages.json`, {
+    const response = await fetch('https://api.brevo.com/v3/transactionalSMS/sms', {
         method: 'POST',
         headers: {
-            Authorization: `Basic ${authorization}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'api-key': process.env.BREVO_API_KEY,
+            'Content-Type': 'application/json',
+            accept: 'application/json'
         },
-        body
+        body: JSON.stringify({
+            recipient: phone,
+            sender,
+            type: 'transactional',
+            content: `Inventario 360: tu codigo para ${purpose === 'registro' ? 'verificar la cuenta' : 'recuperar la cuenta'} es ${code}. Vence en 10 minutos.`
+        }),
+        signal: AbortSignal.timeout(15000)
     });
     if (!response.ok) {
-        const detail = await response.text();
-        console.error('Twilio rechazó el envío de SMS:', response.status, detail);
-        throw createError('No se pudo enviar el SMS. Verifica la configuración del proveedor.');
+        console.error(`Brevo rechazó el SMS (HTTP ${response.status}).`);
+        throw createError(`Brevo no aceptó el SMS (HTTP ${response.status}). Revisa el remitente, el saldo y la cobertura del país.`, 502);
+    }
+}
+
+async function sendWhatsappCode(phone, code) {
+    requireBrevoApiKey();
+    const senderNumber = process.env.BREVO_WHATSAPP_SENDER_NUMBER;
+    const templateId = Number(process.env.BREVO_WHATSAPP_TEMPLATE_ID);
+    const codeParam = process.env.BREVO_WHATSAPP_CODE_PARAM || 'CODE';
+    if (!senderNumber || !/^\+?[1-9]\d{7,14}$/.test(senderNumber.replace(/\s+/g, ''))) {
+        throw createError('Configura BREVO_WHATSAPP_SENDER_NUMBER con el número empresarial de WhatsApp, incluido el código de país.');
+    }
+    if (!Number.isSafeInteger(templateId) || templateId < 1) {
+        throw createError('Configura BREVO_WHATSAPP_TEMPLATE_ID con el ID de una plantilla de verificación aprobada.');
+    }
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,49}$/.test(codeParam)) {
+        throw createError('BREVO_WHATSAPP_CODE_PARAM debe ser el nombre válido de la variable del código en la plantilla.');
+    }
+
+    const response = await fetch('https://api.brevo.com/v3/whatsapp/sendMessage', {
+        method: 'POST',
+        headers: {
+            'api-key': process.env.BREVO_API_KEY,
+            'Content-Type': 'application/json',
+            accept: 'application/json'
+        },
+        body: JSON.stringify({
+            contactNumbers: [phone.replace(/\D/g, '')],
+            senderNumber: senderNumber.replace(/\D/g, ''),
+            templateId,
+            params: { [codeParam]: code }
+        }),
+        signal: AbortSignal.timeout(15000)
+    });
+    if (!response.ok) {
+        console.error(`Brevo rechazó el WhatsApp (HTTP ${response.status}).`);
+        throw createError(`Brevo no aceptó el WhatsApp (HTTP ${response.status}). Revisa la cuenta, el número empresarial, la plantilla y el saldo.`, 502);
     }
 }
 
 async function issueCode(user, purpose, canal) {
+    if (!['email', 'sms', 'whatsapp'].includes(canal)) {
+        throw createError('Canal de verificación no válido.', 400);
+    }
     const destination = canal === 'email' ? user.email : user.telefono;
     if (!destination) throw createError('No hay un destino registrado para este canal.', 400);
-    if (canal === 'sms' && !/^\+[1-9]\d{7,14}$/.test(destination)) {
+    if (canal !== 'email' && !/^\+[1-9]\d{7,14}$/.test(destination)) {
         throw createError('El teléfono no está en formato internacional. Actualízalo después de verificar el correo.', 400);
     }
 
@@ -124,7 +170,8 @@ async function issueCode(user, purpose, canal) {
 
     try {
         if (canal === 'email') await sendEmailCode(destination, code, purpose);
-        else await sendSmsCode(destination, code, purpose);
+        else if (canal === 'sms') await sendSmsCode(destination, code, purpose);
+        else await sendWhatsappCode(destination, code);
     } catch (error) {
         await db.run('DELETE FROM codigos_verificacion WHERE usuario_id = ? AND proposito = ? AND canal = ? AND codigo_hash = ?', [
             user.id, purpose, canal, codeHash
@@ -136,7 +183,9 @@ async function issueCode(user, purpose, canal) {
 async function sendAccountCodes(user) {
     const pending = [];
     if (!Number(user.email_verificado)) pending.push('email');
-    if (Number(user.telefono_requerido) && !Number(user.telefono_verificado)) pending.push('sms');
+    if (Number(user.telefono_requerido) && !Number(user.telefono_verificado)) {
+        pending.push(user.telefono_canal === 'whatsapp' ? 'whatsapp' : 'sms');
+    }
 
     const results = await Promise.allSettled(pending.map(canal =>
         issueCode(user, 'registro', canal === 'sms' ? 'sms' : canal)

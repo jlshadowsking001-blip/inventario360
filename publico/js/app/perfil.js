@@ -17,7 +17,8 @@ function guardarPerfil() {
         codigo_postal: document.getElementById("codigoPostalUsuario").value,
         detalles: document.getElementById("detallesUsuario").value,
         email: document.getElementById("correoUsuario").value,
-        telefono: document.getElementById("telefonoUsuario").value
+        telefono: document.getElementById("telefonoUsuario").value,
+        canalTelefono: document.getElementById("canalTelefonoUsuario").value
     };
 
     fetch(`/usuarios/perfil/${encodeURIComponent(currentUser)}`, {
@@ -73,6 +74,7 @@ window.cargarPerfil = async function cargarPerfil() {
         setValue('detallesUsuario', perfil.detalles);
         setValue('correoUsuario', perfil.email);
         setValue('telefonoUsuario', perfil.telefono);
+        setValue('canalTelefonoUsuario', perfil.telefono_canal === 'whatsapp' ? 'whatsapp' : 'sms');
 
         const preview = document.getElementById('previewFoto');
         if (preview && perfil.foto_url) preview.src = perfil.foto_url;

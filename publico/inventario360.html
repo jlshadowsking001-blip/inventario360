@@ -86,6 +86,11 @@
                     <input type="email" id="correoUsuario" placeholder="tu@email.com">
                     <label>Teléfono:</label>
                     <input type="tel" id="telefonoUsuario" placeholder="+50588888888">
+                    <label for="canalTelefonoUsuario">Verificar y recuperar por:</label>
+                    <select id="canalTelefonoUsuario">
+                        <option value="sms">SMS</option>
+                        <option value="whatsapp">WhatsApp</option>
+                    </select>
                     <!-- Acción principal del perfil: guarda todos los datos ingresados -->
                     <button class="btn btn--primary" onclick="guardarPerfil()">Guardar cambios</button>
                 </div>

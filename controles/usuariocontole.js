@@ -60,8 +60,8 @@ exports.registrarUsuario = async (req, res) => {
         const hash = bcrypt.hashSync(password, 10);
         const usuarioId = await new Promise((resolve, reject) => {
             db.run(
-                'INSERT INTO usuarios (username, password, email, telefono, email_verificado, telefono_verificado, telefono_requerido) VALUES (?, ?, ?, ?, 0, 0, 1)',
-                [username, hash, email, telefono],
+                'INSERT INTO usuarios (username, password, email, telefono, telefono_canal, email_verificado, telefono_verificado, telefono_requerido) VALUES (?, ?, ?, ?, ?, 0, 0, 1)',
+                [username, hash, email, telefono, req.body.canalTelefono],
                 function (error) {
                     if (error) return reject(error);
                     resolve(this.lastID);
@@ -69,12 +69,12 @@ exports.registrarUsuario = async (req, res) => {
             );
         });
         const usuario = await db.get(
-            'SELECT id, username, email, telefono, email_verificado, telefono_verificado, telefono_requerido FROM usuarios WHERE id = ?',
+            'SELECT id, username, email, telefono, telefono_canal, email_verificado, telefono_verificado, telefono_requerido FROM usuarios WHERE id = ?',
             [usuarioId]
         );
         const envio = await verificacion.sendAccountCodes(usuario);
         return res.status(201).json({
-            mensaje: 'Cuenta creada. Confirma los códigos enviados a tu correo y teléfono.',
+            mensaje: 'Cuenta creada. Confirma los códigos enviados a tu correo y al canal telefónico seleccionado.',
             usuario: { id: usuario.id, username: usuario.username },
             canalesPendientes: envio.pending,
             canalesEnviados: envio.sent,
