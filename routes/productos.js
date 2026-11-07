@@ -6,7 +6,8 @@ const { parseImageDataUrl } = require('../servicios/imagenes');
 const productWithImageUrl = (row, usuario_id) => {
   const { image_data, image_mime, ...producto } = row;
   if (image_mime) {
-    producto.image_url = `/productos/${row.id}/imagen?usuario_id=${encodeURIComponent(usuario_id)}`;
+    const imageVersion = row.updated_at || row.created_at || 0;
+    producto.image_url = `/productos/${row.id}/imagen?usuario_id=${encodeURIComponent(usuario_id)}&v=${imageVersion}`;
   }
   return producto;
 };
@@ -38,7 +39,7 @@ router.get('/:id/imagen', (req, res) => {
     (err, row) => {
       if (err) return res.status(500).json({ error: 'Error leyendo imagen del producto' });
       if (!row || !row.image_data || !row.image_mime) return res.status(404).json({ error: 'Imagen no encontrada' });
-      res.set('Cache-Control', 'private, max-age=86400');
+      res.set('Cache-Control', 'private, no-store');
       res.type(row.image_mime).send(row.image_data);
     }
   );
