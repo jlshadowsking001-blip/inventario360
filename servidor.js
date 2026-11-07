@@ -69,8 +69,8 @@ inventario360.use(cors({
     }
 }));
 // permitir payloads más grandes para imágenes en dataUrl (ajustar según necesidades)
-inventario360.use(express.json({ limit: '22mb' }));
-inventario360.use(express.urlencoded({ extended: true, limit: '22mb' }));
+inventario360.use(express.json({ limit: '45mb' }));
+inventario360.use(express.urlencoded({ extended: true, limit: '45mb' }));
 
 // Logger simple de peticiones para depuración
 inventario360.use((req, res, next) => {
