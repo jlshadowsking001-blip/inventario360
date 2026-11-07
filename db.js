@@ -137,13 +137,30 @@ const ready = (async () => {
             }
         };
 
+        const ensureLongBlob = async (table) => {
+            const [rows] = await pool.query(
+                'SELECT DATA_TYPE AS data_type FROM information_schema.columns WHERE table_schema = ? AND table_name = ? AND column_name = ?',
+                [MYSQL_DATABASE, table, 'image_data']
+            );
+            if (!rows.length || String(rows[0].data_type).toLowerCase() === 'longblob') return;
+
+            try {
+                await pool.query(`ALTER TABLE \`${table}\` MODIFY COLUMN image_data LONGBLOB NULL`);
+                console.log(`Columna image_data ampliada a LONGBLOB en ${table}`);
+            } catch (err) {
+                console.error(`No se pudo ampliar image_data a LONGBLOB en ${table}:`, err);
+                throw err;
+            }
+        };
+
         await ensureColumn('movimientos', 'cliente_id', 'INT NULL');
         await ensureColumn('movimientos', 'proveedor_id', 'INT NULL');
         await ensureColumn('movimientos', 'es_credito', 'TINYINT(1) NOT NULL DEFAULT 0');
         await ensureColumn('movimientos', 'usuario_id', 'INT NOT NULL DEFAULT 0');
         await ensureColumn('usuarios', 'email_verificado', 'TINYINT(1) NOT NULL DEFAULT 0');
-        await ensureColumn('usuarios', 'image_data', 'MEDIUMBLOB NULL');
+        await ensureColumn('usuarios', 'image_data', 'LONGBLOB NULL');
         await ensureColumn('usuarios', 'image_mime', 'VARCHAR(32) NULL');
+        await ensureLongBlob('usuarios');
 
         await pool.query(`CREATE TABLE IF NOT EXISTS codigos_verificacion (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -161,8 +178,9 @@ const ready = (async () => {
 
         await ensureColumn('categorias', 'usuario_id', 'INT NOT NULL DEFAULT 0');
         await ensureColumn('productos', 'usuario_id', 'INT NOT NULL DEFAULT 0');
-        await ensureColumn('productos', 'image_data', 'MEDIUMBLOB NULL');
+        await ensureColumn('productos', 'image_data', 'LONGBLOB NULL');
         await ensureColumn('productos', 'image_mime', 'VARCHAR(32) NULL');
+        await ensureLongBlob('productos');
 
         await pool.query(`CREATE TABLE IF NOT EXISTS clientes (
             id INT AUTO_INCREMENT PRIMARY KEY,
