@@ -65,7 +65,7 @@ router.post('/', (req, res)=>{
   if (precio < 0 || costo < 0 || existencia < 0) return res.status(400).json({ error: 'Valores no pueden ser negativos' });
 
   const image = dataUrl ? parseImageDataUrl(dataUrl) : null;
-  if (dataUrl && !image) return res.status(400).json({ error: 'Imagen inválida o supera el límite de 15 MB' });
+  if (dataUrl && !image) return res.status(400).json({ error: 'Imagen inválida o supera el límite de 30 MB' });
 
   db.run(
     `INSERT INTO productos (nombre, descripcion, precio, costo, existencia, categoria_id, image_url, image_data, image_mime, created_at, usuario_id) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, UNIX_TIMESTAMP(), ?)`,
@@ -120,7 +120,7 @@ router.patch('/:id', (req, res)=>{
   let image = null;
   if (req.body.dataUrl !== undefined) {
     image = parseImageDataUrl(req.body.dataUrl);
-    if (!image) return res.status(400).json({ error: 'Imagen inválida o supera el límite de 15 MB' });
+    if (!image) return res.status(400).json({ error: 'Imagen inválida o supera el límite de 30 MB' });
     fields.push('image_data = ?', 'image_mime = ?', 'image_url = NULL');
     values.push(image.buffer, image.mime);
   }
