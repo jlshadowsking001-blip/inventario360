@@ -91,6 +91,7 @@ const ready = (async () => {
             precio DOUBLE NOT NULL DEFAULT 0,
             costo DOUBLE DEFAULT 0,
             existencia INT NOT NULL DEFAULT 0,
+            codigo VARCHAR(191),
             categoria_id INT,
             image_url VARCHAR(512),
             created_at BIGINT,
@@ -178,6 +179,7 @@ const ready = (async () => {
 
         await ensureColumn('categorias', 'usuario_id', 'INT NOT NULL DEFAULT 0');
         await ensureColumn('productos', 'usuario_id', 'INT NOT NULL DEFAULT 0');
+        await ensureColumn('productos', 'codigo', 'VARCHAR(191) NULL');
         await ensureColumn('productos', 'image_data', 'LONGBLOB NULL');
         await ensureColumn('productos', 'image_mime', 'VARCHAR(32) NULL');
         await ensureLongBlob('productos');

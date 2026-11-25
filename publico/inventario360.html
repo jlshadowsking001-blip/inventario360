@@ -117,8 +117,11 @@
                     <header class="inventario-hero">
                         <div class="inventario-hero-text">
                             <h2>Inventario</h2>
+                            <p class="inventario-import-hint">Importa .xlsx con nombre, código, categoría, existencia, costo y precio. Se omiten productos sin existencia; coincidencias por código o nombre se actualizan.</p>
                         </div>
                         <div class="inventario-actions">
+                            <button id="btnImportarInventario" class="btn inventario-action-btn" type="button" onclick="seleccionarArchivoInventario()">Importar Excel</button>
+                            <input id="archivoInventarioExcel" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
                             <button id="btnCrearCategoria" class="btn btn--primary inventario-action-btn" onclick="crearCategorias()">Crear Categoría</button>
                             <button id="btnEliminarCategoria" class="btn inventario-action-btn inventario-action-btn--danger" onclick="abrirModalEliminarCategoria()">Eliminar Categoría</button>
                             <button id="btnCrearProducto" class="btn btn--primary inventario-action-btn" onclick="crearProducto()">Crear Producto</button>
