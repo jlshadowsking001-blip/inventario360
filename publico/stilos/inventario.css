@@ -296,6 +296,99 @@
     font-size: 0.9rem;
 }
 
+.inventario-delete-queue {
+    padding: 16px;
+    border: 1px solid rgba(165, 43, 58, 0.28);
+    border-radius: 16px;
+    background: #fff8f8;
+}
+
+.inventario-delete-queue[hidden] {
+    display: none;
+}
+
+.inventario-delete-queue__header,
+.inventario-delete-queue__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.inventario-delete-queue__header > div:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.inventario-delete-queue__header strong {
+    color: #8d2431;
+}
+
+.inventario-delete-queue__header span {
+    color: #736ba1;
+    font-size: 0.9rem;
+}
+
+.inventario-delete-queue__actions .btn {
+    width: auto;
+}
+
+.inventario-delete-queue__actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.inventario-delete-queue__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 120px;
+    overflow-y: auto;
+    margin-top: 12px;
+}
+
+.inventario-delete-queue__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px 4px 12px;
+    border: 1px solid rgba(165, 43, 58, 0.2);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--inv-text);
+}
+
+.inventario-delete-queue__remove {
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 50%;
+    background: #f8e3e5;
+    color: #8d2431;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.producto-seleccion-eliminar {
+    display: none;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    accent-color: #a52b3a;
+    cursor: pointer;
+}
+
+.tabla-inventario.is-delete-mode .producto-seleccion-eliminar {
+    display: inline-block;
+}
+
+.tabla-inventario tbody tr.is-selected-for-deletion td {
+    background: #fff0f1;
+}
+
 .inventario-delete-actions {
     display: flex;
     justify-content: flex-end;
