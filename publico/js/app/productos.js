@@ -49,7 +49,7 @@ window.importarInventarioExcel = async function importarInventarioExcel(file) {
 
         await window.cargarCategorias();
         await window.loadProducts();
-        const detalle = `${data.creados} nuevos, ${data.actualizados} actualizados, ${data.sinExistencia || 0} sin existencia y ${data.erroresTotal || 0} filas con datos inválidos`;
+        const detalle = `${data.creados} nuevos, ${data.actualizados} actualizados, ${data.preciosGuardados || 0} con precio de venta guardado, ${data.sinExistencia || 0} sin existencia y ${data.erroresTotal || 0} filas con datos inválidos`;
         showToast(`Importación completada: ${detalle}`, 'success');
         if (data.errores?.length) console.warn('Filas omitidas durante la importación:', data.errores);
     } catch (err) {
@@ -71,6 +71,7 @@ function actualizarColaEliminacion() {
     const contador = document.getElementById('contadorColaEliminar');
     const lista = document.getElementById('listaColaEliminar');
     const confirmar = document.getElementById('confirmarColaEliminar');
+    const seleccionarTodos = document.getElementById('seleccionarTodosEliminar');
     const tabla = document.querySelector('.tabla-inventario');
     const botonEliminar = document.getElementById('btnEliminarProducto');
     const seleccionados = window._productosSeleccionadosParaEliminar;
@@ -89,6 +90,14 @@ function actualizarColaEliminacion() {
     if (confirmar) {
         confirmar.disabled = seleccionados.size === 0 || window._eliminandoProductosEnCola;
         confirmar.textContent = `Eliminar seleccionados${seleccionados.size ? ` (${seleccionados.size})` : ''}`;
+    }
+    if (seleccionarTodos) {
+        const productos = window._productosCache || [];
+        const todosSeleccionados = productos.length > 0 &&
+            productos.every(producto => seleccionados.has(String(producto.id)));
+        seleccionarTodos.textContent = todosSeleccionados ? 'Desmarcar todo' : 'Seleccionar todos';
+        seleccionarTodos.disabled = productos.length === 0 || window._eliminandoProductosEnCola;
+        seleccionarTodos.setAttribute('aria-pressed', String(todosSeleccionados));
     }
     document.getElementById('limpiarColaEliminar')?.toggleAttribute('disabled', window._eliminandoProductosEnCola);
     document.getElementById('cancelarColaEliminar')?.toggleAttribute('disabled', window._eliminandoProductosEnCola);
@@ -137,6 +146,24 @@ function vaciarColaEliminacion() {
     tabla?.querySelectorAll('.producto-seleccion-eliminar').forEach(checkbox => {
         checkbox.checked = false;
         checkbox.closest('tr')?.classList.remove('is-selected-for-deletion');
+    });
+}
+
+function alternarSeleccionTodosEliminar() {
+    const productos = window._productosCache || [];
+    if (productos.length === 0) return;
+    const seleccionados = window._productosSeleccionadosParaEliminar;
+    const todosSeleccionados = productos.every(producto => seleccionados.has(String(producto.id)));
+
+    if (todosSeleccionados) {
+        seleccionados.clear();
+    } else {
+        productos.forEach(producto => seleccionados.add(String(producto.id)));
+    }
+    actualizarColaEliminacion();
+    document.querySelectorAll('.producto-seleccion-eliminar').forEach(checkbox => {
+        checkbox.checked = seleccionados.has(String(checkbox.dataset.id));
+        checkbox.closest('tr')?.classList.toggle('is-selected-for-deletion', checkbox.checked);
     });
 }
 
@@ -193,6 +220,7 @@ async function confirmarEliminacionEnCola() {
     }
 }
 
+document.getElementById('seleccionarTodosEliminar')?.addEventListener('click', alternarSeleccionTodosEliminar);
 document.getElementById('limpiarColaEliminar')?.addEventListener('click', vaciarColaEliminacion);
 document.getElementById('cancelarColaEliminar')?.addEventListener('click', () => {
     vaciarColaEliminacion();
@@ -434,12 +462,57 @@ window.abrirModalEliminarProducto = function abrirModalEliminarProducto() {
     window.searchProducts(document.getElementById('buscador')?.value || '');
 };
 
+function actualizarFilaProductoEnInventario(producto) {
+    const filas = document.querySelectorAll('#tablaInventarioBody tr');
+    const fila = [...filas].find(row => row.querySelector('[data-id]')?.dataset.id === String(producto.id));
+    if (!fila) return;
+
+    const precio = Number(producto.precio) || 0;
+    const costo = Number(producto.costo) || 0;
+    const inputPrecio = fila.querySelector('.input-precio');
+    const inputCosto = fila.querySelector('.input-costo');
+    const inputExistencia = fila.querySelector('.input-existencia');
+    if (inputPrecio) inputPrecio.value = String(precio);
+    if (inputCosto) inputCosto.value = String(costo);
+    if (inputExistencia) inputExistencia.value = String(Number(producto.existencia) || 0);
+    if (fila.cells[4]) fila.cells[4].textContent = (precio - costo).toFixed(2);
+
+    const fechaRef = producto.updated_at || producto.created_at;
+    if (fila.cells[6]) {
+        fila.cells[6].textContent = fechaRef
+            ? new Date(Number(fechaRef) * 1000).toLocaleDateString()
+            : '—';
+    }
+}
+
 /**
  * Actualiza campos específicos de un producto en el servidor.
  * @param {string} id - ID del producto.
  * @param {object} fields - Campos a actualizar.
  */
 window.updateProduct = async function updateProduct(id, fields) {
+    const camposEnLinea = ['precio', 'costo', 'existencia'];
+    const actualizacionEnLinea = Object.keys(fields).every(campo => camposEnLinea.includes(campo));
+    const productoAnterior = (window._productosCache || []).find(producto => String(producto.id) === String(id));
+    const filas = document.querySelectorAll('#tablaInventarioBody tr');
+    const fila = [...filas].find(row => row.querySelector('[data-id]')?.dataset.id === String(id));
+    const entradasPorCampo = {
+        precio: fila?.querySelector('.input-precio'),
+        costo: fila?.querySelector('.input-costo'),
+        existencia: fila?.querySelector('.input-existencia')
+    };
+    const entradasEnEdicion = Object.keys(fields)
+        .map(campo => entradasPorCampo[campo])
+        .filter(Boolean);
+    entradasEnEdicion.forEach(input => { input.disabled = true; });
+    const restaurarEntradas = () => {
+        if (!productoAnterior) return;
+        Object.entries(fields).forEach(([campo]) => {
+            const input = entradasPorCampo[campo];
+            if (input) input.value = String(productoAnterior[campo] ?? 0);
+        });
+    };
+
     try {
         const usuario_id = getUsuarioId();
         if (!usuario_id) return showToast('Usuario no identificado', 'error');
@@ -450,17 +523,41 @@ window.updateProduct = async function updateProduct(id, fields) {
         });
         const data = await res.json();
         if (!res.ok) {
+        restaurarEntradas();
         showToast(data.error || 'Error actualizando producto', 'error');
         return false;
         } else {
+        if (productoAnterior) {
+            Object.assign(productoAnterior, data.producto || fields);
+            window.actualizarResumenInventario(window._productosCache);
+            if (actualizacionEnLinea) {
+            actualizarFilaProductoEnInventario(productoAnterior);
+            } else {
+                const contenedorTabla = document.querySelector('.inventario-tabla-scroll');
+                const scrollTop = contenedorTabla?.scrollTop || 0;
+                const scrollLeft = contenedorTabla?.scrollLeft || 0;
+                window.searchProducts(document.getElementById('buscador')?.value || '');
+                if (contenedorTabla) {
+                    contenedorTabla.scrollTop = scrollTop;
+                    contenedorTabla.scrollLeft = scrollLeft;
+                }
+            }
+            if (!actualizacionEnLinea || fields.precio !== undefined || fields.existencia !== undefined) {
+                window.filtrarVentasPorTexto?.(window._busquedaVentas || '');
+            }
+            if (fields.precio !== undefined) showToast('Precio guardado', 'success');
+            return true;
+        }
         await loadProducts();
-        await loadStats();
         return true;
         }
     } catch (err) {
+        restaurarEntradas();
         console.error('Error actualizando producto:', err);
         showToast('Error actualizando producto', 'error');
         return false;
+    } finally {
+        entradasEnEdicion.forEach(input => { input.disabled = false; });
     }
 };
 
