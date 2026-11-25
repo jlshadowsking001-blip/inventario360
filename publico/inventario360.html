@@ -124,7 +124,7 @@
                             <button id="btnCrearCategoria" class="btn btn--primary inventario-action-btn" onclick="crearCategorias()">Crear Categoría</button>
                             <button id="btnEliminarCategoria" class="btn inventario-action-btn inventario-action-btn--danger" onclick="abrirModalEliminarCategoria()">Eliminar Categoría</button>
                             <button id="btnCrearProducto" class="btn btn--primary inventario-action-btn" onclick="crearProducto()">Crear Producto</button>
-                            <button id="btnEliminarProducto" class="btn inventario-action-btn inventario-action-btn--danger" onclick="abrirModalEliminarProducto()">Eliminar Producto</button>
+                            <button id="btnEliminarProducto" class="btn inventario-action-btn inventario-action-btn--danger" aria-pressed="false" onclick="abrirModalEliminarProducto()">Eliminar Producto</button>
                         </div>
                     </header>
 
@@ -146,6 +146,21 @@
                     </div>
 
                     <div id="categoriasHeader" class="categorias-header inventario-categorias"></div>
+
+                    <section id="colaEliminarProductos" class="inventario-delete-queue" aria-label="Cola de eliminación" hidden>
+                        <div class="inventario-delete-queue__header">
+                            <div>
+                                <strong>Cola de eliminación</strong>
+                                <span id="contadorColaEliminar">0 productos seleccionados</span>
+                            </div>
+                            <div class="inventario-delete-queue__actions">
+                                <button id="limpiarColaEliminar" class="btn btn--ghost" type="button">Vaciar cola</button>
+                                <button id="cancelarColaEliminar" class="btn btn--ghost" type="button">Cancelar</button>
+                                <button id="confirmarColaEliminar" class="btn inventario-action-btn--danger" type="button" disabled>Eliminar seleccionados</button>
+                            </div>
+                        </div>
+                        <div id="listaColaEliminar" class="inventario-delete-queue__list"></div>
+                    </section>
 
                     <div class="tabla-wrapper inventario-tabla-wrapper">
                         <div class="inventario-tabla-scroll">

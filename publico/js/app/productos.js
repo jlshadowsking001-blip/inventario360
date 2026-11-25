@@ -3,6 +3,9 @@
 // ===============================
 
 window._productosCache = window._productosCache || [];
+window._productosSeleccionadosParaEliminar = window._productosSeleccionadosParaEliminar || new Set();
+window._modoSeleccionEliminarProductos = false;
+window._eliminandoProductosEnCola = false;
 const DEFAULT_PRODUCT_IMAGE = 'assets/logoinventario360.png';
 
 function escaparHTML(valor) {
@@ -62,6 +65,141 @@ window.importarInventarioExcel = async function importarInventarioExcel(file) {
 document.getElementById('archivoInventarioExcel')?.addEventListener('change', event => {
     window.importarInventarioExcel(event.target.files?.[0]);
 });
+
+function actualizarColaEliminacion() {
+    const cola = document.getElementById('colaEliminarProductos');
+    const contador = document.getElementById('contadorColaEliminar');
+    const lista = document.getElementById('listaColaEliminar');
+    const confirmar = document.getElementById('confirmarColaEliminar');
+    const tabla = document.querySelector('.tabla-inventario');
+    const botonEliminar = document.getElementById('btnEliminarProducto');
+    const seleccionados = window._productosSeleccionadosParaEliminar;
+
+    if (cola) cola.hidden = !window._modoSeleccionEliminarProductos;
+    if (tabla) tabla.classList.toggle('is-delete-mode', window._modoSeleccionEliminarProductos);
+    if (botonEliminar) {
+        botonEliminar.textContent = window._modoSeleccionEliminarProductos ? 'Salir de eliminación' : 'Eliminar Producto';
+        botonEliminar.setAttribute('aria-pressed', String(window._modoSeleccionEliminarProductos));
+        botonEliminar.disabled = window._eliminandoProductosEnCola;
+    }
+    if (contador) {
+        const total = seleccionados.size;
+        contador.textContent = `${total} ${total === 1 ? 'producto seleccionado' : 'productos seleccionados'}`;
+    }
+    if (confirmar) {
+        confirmar.disabled = seleccionados.size === 0 || window._eliminandoProductosEnCola;
+        confirmar.textContent = `Eliminar seleccionados${seleccionados.size ? ` (${seleccionados.size})` : ''}`;
+    }
+    document.getElementById('limpiarColaEliminar')?.toggleAttribute('disabled', window._eliminandoProductosEnCola);
+    document.getElementById('cancelarColaEliminar')?.toggleAttribute('disabled', window._eliminandoProductosEnCola);
+    document.querySelectorAll('.producto-seleccion-eliminar').forEach(checkbox => {
+        checkbox.disabled = window._eliminandoProductosEnCola;
+    });
+    if (!lista) return;
+
+    lista.replaceChildren();
+    const productos = (window._productosCache || []).filter(producto => seleccionados.has(String(producto.id)));
+    productos.forEach(producto => {
+        const etiqueta = document.createElement('span');
+        etiqueta.className = 'inventario-delete-queue__item';
+
+        const nombre = document.createElement('span');
+        const referencia = producto.codigo ? ` · ${producto.codigo}` : '';
+        nombre.textContent = `${producto.nombre} · ID ${producto.id}${referencia}`;
+        etiqueta.appendChild(nombre);
+
+        const quitar = document.createElement('button');
+        quitar.type = 'button';
+        quitar.className = 'inventario-delete-queue__remove';
+        quitar.textContent = '×';
+        quitar.disabled = window._eliminandoProductosEnCola;
+        quitar.setAttribute('aria-label', `Quitar ${producto.nombre} de la cola`);
+        quitar.addEventListener('click', () => cambiarSeleccionEliminacion(producto.id, false));
+        etiqueta.appendChild(quitar);
+        lista.appendChild(etiqueta);
+    });
+}
+
+function cambiarSeleccionEliminacion(productoId, seleccionado) {
+    const id = String(productoId);
+    if (seleccionado) {
+        window._productosSeleccionadosParaEliminar.add(id);
+    } else {
+        window._productosSeleccionadosParaEliminar.delete(id);
+    }
+    actualizarColaEliminacion();
+}
+
+function vaciarColaEliminacion() {
+    window._productosSeleccionadosParaEliminar.clear();
+    actualizarColaEliminacion();
+    const tabla = document.querySelector('.tabla-inventario');
+    tabla?.querySelectorAll('.producto-seleccion-eliminar').forEach(checkbox => {
+        checkbox.checked = false;
+        checkbox.closest('tr')?.classList.remove('is-selected-for-deletion');
+    });
+}
+
+async function confirmarEliminacionEnCola() {
+    const ids = [...window._productosSeleccionadosParaEliminar];
+    if (!ids.length) return;
+
+    const seleccionados = (window._productosCache || [])
+        .filter(producto => ids.includes(String(producto.id)));
+    const ejemplos = seleccionados.slice(0, 3).map(producto => `• ${producto.nombre}`).join('\n');
+    const otros = seleccionados.length > 3 ? `\n• y ${seleccionados.length - 3} más` : '';
+    if (!confirm(`¿Eliminar definitivamente ${ids.length} ${ids.length === 1 ? 'producto' : 'productos'}?\n\n${ejemplos}${otros}\n\nEsta acción no se puede deshacer.`)) return;
+
+    const usuario_id = getUsuarioId();
+    if (!usuario_id) return showToast('Usuario no identificado', 'error');
+
+    window._eliminandoProductosEnCola = true;
+    actualizarColaEliminacion();
+    const eliminados = [];
+    const errores = [];
+
+    try {
+        for (const id of ids) {
+            const producto = seleccionados.find(item => String(item.id) === id);
+            try {
+                const res = await fetch(`/productos/${encodeURIComponent(id)}?usuario_id=${encodeURIComponent(usuario_id)}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    errores.push(`${producto?.nombre || id}: ${data.error || 'no se pudo eliminar'}`);
+                    continue;
+                }
+                eliminados.push(id);
+                window._productosSeleccionadosParaEliminar.delete(id);
+            } catch (error) {
+                console.error(`Error eliminando producto ${id}:`, error);
+                errores.push(`${producto?.nombre || id}: error de conexión`);
+            }
+        }
+
+        if (eliminados.length) await window.loadProducts();
+        if (errores.length) {
+            showToast(`${eliminados.length} eliminados; ${errores.length} permanecen en la cola`, 'error');
+            console.error('Productos que no se pudieron eliminar:', errores);
+        } else {
+            showToast(`${eliminados.length} ${eliminados.length === 1 ? 'producto eliminado' : 'productos eliminados'}`, 'success');
+            window._modoSeleccionEliminarProductos = false;
+        }
+        actualizarColaEliminacion();
+    } finally {
+        window._eliminandoProductosEnCola = false;
+        actualizarColaEliminacion();
+    }
+}
+
+document.getElementById('limpiarColaEliminar')?.addEventListener('click', vaciarColaEliminacion);
+document.getElementById('cancelarColaEliminar')?.addEventListener('click', () => {
+    vaciarColaEliminacion();
+    window._modoSeleccionEliminarProductos = false;
+    actualizarColaEliminacion();
+});
+document.getElementById('confirmarColaEliminar')?.addEventListener('click', confirmarEliminacionEnCola);
 
 // Función helper que convierte un File en un DataURL para enviarlo vía JSON.
 async function fileToDataUrl(file) {
@@ -176,6 +314,10 @@ window.loadProducts = async function loadProducts() {
         const data = await res.json();
         if (res.ok) {
         window._productosCache = data.productos || [];
+        const idsActuales = new Set(window._productosCache.map(producto => String(producto.id)));
+        window._productosSeleccionadosParaEliminar.forEach(id => {
+            if (!idsActuales.has(id)) window._productosSeleccionadosParaEliminar.delete(id);
+        });
         window.actualizarResumenInventario(window._productosCache);
         const buscador = document.getElementById('buscador');
         window.searchProducts(buscador ? buscador.value : '');
@@ -185,6 +327,7 @@ window.loadProducts = async function loadProducts() {
         } else {
             renderSalesInventory(window._productosCache);
         }
+        actualizarColaEliminacion();
         try { renderCanasta(); } catch (e) {}
         } else {
         console.error('Error cargando productos', data);
@@ -217,9 +360,11 @@ window.renderProductsTable = function renderProductsTable(productos) {
         const nombre = escaparHTML(p.nombre);
         const codigo = escaparHTML(p.codigo);
         const id = escaparHTML(p.id);
+        const seleccionadoParaEliminar = window._productosSeleccionadosParaEliminar.has(String(p.id));
         fila.innerHTML = `
         <td>
             <div class="inventario-product-cell">
+                <input class="producto-seleccion-eliminar" type="checkbox" data-id="${id}" aria-label="Seleccionar ${nombre}, ID ${id}, para eliminar" ${seleccionadoParaEliminar ? 'checked' : ''}>
                 <img class="inventario-img" src="${escaparHTML(imagenSrc)}" alt="Producto ${nombre}">
                 <span>${nombre}${p.codigo ? `<small class="inventario-codigo">Código: ${codigo}</small>` : ''}</span>
             </div>
@@ -233,6 +378,14 @@ window.renderProductsTable = function renderProductsTable(productos) {
         <td><button class="btn-editar" data-id="${id}">Editar</button></td>
         `;
         tbody.appendChild(fila);
+    });
+    tbody.querySelectorAll('.producto-seleccion-eliminar').forEach(checkbox => {
+        checkbox.addEventListener('change', event => {
+            const input = event.currentTarget;
+            cambiarSeleccionEliminacion(input.dataset.id, input.checked);
+            input.closest('tr')?.classList.toggle('is-selected-for-deletion', input.checked);
+        });
+        checkbox.closest('tr')?.classList.toggle('is-selected-for-deletion', checkbox.checked);
     });
 
     // Listeners para inputs y botones
@@ -275,59 +428,10 @@ window.renderProductsTable = function renderProductsTable(productos) {
 window.abrirModalEliminarProducto = function abrirModalEliminarProducto() {
     const productos = window._productosCache || [];
     if (!productos.length) return showToast('No hay productos para eliminar', 'info');
-
-    abrirModal('Eliminar producto', `
-        <label for="buscarProductoEliminar">Buscar producto:</label>
-        <input id="buscarProductoEliminar" type="search" placeholder="Escribe nombre, código o ID">
-        <label for="productoEliminarSelect">Selecciona el producto:</label>
-        <select id="productoEliminarSelect" required>
-            <option value="">Selecciona un producto</option>
-        </select>
-        <p class="inventario-delete-warning">Esta acción no se puede deshacer.</p>
-        <div class="inventario-delete-actions">
-            <button type="button" class="btn btn--ghost" id="cancelarEliminarProducto">Cancelar</button>
-            <button type="button" class="btn inventario-action-btn--danger" id="confirmarEliminarProducto">Eliminar producto</button>
-        </div>
-    `);
-
-    const select = document.getElementById('productoEliminarSelect');
-    const buscador = document.getElementById('buscarProductoEliminar');
-    const normalizar = valor => String(valor ?? '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
-
-    const renderizarOpciones = () => {
-        const query = normalizar(buscador.value);
-        const seleccionActual = select.value;
-        const coincidencias = productos.filter(producto => {
-            const texto = normalizar([producto.nombre, producto.codigo, producto.id].join(' '));
-            return query.split(/\s+/).filter(Boolean).every(term => texto.includes(term));
-        });
-
-        select.replaceChildren(new Option('Selecciona un producto', ''));
-        coincidencias.forEach(producto => {
-            const detalle = [producto.codigo, `ID ${producto.id}`].filter(Boolean).join(' · ');
-            const option = new Option(
-                detalle ? `${producto.nombre} (${detalle})` : producto.nombre,
-                producto.id
-            );
-            select.appendChild(option);
-        });
-        if (coincidencias.some(producto => String(producto.id) === seleccionActual)) {
-            select.value = seleccionActual;
-        }
-    };
-
-    buscador.addEventListener('input', renderizarOpciones);
-    renderizarOpciones();
-    buscador.focus();
-    document.getElementById('cancelarEliminarProducto').addEventListener('click', cerrarModal);
-    document.getElementById('confirmarEliminarProducto').addEventListener('click', async () => {
-        if (!select.value) return showToast('Busca y selecciona el producto que deseas eliminar', 'error');
-        await eliminarProducto(select.value);
-    });
+    window._modoSeleccionEliminarProductos = !window._modoSeleccionEliminarProductos;
+    if (!window._modoSeleccionEliminarProductos) vaciarColaEliminacion();
+    actualizarColaEliminacion();
+    window.searchProducts(document.getElementById('buscador')?.value || '');
 };
 
 /**
