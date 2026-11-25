@@ -5,6 +5,64 @@
 window._productosCache = window._productosCache || [];
 const DEFAULT_PRODUCT_IMAGE = 'assets/logoinventario360.png';
 
+function escaparHTML(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, caracter => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[caracter]);
+}
+
+window.seleccionarArchivoInventario = function seleccionarArchivoInventario() {
+    document.getElementById('archivoInventarioExcel')?.click();
+};
+
+window.importarInventarioExcel = async function importarInventarioExcel(file) {
+    if (!file) return;
+    if (!/\.xlsx$/i.test(file.name)) {
+        showToast('Selecciona un archivo Excel .xlsx', 'error');
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+        showToast('El archivo no puede superar los 10 MB', 'error');
+        return;
+    }
+
+    const usuario_id = getUsuarioId();
+    if (!usuario_id) return showToast('Usuario no identificado', 'error');
+
+    const boton = document.getElementById('btnImportarInventario');
+    if (boton) boton.disabled = true;
+    try {
+        const res = await fetch(`/productos/importar?usuario_id=${encodeURIComponent(usuario_id)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/octet-stream' },
+            body: file
+        });
+        const data = await res.json();
+        if (!res.ok) return showToast(data.error || 'No se pudo importar el inventario', 'error');
+
+        await window.cargarCategorias();
+        await window.loadProducts();
+        const detalle = `${data.creados} nuevos, ${data.actualizados} actualizados, ${data.sinExistencia || 0} sin existencia y ${data.erroresTotal || 0} filas con datos inválidos`;
+        showToast(`Importación completada: ${detalle}`, 'success');
+        if (data.errores?.length) console.warn('Filas omitidas durante la importación:', data.errores);
+    } catch (err) {
+        console.error('Error importando inventario desde Excel:', err);
+        showToast('Error al importar el archivo Excel', 'error');
+    } finally {
+        if (boton) boton.disabled = false;
+        const input = document.getElementById('archivoInventarioExcel');
+        if (input) input.value = '';
+    }
+};
+
+document.getElementById('archivoInventarioExcel')?.addEventListener('change', event => {
+    window.importarInventarioExcel(event.target.files?.[0]);
+});
+
 // Función helper que convierte un File en un DataURL para enviarlo vía JSON.
 async function fileToDataUrl(file) {
     return new Promise((resolve, reject) => {
@@ -47,6 +105,7 @@ window.actualizarResumenInventario = function actualizarResumenInventario(produc
 window.guardarProducto = async function guardarProducto() {
     try {
         const nombre = document.getElementById('producto').value;
+        const codigo = document.getElementById('codigoProducto')?.value.trim() || null;
         const categoria = document.getElementById('categoria').value || null;
         const cantidad = parseInt(document.getElementById('cantidad').value) || 0;
         const precio = parseFloat(document.getElementById('precio').value) || 0;
@@ -66,7 +125,7 @@ window.guardarProducto = async function guardarProducto() {
             dataUrl = await fileToDataUrl(fileInput.files[0]);
         }
 
-        const payload = { nombre, descripcion: null, precio, costo, existencia: cantidad, categoria_id: categoria, usuario_id };
+        const payload = { nombre, codigo, descripcion: null, precio, costo, existencia: cantidad, categoria_id: categoria, usuario_id };
         if (dataUrl) payload.dataUrl = dataUrl;
 
         const res = await fetch('/productos', {
@@ -82,6 +141,7 @@ window.guardarProducto = async function guardarProducto() {
 
         // Limpiar formulario para permitir crear otro producto enseguida
         const productoIn = document.getElementById('producto');
+        const codigoIn = document.getElementById('codigoProducto');
         const categoriaIn = document.getElementById('categoria');
         const cantidadIn = document.getElementById('cantidad');
         const precioIn = document.getElementById('precio');
@@ -89,6 +149,7 @@ window.guardarProducto = async function guardarProducto() {
         const imagenIn = document.getElementById('imagenProducto');
 
         if (productoIn) productoIn.value = '';
+        if (codigoIn) codigoIn.value = '';
         if (categoriaIn) categoriaIn.value = '';
         if (cantidadIn) cantidadIn.value = '0';
         if (precioIn) precioIn.value = '0';
@@ -153,20 +214,23 @@ window.renderProductsTable = function renderProductsTable(productos) {
         const estimado = p.estimated_price ? Number(p.estimated_price).toFixed(2) : '-';
         const imagenSrc = p.image_url || DEFAULT_PRODUCT_IMAGE;
         const fechaRef = p.updated_at || p.created_at;
+        const nombre = escaparHTML(p.nombre);
+        const codigo = escaparHTML(p.codigo);
+        const id = escaparHTML(p.id);
         fila.innerHTML = `
         <td>
             <div class="inventario-product-cell">
-                <img class="inventario-img" src="${imagenSrc}" alt="Producto ${p.nombre || ''}">
-                <span>${p.nombre}</span>
+                <img class="inventario-img" src="${escaparHTML(imagenSrc)}" alt="Producto ${nombre}">
+                <span>${nombre}${p.codigo ? `<small class="inventario-codigo">Código: ${codigo}</small>` : ''}</span>
             </div>
         </td>
-        <td><input data-id="${p.id}" class="input-precio" type="number" step="0.01" value="${p.precio || 0}" style="width:80px"></td>
-        <td><input data-id="${p.id}" class="input-costo" type="number" min="0" step="0.01" value="${p.costo ?? 0}" style="width:80px"></td>
-        <td><input data-id="${p.id}" class="input-existencia" type="number" value="${p.existencia || 0}" style="width:70px"></td>
+        <td><input data-id="${id}" class="input-precio" type="number" step="0.01" value="${p.precio || 0}" style="width:80px"></td>
+        <td><input data-id="${id}" class="input-costo" type="number" min="0" step="0.01" value="${p.costo ?? 0}" style="width:80px"></td>
+        <td><input data-id="${id}" class="input-existencia" type="number" value="${p.existencia || 0}" style="width:70px"></td>
         <td>$${ganancia}</td>
         <td>${estimado}</td>
         <td>${fechaRef ? new Date(fechaRef * 1000).toLocaleDateString() : '—'}</td>
-        <td><button class="btn-editar" data-id="${p.id}">Editar</button></td>
+        <td><button class="btn-editar" data-id="${id}">Editar</button></td>
         `;
         tbody.appendChild(fila);
     });
@@ -273,7 +337,7 @@ window.editarProducto = function editarProducto(id) {
     const imagenActual = producto.image_url || DEFAULT_PRODUCT_IMAGE;
 
     abrirModal('Editar Producto', `
-        <div class="modal-form-row"><div class="col"><label>Producto:</label><input id="producto" name="nombre" type="text" required></div><div class="col"><label>Categoría:</label><select id="categoria" name="categoria"><option value="">Sin categoría</option></select></div></div>
+        <div class="modal-form-row"><div class="col"><label>Producto:</label><input id="producto" name="nombre" type="text" required></div><div class="col"><label>Código:</label><input id="codigoProducto" name="codigo" type="text"></div><div class="col"><label>Categoría:</label><select id="categoria" name="categoria"><option value="">Sin categoría</option></select></div></div>
         <div class="modal-form-row"><div class="col"><label>Cantidad:</label><input id="cantidad" name="cantidad" type="number" value="0"></div><div class="col"><label>Precio:</label><input id="precio" name="precio" type="number" step="0.01" value="0"></div></div>
         <div class="modal-form-row"><div class="col"><label>Costo:</label><input id="costo" name="costo" type="number" step="0.01" value="0"></div></div>
         <div class="modal-form-row">
@@ -297,6 +361,7 @@ window.editarProducto = function editarProducto(id) {
     if (form) form.dataset.productId = producto.id;
 
     const nombreInput = document.getElementById('producto');
+    const codigoInput = document.getElementById('codigoProducto');
     const cantidadInput = document.getElementById('cantidad');
     const precioInput = document.getElementById('precio');
     const costoInput = document.getElementById('costo');
@@ -305,6 +370,7 @@ window.editarProducto = function editarProducto(id) {
     const fileInput = document.getElementById('imagenProducto');
 
     if (nombreInput) nombreInput.value = producto.nombre || '';
+    if (codigoInput) codigoInput.value = producto.codigo || '';
     if (cantidadInput) cantidadInput.value = producto.existencia ?? 0;
     if (precioInput) precioInput.value = producto.precio ?? 0;
     if (costoInput) costoInput.value = producto.costo ?? 0;
@@ -361,6 +427,7 @@ window.actualizarProductoModal = async function actualizarProductoModal() {
 
     const payload = {
         nombre,
+        codigo: document.getElementById('codigoProducto')?.value.trim() || null,
         categoria_id: document.getElementById('categoria').value || null,
         existencia: parseInt(document.getElementById('cantidad').value) || 0,
         precio: parseFloat(document.getElementById('precio').value) || 0,

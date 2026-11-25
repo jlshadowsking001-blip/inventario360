@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => normalizeInlineOnclicks());
 window.crearProducto = function() {
     // Contenido del modal para crear producto
     abrirModal('Crear Producto', `
-        <div class="modal-form-row"><div class="col"><label>Producto:</label><input id="producto" name="nombre" type="text" required></div><div class="col"><label>Categoría:</label><select id="categoria" name="categoria"><option value="">Sin categoría</option></select></div></div>
+        <div class="modal-form-row"><div class="col"><label>Producto:</label><input id="producto" name="nombre" type="text" required></div><div class="col"><label>Código:</label><input id="codigoProducto" name="codigo" type="text"></div><div class="col"><label>Categoría:</label><select id="categoria" name="categoria"><option value="">Sin categoría</option></select></div></div>
         <div class="modal-form-row"><div class="col"><label>Cantidad:</label><input id="cantidad" name="cantidad" type="number" value="0"></div><div class="col"><label>Precio:</label><input id="precio" name="precio" type="number" step="0.01" value="0"></div></div>
         <div class="modal-form-row"><div class="col"><label>Costo:</label><input id="costo" name="costo" type="number" step="0.01" value="0"></div></div>
         <div class="modal-form-row"><div class="col"><label>Imagen (opcional):</label><input id="imagenProducto" name="imagenProducto" type="file" accept="image/*"></div></div>
