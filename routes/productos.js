@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const { parseImageDataUrl } = require('../servicios/imagenes');
 const { leerProductosExcel } = require('../servicios/importadorInventarioExcel');
+const { buscarNombreParecido } = require('../servicios/nombresProductos');
 
 async function bloquearInventarioUsuario(conexion, usuario_id) {
   const [usuarios] = await conexion.execute(
@@ -123,10 +124,27 @@ router.post('/importar', (req, res, next) => {
     }
     const categoriasPorNombre = new Map();
     const productosExistentes = new Map();
+    const [productosRegistrados] = await conexion.execute(
+      'SELECT id, nombre FROM productos WHERE usuario_id = ?',
+      [usuario_id]
+    );
     let creados = 0;
     let actualizados = 0;
 
     for (const producto of importacion.productos) {
+      const parecido = buscarNombreParecido(producto.nombre, productosRegistrados);
+      if (parecido) {
+        importacion.erroresTotal += 1;
+        if (importacion.errores.length < 20) {
+          importacion.errores.push({
+            hoja: producto.hoja,
+            fila: producto.fila,
+            error: `El nombre se parece a "${parecido.nombre}" (ID ${parecido.id}). Revisa si es el mismo producto.`
+          });
+        }
+        continue;
+      }
+
       let categoria_id = producto.categoria === undefined ? undefined : null;
       if (producto.categoria) {
         const claveCategoria = producto.categoria.toLocaleLowerCase('es');
@@ -213,6 +231,12 @@ router.post('/importar', (req, res, next) => {
       }
       productosExistentes.set(claveNombre, existente);
       if (claveCodigo) productosExistentes.set(claveCodigo, existente);
+      const productoRegistrado = productosRegistrados.find(item => String(item.id) === String(existente));
+      if (productoRegistrado) {
+        productoRegistrado.nombre = producto.nombre;
+      } else {
+        productosRegistrados.push({ id: existente, nombre: producto.nombre });
+      }
     }
 
     await conexion.commit();
@@ -274,6 +298,18 @@ router.post('/', async (req, res) => {
       transaccionIniciada = false;
       return res.status(409).json({ error: `Ya existe un producto llamado "${nombre}"` });
     }
+    const [productosRegistrados] = await conexion.execute(
+      'SELECT id, nombre FROM productos WHERE usuario_id = ?',
+      [usuario_id]
+    );
+    const parecido = buscarNombreParecido(nombre, productosRegistrados);
+    if (parecido) {
+      await conexion.rollback();
+      transaccionIniciada = false;
+      return res.status(409).json({
+        error: `El nombre se parece a "${parecido.nombre}" (ID ${parecido.id}). Revisa si es el mismo producto.`
+      });
+    }
     const [resultado] = await conexion.execute(
       `INSERT INTO productos (nombre, codigo, descripcion, precio, costo, existencia, categoria_id, image_url, image_data, image_mime, created_at, usuario_id)
        VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, UNIX_TIMESTAMP(), ?)`,
@@ -323,6 +359,20 @@ router.put('/:id', async (req, res) => {
       await conexion.rollback();
       transaccionIniciada = false;
       return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+    if (!await nombresIguales(conexion, productoActual[0].nombre, nombre)) {
+      const [productosRegistrados] = await conexion.execute(
+        'SELECT id, nombre FROM productos WHERE usuario_id = ?',
+        [usuario_id]
+      );
+      const parecido = buscarNombreParecido(nombre, productosRegistrados, id);
+      if (parecido) {
+        await conexion.rollback();
+        transaccionIniciada = false;
+        return res.status(409).json({
+          error: `El nombre se parece a "${parecido.nombre}" (ID ${parecido.id}). Revisa si es el mismo producto.`
+        });
+      }
     }
     if (!await nombresIguales(conexion, productoActual[0].nombre, nombre) &&
       await buscarProductoConNombre(conexion, usuario_id, nombre, id)) {
@@ -405,6 +455,20 @@ router.patch('/:id', async (req, res) => {
       await conexion.rollback();
       transaccionIniciada = false;
       return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+    if (nombre !== undefined && !await nombresIguales(conexion, productoActual[0].nombre, nombre)) {
+      const [productosRegistrados] = await conexion.execute(
+        'SELECT id, nombre FROM productos WHERE usuario_id = ?',
+        [usuario_id]
+      );
+      const parecido = buscarNombreParecido(nombre, productosRegistrados, id);
+      if (parecido) {
+        await conexion.rollback();
+        transaccionIniciada = false;
+        return res.status(409).json({
+          error: `El nombre se parece a "${parecido.nombre}" (ID ${parecido.id}). Revisa si es el mismo producto.`
+        });
+      }
     }
     if (nombre !== undefined &&
       !await nombresIguales(conexion, productoActual[0].nombre, nombre) &&
