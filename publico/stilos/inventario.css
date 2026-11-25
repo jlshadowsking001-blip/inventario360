@@ -39,12 +39,6 @@
     color: var(--palette-heading);
 }
 
-.inventario-import-hint {
-    margin: 6px 0 0;
-    color: #736ba1;
-    font-size: 0.9rem;
-}
-
 .inventario-actions {
     display: flex;
     flex-wrap: wrap;

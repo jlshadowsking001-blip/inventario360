@@ -277,8 +277,12 @@ window.abrirModalEliminarProducto = function abrirModalEliminarProducto() {
     if (!productos.length) return showToast('No hay productos para eliminar', 'info');
 
     abrirModal('Eliminar producto', `
+        <label for="buscarProductoEliminar">Buscar producto:</label>
+        <input id="buscarProductoEliminar" type="search" placeholder="Escribe nombre, código o ID">
         <label for="productoEliminarSelect">Selecciona el producto:</label>
-        <select id="productoEliminarSelect" required></select>
+        <select id="productoEliminarSelect" required>
+            <option value="">Selecciona un producto</option>
+        </select>
         <p class="inventario-delete-warning">Esta acción no se puede deshacer.</p>
         <div class="inventario-delete-actions">
             <button type="button" class="btn btn--ghost" id="cancelarEliminarProducto">Cancelar</button>
@@ -287,14 +291,41 @@ window.abrirModalEliminarProducto = function abrirModalEliminarProducto() {
     `);
 
     const select = document.getElementById('productoEliminarSelect');
-    productos.forEach(producto => {
-        const option = document.createElement('option');
-        option.value = producto.id;
-        option.textContent = producto.nombre;
-        select.appendChild(option);
-    });
+    const buscador = document.getElementById('buscarProductoEliminar');
+    const normalizar = valor => String(valor ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+    const renderizarOpciones = () => {
+        const query = normalizar(buscador.value);
+        const seleccionActual = select.value;
+        const coincidencias = productos.filter(producto => {
+            const texto = normalizar([producto.nombre, producto.codigo, producto.id].join(' '));
+            return query.split(/\s+/).filter(Boolean).every(term => texto.includes(term));
+        });
+
+        select.replaceChildren(new Option('Selecciona un producto', ''));
+        coincidencias.forEach(producto => {
+            const detalle = [producto.codigo, `ID ${producto.id}`].filter(Boolean).join(' · ');
+            const option = new Option(
+                detalle ? `${producto.nombre} (${detalle})` : producto.nombre,
+                producto.id
+            );
+            select.appendChild(option);
+        });
+        if (coincidencias.some(producto => String(producto.id) === seleccionActual)) {
+            select.value = seleccionActual;
+        }
+    };
+
+    buscador.addEventListener('input', renderizarOpciones);
+    renderizarOpciones();
+    buscador.focus();
     document.getElementById('cancelarEliminarProducto').addEventListener('click', cerrarModal);
     document.getElementById('confirmarEliminarProducto').addEventListener('click', async () => {
+        if (!select.value) return showToast('Busca y selecciona el producto que deseas eliminar', 'error');
         await eliminarProducto(select.value);
     });
 };
