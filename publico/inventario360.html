@@ -196,14 +196,57 @@
             </div>
             <!--aqui comiensa el apartado de ventras-->
             <section id="ventas" class="modulo">
-                <div class="ventas-layout">
+                <div class="ventas-overview" id="ventasInicio">
+                    <header class="ventas-overview-header">
+                        <div>
+                            <h2>Ventas</h2>
+                            <p>Resumen de ingresos y gastos</p>
+                        </div>
+                        <label class="ventas-overview-date" for="ventasFechaResumen">
+                            <span>Fecha</span>
+                            <input type="date" id="ventasFechaResumen">
+                        </label>
+                    </header>
+
+                    <section class="ventas-balance-card" aria-label="Resumen del día">
+                        <div class="ventas-balance-heading">
+                            <span>Balance</span>
+                            <strong id="ventasBalanceTotal">C$0.00</strong>
+                        </div>
+                        <div class="ventas-balance-totals">
+                            <div>
+                                <span>Ingresos</span>
+                                <strong id="ventasIngresosTotal">C$0.00</strong>
+                            </div>
+                            <div>
+                                <span>Egresos</span>
+                                <strong id="ventasEgresosTotal">C$0.00</strong>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="ventas-overview-tabs" role="tablist" aria-label="Tipo de movimiento">
+                        <button type="button" class="is-active" role="tab" aria-selected="true" data-tipo="venta" onclick="seleccionarPestanaVentas('venta')">Ingresos</button>
+                        <button type="button" role="tab" aria-selected="false" data-tipo="egreso" onclick="seleccionarPestanaVentas('egreso')">Egresos</button>
+                    </div>
+                    <div class="ventas-activity-list" id="ventasResumenLista" aria-live="polite"></div>
+                    <div class="ventas-overview-actions">
+                        <button type="button" class="ventas-action-new" onclick="iniciarNuevaVenta()">Nueva venta</button>
+                        <button type="button" class="ventas-action-expense" onclick="abrirModalGasto()">Nuevo gasto</button>
+                    </div>
+                </div>
+
+                <div class="ventas-layout" id="ventasProceso" hidden>
                     <div class="ventas-panel ventas-panel--catalogo">
                         <div class="ventas-panel--catalogo-inner">
+                            <div class="ventas-selector-heading">
+                                <button type="button" class="ventas-back-button" onclick="mostrarInicioVentas()">‹</button>
+                                <h2>Seleccionar productos</h2>
+                            </div>
                             <div class="ventas-panel-header">
-                                <h2>Nueva venta</h2>
                                 <div class="ventas-search">
-                                    <span class="ventas-search-icon" aria-hidden="true">🔍</span>
-                                    <input type="text" id="buscadorVentas" placeholder="Buscar por nombre, código o ID" />
+                                    <span class="ventas-search-icon" aria-hidden="true">⌕</span>
+                                    <input type="text" id="buscadorVentas" placeholder="Buscar producto por nombre o código" />
                                     <button type="button" class="ventas-search-clear" aria-label="Limpiar búsqueda" onclick="limpiarBusquedaVentas()">×</button>
                                 </div>
                             </div>
@@ -211,9 +254,21 @@
                             <div class="ventas-grid-wrapper">
                                 <div class="ventas-grid" id="tablaventasBody"></div>
                             </div>
+                            <div class="ventas-selector-footer">
+                                <button type="button" id="ventasAgregarSeleccion" onclick="confirmarSeleccionVentas()" disabled>
+                                    <span id="ventasSeleccionCantidad">0</span>
+                                    <span>Añadir productos</span>
+                                    <strong id="ventasSeleccionTotal">C$0.00</strong>
+                                    <span aria-hidden="true">›</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="ventas-panel ventas-panel--cart">
+                        <div class="ventas-checkout-heading">
+                            <button type="button" class="ventas-back-button" onclick="volverASeleccionVentas()">‹</button>
+                            <h2>Tu venta</h2>
+                        </div>
                         <div class="ventas-cart-actions">
                             <button type="button" class="ventas-chip-btn" onclick="abrirModalGasto()">gastos</button>
                             <button type="button" class="ventas-chip-btn" onclick="vaciarcanasta()">Vaciar canasta</button>
