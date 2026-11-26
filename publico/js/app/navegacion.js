@@ -28,9 +28,13 @@ window.mostrarModulo = function(nombreModulo) {
         try {
             switch (nombreModulo) {
                 case 'inventario':
+                    window.loadProducts && window.loadProducts();
+                    window.cargarCategorias && window.cargarCategorias();
+                    break;
                 case 'ventas':
                     window.loadProducts && window.loadProducts();
                     window.cargarCategorias && window.cargarCategorias();
+                    window.mostrarInicioVentas && window.mostrarInicioVentas();
                     break;
                 case 'clientes':
                     window.loadClientes && window.loadClientes();

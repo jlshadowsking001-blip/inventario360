@@ -4,6 +4,9 @@
 
 window._canasta = window._canasta || [];
 window.modoVentaActual = window.modoVentaActual || 'contado';
+window._seleccionVentas = window._seleccionVentas || Object.create(null);
+window._ventasMovimientos = window._ventasMovimientos || [];
+window._ventasTabActual = window._ventasTabActual || 'venta';
 
 function fechaLocalParaInput() {
     const hoy = new Date();
@@ -16,6 +19,237 @@ const fechaVentaInput = document.getElementById('fechaVenta');
 if (fechaVentaInput && !fechaVentaInput.value) {
     fechaVentaInput.value = fechaLocalParaInput();
 }
+
+const fechaResumenVentasInput = document.getElementById('ventasFechaResumen');
+if (fechaResumenVentasInput) {
+    fechaResumenVentasInput.value = fechaLocalParaInput();
+    fechaResumenVentasInput.addEventListener('change', () => window.cargarResumenVentas());
+}
+
+function monedaVenta(valor) {
+    const numero = Number(valor) || 0;
+    return typeof window.formatearMoneda === 'function'
+        ? window.formatearMoneda(numero)
+        : `C$${numero.toFixed(2)}`;
+}
+
+function setVistaProcesoVentas(vista) {
+    const proceso = document.getElementById('ventasProceso');
+    const inicio = document.getElementById('ventasInicio');
+    if (!proceso || !inicio) return;
+    inicio.hidden = true;
+    proceso.hidden = false;
+    proceso.classList.toggle('is-selector', vista === 'selector');
+    proceso.classList.toggle('is-checkout', vista === 'checkout');
+}
+
+function actualizarFooterSeleccionVentas() {
+    let cantidadTotal = 0;
+    let precioTotal = 0;
+    const productos = window._productosCache || [];
+    Object.entries(window._seleccionVentas).forEach(([id, cantidad]) => {
+        const producto = productos.find(item => String(item.id) === String(id));
+        if (!producto || cantidad <= 0) return;
+        cantidadTotal += cantidad;
+        precioTotal += (Number(producto.precio) || 0) * cantidad;
+    });
+
+    const cantidadEl = document.getElementById('ventasSeleccionCantidad');
+    const totalEl = document.getElementById('ventasSeleccionTotal');
+    const boton = document.getElementById('ventasAgregarSeleccion');
+    if (cantidadEl) cantidadEl.textContent = String(cantidadTotal);
+    if (totalEl) totalEl.textContent = monedaVenta(precioTotal);
+    if (boton) boton.disabled = cantidadTotal === 0;
+}
+
+function obtenerExistenciaDisponible(producto) {
+    const yaEnCanasta = window._canasta.find(item => String(item.id) === String(producto.id));
+    return Math.max(0, (Number(producto.existencia) || 0) - (Number(yaEnCanasta?.cantidad) || 0));
+}
+
+function cambiarCantidadSeleccionada(id, cambio) {
+    const producto = (window._productosCache || []).find(item => String(item.id) === String(id));
+    if (!producto) return;
+    const actual = Number(window._seleccionVentas[id]) || 0;
+    const nueva = Math.max(0, Math.min(obtenerExistenciaDisponible(producto), actual + cambio));
+    if (nueva === 0) {
+        delete window._seleccionVentas[id];
+    } else {
+        window._seleccionVentas[id] = nueva;
+    }
+
+    const query = String(window._busquedaVentas || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const categoriaId = window._categoriaVentaActiva;
+    window.renderSalesInventory((window._productosCache || []).filter(item => {
+        const texto = [item.nombre, item.codigo, item.id]
+            .filter(value => value != null)
+            .join(' ')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+        return (categoriaId == null || String(item.categoria_id) === String(categoriaId)) &&
+            (!query || query.split(/\s+/).every(term => texto.includes(term)));
+    }));
+    actualizarFooterSeleccionVentas();
+}
+
+function renderListaResumenVentas(movimientos) {
+    const lista = document.getElementById('ventasResumenLista');
+    if (!lista) return;
+    lista.replaceChildren();
+
+    const esVenta = window._ventasTabActual === 'venta';
+    const items = movimientos.filter(movimiento => esVenta
+        ? movimiento.tipo === 'venta'
+        : ['egreso', 'gasto', 'ajuste'].includes(movimiento.tipo));
+
+    if (!items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'ventas-overview-empty';
+        const icon = document.createElement('span');
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = '▤';
+        const message = document.createElement('p');
+        message.textContent = `No tienes registros de ${esVenta ? 'ventas' : 'egresos'} en esta fecha.`;
+        empty.append(icon, message);
+        lista.appendChild(empty);
+        return;
+    }
+
+    items.forEach(movimiento => {
+        const item = document.createElement('article');
+        item.className = 'ventas-activity-card';
+
+        const icon = document.createElement('span');
+        icon.className = `ventas-activity-icon${esVenta ? ' is-income' : ' is-expense'}`;
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = esVenta ? '↗' : '↙';
+
+        const content = document.createElement('div');
+        content.className = 'ventas-activity-content';
+        const title = document.createElement('strong');
+        title.textContent = movimiento.producto || movimiento.descripcion || (esVenta ? 'Venta de producto' : 'Gasto');
+        const details = [];
+        if (Number(movimiento.cantidad) > 0) details.push(`${movimiento.cantidad} unidades`);
+        if (movimiento.cliente) details.push(movimiento.cliente);
+        if (movimiento.proveedor) details.push(movimiento.proveedor);
+        const subtitle = document.createElement('small');
+        subtitle.textContent = details.join(' · ') || (esVenta ? 'Venta registrada' : 'Egreso registrado');
+        content.append(title, subtitle);
+
+        const amount = document.createElement('strong');
+        amount.className = `ventas-activity-amount${esVenta ? ' is-income' : ' is-expense'}`;
+        amount.textContent = monedaVenta(movimiento.monto);
+        item.append(icon, content, amount);
+        lista.appendChild(item);
+    });
+}
+
+window.cargarResumenVentas = async function cargarResumenVentas() {
+    const lista = document.getElementById('ventasResumenLista');
+    const fecha = document.getElementById('ventasFechaResumen')?.value || fechaLocalParaInput();
+    const usuarioId = getUsuarioId();
+    if (!usuarioId) {
+        if (lista) lista.textContent = 'No se pudo identificar al usuario. Inicia sesión nuevamente.';
+        return;
+    }
+
+    if (lista) lista.textContent = 'Cargando movimientos…';
+    try {
+        const query = new URLSearchParams({
+            usuario_id: usuarioId,
+            fechaBase: fecha,
+            rango: 'dia'
+        });
+        const response = await fetch(`/movimientos?${query.toString()}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'No se pudieron cargar los movimientos');
+        if (document.getElementById('ventasFechaResumen')?.value !== fecha) return;
+
+        const movimientos = Array.isArray(data.movimientos) ? data.movimientos : [];
+        window._ventasMovimientos = movimientos;
+        const ingresos = movimientos
+            .filter(movimiento => movimiento.tipo === 'venta')
+            .reduce((total, movimiento) => total + (Number(movimiento.monto) || 0), 0);
+        const egresos = movimientos
+            .filter(movimiento => ['egreso', 'gasto', 'ajuste'].includes(movimiento.tipo))
+            .reduce((total, movimiento) => total + (Number(movimiento.monto) || 0), 0);
+
+        document.getElementById('ventasBalanceTotal').textContent = monedaVenta(ingresos - egresos);
+        document.getElementById('ventasIngresosTotal').textContent = monedaVenta(ingresos);
+        document.getElementById('ventasEgresosTotal').textContent = monedaVenta(egresos);
+        renderListaResumenVentas(movimientos);
+    } catch (error) {
+        console.error('Error cargando resumen de ventas:', error);
+        if (lista) {
+            lista.replaceChildren();
+            const message = document.createElement('p');
+            message.className = 'ventas-overview-error';
+            message.textContent = `No se pudieron cargar los movimientos. ${error.message}`;
+            lista.appendChild(message);
+        }
+    }
+};
+
+window.seleccionarPestanaVentas = function seleccionarPestanaVentas(tipo) {
+    window._ventasTabActual = tipo === 'egreso' ? 'egreso' : 'venta';
+    document.querySelectorAll('.ventas-overview-tabs [data-tipo]').forEach(button => {
+        const active = button.dataset.tipo === window._ventasTabActual;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-selected', String(active));
+    });
+    renderListaResumenVentas(window._ventasMovimientos);
+};
+
+window.mostrarInicioVentas = function mostrarInicioVentas() {
+    const proceso = document.getElementById('ventasProceso');
+    const inicio = document.getElementById('ventasInicio');
+    if (proceso) proceso.hidden = true;
+    if (inicio) inicio.hidden = false;
+    window.cargarResumenVentas();
+};
+
+window.iniciarNuevaVenta = function iniciarNuevaVenta() {
+    if (window._canasta.length) {
+        setVistaProcesoVentas('checkout');
+        window.renderCanasta();
+        return;
+    }
+    window._seleccionVentas = Object.create(null);
+    window._categoriaVentaActiva = null;
+    window._busquedaVentas = '';
+    const buscador = document.getElementById('buscadorVentas');
+    if (buscador) buscador.value = '';
+    setVistaProcesoVentas('selector');
+    window.renderizarCategoriasVentas?.();
+    window.filtrarVentasPorTexto?.('');
+    actualizarFooterSeleccionVentas();
+};
+
+window.volverASeleccionVentas = function volverASeleccionVentas() {
+    setVistaProcesoVentas('selector');
+    window.renderizarCategoriasVentas?.();
+    window.filtrarVentasPorTexto?.(window._busquedaVentas || '');
+    actualizarFooterSeleccionVentas();
+};
+
+window.confirmarSeleccionVentas = function confirmarSeleccionVentas() {
+    const productos = window._productosCache || [];
+    const seleccion = Object.entries(window._seleccionVentas)
+        .filter(([, cantidad]) => Number(cantidad) > 0);
+    if (!seleccion.length) return showToast('Selecciona al menos un producto.', 'info');
+
+    const invalido = seleccion.find(([id, cantidad]) => {
+        const producto = productos.find(item => String(item.id) === String(id));
+        return !producto || Number(cantidad) > obtenerExistenciaDisponible(producto);
+    });
+    if (invalido) return showToast('La existencia de un producto cambió. Revisa la selección.', 'error');
+
+    seleccion.forEach(([id, cantidad]) => window.addToCanasta(id, Number(cantidad)));
+    window._seleccionVentas = Object.create(null);
+    setVistaProcesoVentas('checkout');
+    window.renderCanasta();
+};
 
 // Función que muestra u oculta el aviso cuando se intenta vender a crédito sin cliente asignado.
 function actualizarAvisoCredito() {
@@ -68,13 +302,19 @@ window.renderSalesInventory = function renderSalesInventory(productos) {
     contenedor.innerHTML = '';
 
     const lista = Array.isArray(productos)
-        ? [...productos].sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' }))
+        ? [...productos]
+            .filter(producto => Number(producto.existencia) > 0)
+            .sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' }))
         : [];
     if (!lista.length) {
         const mensaje = window._busquedaVentas?.trim()
             ? 'No se encontraron productos.'
-            : 'No hay productos disponibles.';
-        contenedor.innerHTML = `<p class="ventas-empty">${mensaje}</p>`;
+            : 'No hay productos con existencias disponibles.';
+        const empty = document.createElement('p');
+        empty.className = 'ventas-empty';
+        empty.textContent = mensaje;
+        contenedor.appendChild(empty);
+        actualizarFooterSeleccionVentas();
         return;
     }
 
@@ -82,26 +322,52 @@ window.renderSalesInventory = function renderSalesInventory(productos) {
         const card = document.createElement('article');
         card.className = 'venta-card';
         const disponible = Number(p.existencia) || 0;
-        const precio = Number(p.precio) || 0;
-        const precioTexto = typeof window.formatearMoneda === 'function'
-            ? window.formatearMoneda(precio)
-            : `C$${precio.toFixed(2)}`;
-        const imagen = p.image_url || p.imagen || 'assets/logoinventario360.png';
+        const cantidadSeleccionada = Number(window._seleccionVentas[p.id]) || 0;
+        const maxSeleccionable = obtenerExistenciaDisponible(p);
+        const imageWrapper = document.createElement('div');
+        imageWrapper.className = 'venta-card-img-wrapper';
+        const image = document.createElement('img');
+        image.src = p.image_url || p.imagen || 'assets/logoinventario360.png';
+        image.alt = p.nombre || 'Producto';
+        imageWrapper.appendChild(image);
 
-        card.innerHTML = `
-            <div class="venta-card-img-wrapper">
-                <img src="${imagen}" alt="${p.nombre}">
-            </div>
-            <span class="venta-card-title">${p.nombre}</span>
-            <div class="venta-card-meta">
-                <span class="venta-card-price">${precioTexto}</span>
-                <span class="venta-card-stock">Exist. ${disponible}</span>
-            </div>
-        `;
+        const info = document.createElement('div');
+        info.className = 'venta-card-info';
+        const title = document.createElement('span');
+        title.className = 'venta-card-title';
+        title.textContent = p.nombre || 'Producto sin nombre';
+        const stock = document.createElement('span');
+        stock.className = 'venta-card-stock';
+        stock.textContent = `${disponible} disponibles`;
+        const price = document.createElement('strong');
+        price.className = 'venta-card-price';
+        price.textContent = monedaVenta(p.precio);
+        info.append(title, stock, price);
 
-        card.addEventListener('click', () => addToCanasta(p.id, 1));
+        const quantity = document.createElement('div');
+        quantity.className = 'venta-card-quantity';
+        quantity.setAttribute('aria-label', `Cantidad de ${p.nombre || 'producto'}`);
+        const minus = document.createElement('button');
+        minus.type = 'button';
+        minus.textContent = '−';
+        minus.setAttribute('aria-label', `Quitar una unidad de ${p.nombre || 'producto'}`);
+        minus.disabled = cantidadSeleccionada === 0;
+        minus.addEventListener('click', () => cambiarCantidadSeleccionada(p.id, -1));
+        const value = document.createElement('span');
+        value.textContent = String(cantidadSeleccionada);
+        const plus = document.createElement('button');
+        plus.type = 'button';
+        plus.textContent = '+';
+        plus.setAttribute('aria-label', `Agregar una unidad de ${p.nombre || 'producto'}`);
+        plus.disabled = cantidadSeleccionada >= maxSeleccionable;
+        plus.addEventListener('click', () => cambiarCantidadSeleccionada(p.id, 1));
+        quantity.append(minus, value, plus);
+
+        card.classList.toggle('is-selected', cantidadSeleccionada > 0);
+        card.append(imageWrapper, info, quantity);
         contenedor.appendChild(card);
     });
+    actualizarFooterSeleccionVentas();
 };
 
 /**
@@ -251,6 +517,7 @@ window.terminarventa = async function terminarventa() {
         const fechaInput = document.getElementById('fechaVenta');
         if (fechaInput) fechaInput.value = fechaLocalParaInput();
         seleccionarModoVenta('contado');
+        window.mostrarInicioVentas();
         loadProducts();
         loadMovimientos();
         loadMovimientosUI();
@@ -316,6 +583,7 @@ window.guardarGasto = async function guardarGasto() {
         cerrarModal();
         loadMovimientos();
         loadMovimientosUI();
+        window.cargarResumenVentas();
     } catch (err) {
         console.error('Error guardando gasto:', err);
         showToast('Error guardando gasto', 'error');
