@@ -236,10 +236,10 @@ window.renderMovimientosTable = function renderMovimientosTable(movimientos) {
             <tr class="mov-periodo-row">
                 <td colspan="6">
                     <div class="mov-periodo-resumen">
-                        <span>Periodo <strong>${grupo.label}</strong></span>
-                        <span>Ingresos <strong>${formatearMoneda(grupo.totalIngresos)}</strong></span>
-                        <span>Egresos <strong>${formatearMoneda(grupo.totalEgresos)}</strong></span>
-                        <span>Neto <strong>${formatearMoneda(grupo.totalIngresos - grupo.totalEgresos)}</strong></span>
+                        <span><small>Periodo</small><strong>${grupo.label}</strong></span>
+                        <span><small>Ingresos</small><strong>${formatearMoneda(grupo.totalIngresos)}</strong></span>
+                        <span><small>Egresos</small><strong>${formatearMoneda(grupo.totalEgresos)}</strong></span>
+                        <span><small>Neto</small><strong>${formatearMoneda(grupo.totalIngresos - grupo.totalEgresos)}</strong></span>
                     </div>
                 </td>
             </tr>`;
@@ -264,12 +264,12 @@ function crearFilaMovimiento(m) {
     const monto = m.monto != null ? formatearMoneda(m.monto) : '—';
     return `
         <tr>
-            <td>${fecha}</td>
-            <td>${m.tipo}</td>
-            <td>${detalles || '-'}</td>
-            <td>${m.cantidad || 0}</td>
-            <td>${monto}</td>
-            <td>${vinculo}</td>
+            <td data-label="Fecha">${fecha}</td>
+            <td data-label="Tipo">${m.tipo}</td>
+            <td data-label="Detalles">${detalles || '-'}</td>
+            <td data-label="Cantidad">${m.cantidad || 0}</td>
+            <td data-label="Monto">${monto}</td>
+            <td data-label="Vinculado">${vinculo}</td>
         </tr>`;
 }
 
@@ -331,23 +331,56 @@ window.loadStats = async function loadStats() {
             datasets: [{
             label: 'Ingresos (C$)',
             data: montos,
-            backgroundColor: 'rgba(54,162,235,0.6)'
+            backgroundColor: '#3e4395'
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#4a4171' } },
+                y: { grid: { color: 'rgba(41,39,70,0.12)' }, ticks: { color: '#4a4171' } }
+            }
         }
         });
 
         // Gráfico de pastel: distribución de ingresos
         const ctxPie = document.getElementById('salesPieChart').getContext('2d');
         if (window.pieChart) window.pieChart.destroy();
+        let pieLabels = labels;
+        let pieData = montos;
+        if (window.matchMedia('(max-width: 768px)').matches && labels.length > 6) {
+            const principales = resumen.slice(0, 5);
+            pieLabels = [...principales.map(producto => producto.nombre), 'Otros productos'];
+            pieData = [
+                ...principales.map(producto => Number(producto.total_monto) || 0),
+                resumen.slice(5).reduce((total, producto) => total + (Number(producto.total_monto) || 0), 0)
+            ];
+        }
+        const pieColors = ['#3e4395', '#ffdc55', '#7cb5ff', '#6fd4e9', '#292746', '#a8c9ec'];
         window.pieChart = new Chart(ctxPie, {
         type: 'pie',
         data: {
-            labels,
+            labels: pieLabels,
             datasets: [{
-            data: montos,
-            backgroundColor: labels.map((_, i) => `hsl(${i * 40 % 360} 70% 50%)`)
+            data: pieData,
+            backgroundColor: pieLabels.map((_, i) => pieColors[i % pieColors.length])
             }]
-        }
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: context => `${context.label}: ${formatearMoneda(context.raw)}`
+                    }
+                }
+            }
+        },
+        plugins: window.statsPieSegmentLabelsPlugin ? [window.statsPieSegmentLabelsPlugin] : []
         });
 
         // Calcular precio estimado por producto
