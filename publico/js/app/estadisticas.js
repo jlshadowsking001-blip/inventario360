@@ -3,6 +3,48 @@
  */
 const STATS_COLOR_SWATCH = ['#3e4395', '#ffdc55', '#7cb5ff', '#6fd4e9', '#292746', '#a8c9ec'];
 const buildStatsPalette = (len) => Array.from({ length: len }, (_, i) => STATS_COLOR_SWATCH[i % STATS_COLOR_SWATCH.length]);
+const pieSegmentLabelsPlugin = {
+    id: 'statsPieSegmentLabels',
+    afterDatasetDraw(chart, args) {
+        const dataset = chart.data.datasets[args.index];
+        const arcs = chart.getDatasetMeta(args.index).data;
+        const total = dataset.data.reduce((sum, value) => sum + (Number(value) || 0), 0);
+        if (!total) return;
+
+        const { ctx } = chart;
+        ctx.save();
+        ctx.font = `600 ${Math.max(8, Math.min(11, chart.width / 38))}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        arcs.forEach((arc, index) => {
+            const value = Number(dataset.data[index]) || 0;
+            if (!value || value / total < 0.035) return;
+
+            const angleSpan = arc.endAngle - arc.startAngle;
+            const angle = (arc.startAngle + arc.endAngle) / 2;
+            const radius = arc.innerRadius + (arc.outerRadius - arc.innerRadius) * 0.68;
+            const chordWidth = 2 * radius * Math.sin(Math.min(angleSpan, Math.PI) / 2);
+            const maxCharacters = Math.floor(chordWidth / 6);
+            if (maxCharacters < 4) return;
+            const x = arc.x + Math.cos(angle) * radius;
+            const y = arc.y + Math.sin(angle) * radius;
+            const label = String(chart.data.labels[index] || '');
+            const text = label.length > maxCharacters
+                ? `${label.slice(0, maxCharacters - 1)}…`
+                : label;
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+            ctx.strokeText(text, x, y);
+            ctx.fillStyle = '#292746';
+            ctx.fillText(text, x, y);
+        });
+
+        ctx.restore();
+    }
+};
+window.statsPieSegmentLabelsPlugin = pieSegmentLabelsPlugin;
 
 // Función que resume el inventario para el gráfico de pastel, calculando costo total por producto.
 function aggregateInventario(raw = {}) {
@@ -133,17 +175,20 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
         // --- Tabla detallada por periodo/producto ---
         const tbody = document.getElementById('tablaEstadisticasBody');
         tbody.innerHTML = '';
+        if (!resumen.length) {
+            tbody.innerHTML = '<tr><td class="stats-empty" colspan="6">No hay ventas en el periodo seleccionado.</td></tr>';
+        }
         resumen.forEach(r => {
             const ganancia = (r.total_monto || 0) - (r.total_costo || 0);
             const periodoLabel = formatPeriodoLabel(r.periodo, rango);
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${periodoLabel}</td>
-                <td>${r.nombre}</td>
-                <td>${r.total_unidades}</td>
-                <td>${r.precio_unitario?.toFixed(2) || '-'}</td>
-                <td>${r.total_costo?.toFixed(2) || '-'}</td>
-                <td>${ganancia.toFixed(2)}</td>
+                <td data-label="Periodo">${periodoLabel}</td>
+                <td data-label="Producto">${r.nombre}</td>
+                <td data-label="Cantidad">${r.total_unidades}</td>
+                <td data-label="Precio">${r.precio_unitario != null ? `C$${Number(r.precio_unitario).toFixed(2)}` : '-'}</td>
+                <td data-label="Costo">${r.total_costo != null ? `C$${Number(r.total_costo).toFixed(2)}` : '-'}</td>
+                <td data-label="Ganancia">C$${ganancia.toFixed(2)}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -202,6 +247,7 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
+            legend: { display: false },
             tooltip: {
                 backgroundColor: '#292746',
                 padding: 10,
@@ -231,8 +277,20 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
         const inventario = await resInventario.json();
         const productosInventario = aggregateInventario(inventario);
 
-        const pieLabels = productosInventario.length ? productosInventario.map(p => p.nombre) : ['Inventario'];
-        const pieData = productosInventario.length ? productosInventario.map(p => p.costo_total) : [0];
+        let productosParaGrafico = productosInventario;
+        if (window.matchMedia('(max-width: 768px)').matches && productosInventario.length > 6) {
+            const principales = productosInventario.slice(0, 5);
+            const otros = productosInventario.slice(5);
+            productosParaGrafico = [
+                ...principales,
+                {
+                    nombre: 'Otros productos',
+                    costo_total: otros.reduce((total, producto) => total + producto.costo_total, 0)
+                }
+            ];
+        }
+        const pieLabels = productosParaGrafico.length ? productosParaGrafico.map(p => p.nombre) : ['Inventario'];
+        const pieData = productosParaGrafico.length ? productosParaGrafico.map(p => p.costo_total) : [0];
         const piePalette = buildStatsPalette(pieLabels.length || 1);
 
         const ctxPie = document.getElementById('salesPieChart').getContext('2d');
@@ -253,15 +311,7 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                position: 'right',
-                labels: {
-                    color: '#2b1c52',
-                    usePointStyle: true,
-                    pointStyle: 'circle',
-                    padding: 16
-                }
-                },
+                legend: { display: false },
                 tooltip: {
                 callbacks: {
                     label: function (context) {
@@ -274,7 +324,8 @@ window.filtrarEstadisticas = async function filtrarEstadisticas() {
                 }
                 }
             }
-            }
+            },
+        plugins: [pieSegmentLabelsPlugin]
         });
         } catch (errInventario) {
             console.error('Error cargando inventario:', errInventario);
