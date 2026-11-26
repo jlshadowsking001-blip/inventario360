@@ -104,6 +104,7 @@ router.post('/importar', (req, res, next) => {
     return res.json({
       creados: 0,
       actualizados: 0,
+      preciosGuardados: 0,
       omitidos: importacion.sinExistencia + importacion.erroresTotal,
       sinExistencia: importacion.sinExistencia,
       erroresTotal: importacion.erroresTotal,
@@ -125,14 +126,19 @@ router.post('/importar', (req, res, next) => {
     const categoriasPorNombre = new Map();
     const productosExistentes = new Map();
     const [productosRegistrados] = await conexion.execute(
-      'SELECT id, nombre FROM productos WHERE usuario_id = ?',
+      'SELECT id, nombre, codigo FROM productos WHERE usuario_id = ?',
       [usuario_id]
     );
     let creados = 0;
     let actualizados = 0;
+    let preciosGuardados = 0;
 
     for (const producto of importacion.productos) {
-      const parecido = buscarNombreParecido(producto.nombre, productosRegistrados);
+      const coincideCodigo = producto.codigo && productosRegistrados.some(registrado =>
+        String(registrado.codigo || '').trim().toLocaleLowerCase('es') ===
+        producto.codigo.toLocaleLowerCase('es')
+      );
+      const parecido = coincideCodigo ? null : buscarNombreParecido(producto.nombre, productosRegistrados);
       if (parecido) {
         importacion.erroresTotal += 1;
         if (importacion.errores.length < 20) {
@@ -229,13 +235,15 @@ router.post('/importar', (req, res, next) => {
         creados += 1;
         existente = resultado.insertId;
       }
+      if (producto.precio != null) preciosGuardados += 1;
       productosExistentes.set(claveNombre, existente);
       if (claveCodigo) productosExistentes.set(claveCodigo, existente);
       const productoRegistrado = productosRegistrados.find(item => String(item.id) === String(existente));
       if (productoRegistrado) {
         productoRegistrado.nombre = producto.nombre;
+        if (producto.codigo) productoRegistrado.codigo = producto.codigo;
       } else {
-        productosRegistrados.push({ id: existente, nombre: producto.nombre });
+        productosRegistrados.push({ id: existente, nombre: producto.nombre, codigo: producto.codigo });
       }
     }
 
@@ -244,6 +252,7 @@ router.post('/importar', (req, res, next) => {
     res.json({
       creados,
       actualizados,
+      preciosGuardados,
       omitidos: importacion.sinExistencia + importacion.erroresTotal,
       sinExistencia: importacion.sinExistencia,
       erroresTotal: importacion.erroresTotal,

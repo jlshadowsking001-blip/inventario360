@@ -33,6 +33,7 @@ function detectarColumnas(hoja, fila) {
     encabezados.eachCell({ includeEmpty: false }, (celda, indice) => {
         const texto = normalizarEncabezado(celda.text || celda.value);
         if (!texto) return;
+        const textoPrecioVenta = texto.replace(/\s+(c|cs|usd|mxn|eur|cordobas?)$/, '');
 
         if (!columnas.nombre && /^(nombre|producto|name|product|nombre producto|nombre del producto|articulo|nombre articulo)$/.test(texto)) {
             columnas.nombre = indice;
@@ -46,7 +47,7 @@ function detectarColumnas(hoja, fila) {
             /^(costo|costos|coste|costo compra|costo de compra|coste compra|precio compra|precio de compra|precio de costo|costo unitario|unit cost|cost)$/.test(texto)) {
             columnas.costo = indice;
         } else if (!columnas.precio && !texto.includes('inventario') &&
-            /^(precio|precio venta|precio de venta|precio unitario venta|sale price|venta|precio publico|price)$/.test(texto)) {
+            /^(precio|precio venta|precio de venta|precio unitario venta|precio venta unitario|precio unitario de venta|precio al publico|precio publico|p venta|pvp|sale price|venta|price)$/.test(textoPrecioVenta)) {
             columnas.precio = indice;
         }
     });
@@ -143,7 +144,11 @@ async function leerProductosExcel(buffer) {
                         : convertirNumero(obtenerValorCelda(hoja, fila, columnas.costo), 'El costo'),
                     precio: columnas.precio == null
                         ? undefined
-                        : convertirNumero(obtenerValorCelda(hoja, fila, columnas.precio), 'El precio'),
+                        : convertirNumero(
+                            obtenerValorCelda(hoja, fila, columnas.precio) ??
+                                obtenerValorCelda(hoja, fila, columnas.precio, true),
+                            'El precio'
+                        ),
                     hoja: hoja.name,
                     fila
                 };
