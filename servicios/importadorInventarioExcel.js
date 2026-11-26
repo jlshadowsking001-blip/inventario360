@@ -49,6 +49,9 @@ function detectarColumnas(hoja, fila) {
         } else if (!columnas.precio && !texto.includes('inventario') &&
             /^(precio|precio venta|precio de venta|precio unitario venta|precio venta unitario|precio unitario de venta|precio al publico|precio publico|p venta|pvp|sale price|venta|price)$/.test(textoPrecioVenta)) {
             columnas.precio = indice;
+        } else if (!columnas.precioInventario &&
+            /^(precio inventario|precio del inventario|valor inventario|valor del inventario)$/.test(texto)) {
+            columnas.precioInventario = indice;
         }
     });
 
@@ -128,6 +131,26 @@ async function leerProductosExcel(buffer) {
             }
 
             try {
+                const existencia = columnas.existencia == null
+                    ? undefined
+                    : convertirNumero(obtenerValorCelda(hoja, fila, columnas.existencia), 'La existencia');
+                let precio = columnas.precio == null
+                    ? undefined
+                    : convertirNumero(
+                        obtenerValorCelda(hoja, fila, columnas.precio) ??
+                            obtenerValorCelda(hoja, fila, columnas.precio, true),
+                        'El precio'
+                    );
+                if (precio == null && columnas.precioInventario != null && existencia > 0) {
+                    const totalPrecioInventario = convertirNumero(
+                        obtenerValorCelda(hoja, fila, columnas.precioInventario) ??
+                            obtenerValorCelda(hoja, fila, columnas.precioInventario, true),
+                        'El precio del inventario'
+                    );
+                    if (totalPrecioInventario != null) {
+                        precio = Number((totalPrecioInventario / existencia).toFixed(2));
+                    }
+                }
                 const producto = {
                     nombre,
                     codigo: columnas.codigo == null
@@ -136,19 +159,11 @@ async function leerProductosExcel(buffer) {
                     categoria: columnas.categoria == null
                         ? undefined
                         : String(obtenerValorCelda(hoja, fila, columnas.categoria) ?? '').trim() || null,
-                    existencia: columnas.existencia == null
-                        ? undefined
-                        : convertirNumero(obtenerValorCelda(hoja, fila, columnas.existencia), 'La existencia'),
+                    existencia,
                     costo: columnas.costo == null
                         ? undefined
                         : convertirNumero(obtenerValorCelda(hoja, fila, columnas.costo), 'El costo'),
-                    precio: columnas.precio == null
-                        ? undefined
-                        : convertirNumero(
-                            obtenerValorCelda(hoja, fila, columnas.precio) ??
-                                obtenerValorCelda(hoja, fila, columnas.precio, true),
-                            'El precio'
-                        ),
+                    precio,
                     hoja: hoja.name,
                     fila
                 };
