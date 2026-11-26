@@ -179,7 +179,7 @@ window.renderizarCategoriasHeader = function renderizarCategoriasHeader() {
     cont.innerHTML = '';
 
     const btnTodos = document.createElement('button');
-    btnTodos.textContent = 'Todos los productos';
+    btnTodos.textContent = 'Todas';
     btnTodos.className = 'btn-categoria btn-categoria--todos';
     btnTodos.onclick = () => window.mostrarTodosProductos();
     btnTodos.classList.toggle('is-active', window._categoriaInventarioActiva == null);

@@ -2137,3 +2137,406 @@
     font-size: 0.88rem;
   }
 }
+
+@media (max-width: 768px) {
+  #inventario {
+    min-width: 0;
+    background: #f3f4f7;
+  }
+
+  .inventario-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-height: none;
+    padding: 14px 0 calc(110px + env(safe-area-inset-bottom));
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .inventario-search-row {
+    display: contents;
+  }
+
+  .inventario-summary {
+    order: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    width: 100%;
+    margin: 0;
+  }
+
+  .inventario-summary-item {
+    justify-content: space-between;
+    min-width: 0;
+    min-height: 122px;
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid var(--palette-border);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(41, 39, 70, 0.05);
+  }
+
+  .inventario-summary-item:nth-child(2) {
+    order: -1;
+  }
+
+  .inventario-summary-item span {
+    color: var(--palette-ink);
+    font-size: clamp(0.92rem, 4vw, 1.15rem);
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .inventario-summary-item strong {
+    min-width: 0;
+    color: #64758c;
+    font-size: clamp(1.35rem, 6vw, 1.9rem);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .inventario-hero {
+    order: 1;
+    display: block;
+    min-width: 0;
+  }
+
+  .inventario-hero-text {
+    display: none;
+  }
+
+  .inventario-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 0 6px;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .inventario-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .inventario-actions .inventario-action-btn {
+    flex: 0 0 auto;
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 1px solid var(--palette-border);
+    border-radius: 14px;
+    background: #fff;
+    color: var(--palette-ink);
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .inventario-actions .inventario-action-btn.btn--primary {
+    background: var(--palette-yellow);
+  }
+
+  .inventario-actions .inventario-action-btn--danger {
+    border-color: #e7c7cb;
+    color: #8d2431;
+  }
+
+  .inventario-categorias {
+    order: 2;
+    gap: 10px;
+    padding: 0 0 4px;
+  }
+
+  .inventario-categorias button {
+    min-height: 48px;
+    padding: 8px 18px;
+    border: 0;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--palette-ink);
+    box-shadow: none;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .inventario-categorias button.is-active {
+    background: var(--palette-yellow);
+    color: var(--palette-ink);
+  }
+
+  .inventario-search {
+    order: 3;
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    border-color: var(--palette-border);
+    border-radius: 14px;
+    box-shadow: none;
+  }
+
+  .inventario-tabla-wrapper {
+    order: 5;
+    display: block;
+    min-height: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    isolation: auto;
+  }
+
+  .inventario-tabla-scroll {
+    overflow: visible;
+  }
+
+  .tabla-inventario,
+  .tabla-inventario tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .tabla-inventario thead {
+    display: none;
+  }
+
+  .tabla-inventario tbody tr {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr) 42px;
+    grid-template-areas:
+      "product product product"
+      "stock stock actions"
+      "price price actions";
+    align-items: center;
+    gap: 4px 10px;
+    min-width: 0;
+    margin: 0 0 12px;
+    padding: 12px;
+    border: 1px solid var(--palette-border);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(41, 39, 70, 0.05);
+  }
+
+  .tabla-inventario tbody tr:nth-child(even) td,
+  .tabla-inventario tbody td {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    text-align: left;
+  }
+
+  .tabla-inventario tbody td[data-label="Producto"] {
+    grid-area: product;
+  }
+
+  .tabla-inventario tbody td[data-label="Existencias"] {
+    grid-area: stock;
+  }
+
+  .tabla-inventario tbody td[data-label="Precio"] {
+    grid-area: price;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .tabla-inventario tbody td[data-label="Precio"]::before {
+    content: "C$";
+    color: var(--palette-ink);
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  .tabla-inventario tbody td[data-label="Acciones"] {
+    grid-area: actions;
+  }
+
+  .tabla-inventario tbody td[data-label="Costo"],
+  .tabla-inventario tbody td[data-label="Ganancia"],
+  .tabla-inventario tbody td[data-label="Estimado"],
+  .tabla-inventario tbody td[data-label="Actualizado"] {
+    display: none;
+  }
+
+  .inventario-product-cell {
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .inventario-product-cell .inventario-img {
+    flex: 0 0 72px;
+    width: 72px;
+    height: 72px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--palette-row);
+    object-fit: contain;
+  }
+
+  .inventario-product-cell > span {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--palette-ink);
+    font-size: 1.05rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .inventario-codigo {
+    margin-top: 4px;
+    font-size: 0.72rem;
+  }
+
+  .tabla-inventario tbody td[data-label="Existencias"]::after {
+    content: " disponibles";
+    color: #8f2933;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .tabla-inventario .input-existencia,
+  .tabla-inventario .input-precio {
+    width: auto !important;
+    max-width: 100%;
+    min-height: 36px;
+    padding: 4px 10px;
+    border: 0;
+    border-radius: 10px;
+    color: var(--palette-ink);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .tabla-inventario .input-existencia {
+    width: min(100%, 150px) !important;
+    background: #fce4e5;
+    color: #8f2933;
+  }
+
+  .tabla-inventario .input-existencia.is-in-stock {
+    background: #d7f4e9;
+    color: #15734f;
+  }
+
+  .tabla-inventario .input-precio {
+    width: min(100%, 150px) !important;
+    padding-left: 0;
+    background: transparent;
+    font-size: 1.25rem;
+  }
+
+  .tabla-inventario .btn-editar {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--palette-border);
+    border-radius: 50%;
+    background: #fff;
+    color: var(--palette-ink);
+    font-size: 0;
+  }
+
+  .tabla-inventario .btn-editar::before {
+    content: "✎";
+    font-size: 1.2rem;
+  }
+
+  .tabla-inventario.is-delete-mode tbody tr {
+    border-color: #d98b93;
+    background: #fff8f8;
+  }
+
+  .tabla-inventario .producto-seleccion-eliminar {
+    position: absolute;
+    z-index: 1;
+    width: 22px;
+    height: 22px;
+    margin: -4px 0 0 -4px;
+  }
+
+  .inventario-delete-queue {
+    order: 4;
+    padding: 12px;
+  }
+
+  .inventario-delete-queue__actions {
+    justify-content: flex-start;
+  }
+
+  .inventario-delete-queue__actions .btn {
+    width: auto;
+  }
+
+  .inventario-mobile-add {
+    position: fixed;
+    right: 18px;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    z-index: 12;
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: var(--palette-ink);
+    box-shadow: 0 5px 16px rgba(41, 39, 70, 0.25);
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1;
+  }
+}
+
+@media (min-width: 769px) {
+  .inventario-mobile-add {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .inventario-search,
+  .ventas-search,
+  .mov-search-box,
+  .contact-search {
+    min-height: 46px;
+    border-radius: 12px;
+    border-color: var(--palette-border);
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .contact-card__toolbar {
+    width: 100%;
+    min-width: 0;
+    gap: 12px;
+  }
+
+  .contact-search {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    padding: 6px 12px;
+    box-sizing: border-box;
+  }
+
+  .contact-search input {
+    min-width: 0;
+    min-height: 0;
+  }
+}

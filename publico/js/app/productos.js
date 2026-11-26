@@ -255,7 +255,7 @@ window.actualizarResumenInventario = function actualizarResumenInventario(produc
         return acc + (unidades * base);
     }, 0);
 
-    if (totalArticulosEl) totalArticulosEl.textContent = `${totalRegistros} productos`;
+    if (totalArticulosEl) totalArticulosEl.textContent = String(totalRegistros);
 
     if (costoInventarioEl) {
         const formato = typeof window.formatearMoneda === 'function'
@@ -390,20 +390,20 @@ window.renderProductsTable = function renderProductsTable(productos) {
         const id = escaparHTML(p.id);
         const seleccionadoParaEliminar = window._productosSeleccionadosParaEliminar.has(String(p.id));
         fila.innerHTML = `
-        <td>
+        <td data-label="Producto">
             <div class="inventario-product-cell">
                 <input class="producto-seleccion-eliminar" type="checkbox" data-id="${id}" aria-label="Seleccionar ${nombre}, ID ${id}, para eliminar" ${seleccionadoParaEliminar ? 'checked' : ''}>
                 <img class="inventario-img" src="${escaparHTML(imagenSrc)}" alt="Producto ${nombre}">
                 <span>${nombre}${p.codigo ? `<small class="inventario-codigo">Código: ${codigo}</small>` : ''}</span>
             </div>
         </td>
-        <td><input data-id="${id}" class="input-precio" type="number" step="0.01" value="${p.precio || 0}" style="width:80px"></td>
-        <td><input data-id="${id}" class="input-costo" type="number" min="0" step="0.01" value="${p.costo ?? 0}" style="width:80px"></td>
-        <td><input data-id="${id}" class="input-existencia" type="number" value="${p.existencia || 0}" style="width:70px"></td>
-        <td>$${ganancia}</td>
-        <td>${estimado}</td>
-        <td>${fechaRef ? new Date(fechaRef * 1000).toLocaleDateString() : '—'}</td>
-        <td><button class="btn-editar" data-id="${id}">Editar</button></td>
+        <td data-label="Precio"><input data-id="${id}" class="input-precio" type="number" step="0.01" value="${p.precio || 0}" style="width:80px"></td>
+        <td data-label="Costo"><input data-id="${id}" class="input-costo" type="number" min="0" step="0.01" value="${p.costo ?? 0}" style="width:80px"></td>
+        <td data-label="Existencias"><input data-id="${id}" class="input-existencia ${Number(p.existencia) <= 5 ? 'is-low-stock' : 'is-in-stock'}" type="number" value="${p.existencia || 0}" style="width:70px"></td>
+        <td data-label="Ganancia">$${ganancia}</td>
+        <td data-label="Estimado">${estimado}</td>
+        <td data-label="Actualizado">${fechaRef ? new Date(fechaRef * 1000).toLocaleDateString() : '—'}</td>
+        <td data-label="Acciones"><button class="btn-editar" data-id="${id}" aria-label="Editar ${nombre}" title="Editar producto">Editar</button></td>
         `;
         tbody.appendChild(fila);
     });
